@@ -40,7 +40,7 @@ Sigue la arquitectura de 4 capas y hoy incluye **8 archivos** (el 9no archivo de
     1.  Verifica si email o username ya existen (Fail Fast).
     2.  Hashea password con `bcryptjs` (Salt automático, costo 10).
     3.  Crea usuario en `security.users`.
-    4.  Crea perfil en `security.user_profiles` (Rol inicial configurable).
+    4.  Crea asignación de rol en `security.user_profile` (Rol inicial configurable).
     5.  Si `AUTH_REQUIRE_EMAIL_VERIFICATION=true`, envía email de verificación con token.
 - **Output**: 201 Created.
 
@@ -94,6 +94,6 @@ Sigue la arquitectura de 4 capas y hoy incluye **8 archivos** (el 9no archivo de
 ## Tablas Involucradas
 
 - `security.users`: Credenciales y estado.
-- `security.user_profiles`: Roles asignados.
+- `security.user_profile`: Roles asignados (user_id, profile_id).
 - `security.one_time_codes`: Almacén temporal de OTPs.
 - `security.password_resets`: Historial de solicitudes de reset.

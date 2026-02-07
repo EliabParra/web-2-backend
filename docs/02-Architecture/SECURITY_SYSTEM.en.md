@@ -20,48 +20,79 @@ Instead of exposing traditional CRUD resources (`POST /users`), we expose Busine
 
 We have separated responsibilities into specialized components to comply with **SOLID** and enhance security:
 
-### A. Permission Matrix (`security.permissions`)
+### A. Permission Matrix (`security.profile_method`)
 
 Authorization is based on the database, loaded into RAM (`PermissionGuard`) for O(1) speed.
 
-| transaction_id (`tx`) | profile_id | description        |
-| :-------------------- | :--------- | :----------------- |
-| 1001 (Register)       | 2 (Public) | Allowed for guests |
-| 1002 (Admin Panel)    | 1 (Admin)  | Admins only        |
+| profile_id | object_name | method_name | description        |
+| :--------- | :---------- | :---------- | :----------------- |
+| 2 (Public) | Auth        | register    | Allowed for guests |
+| 1 (Admin)  | Admin       | dashboard   | Admins only        |
+
+**Schema:**
+
+```sql
+security.profile_method (
+    profile_method_id PK,
+    profile_id FK -> profiles,
+    method_id FK -> methods
+)
+```
 
 ### B. Core Components (`src/core/*`)
 
-1.  **TransactionOrchestrator** (The Director):
-    - Receives request from controller.
+1.  **SecurityService** (The Orchestrator):
     - Coordinates: Resolution -> Route Validation -> AuthZ -> Execution -> Audit.
-    - **Security**: Validates method names against a whitelist (Regex) to prevent arbitrary execution.
+    - Delegates to specialized components.
 
-2.  **AuthorizationService** (The Guardian):
-    - Solely responsible for permissions (YES/NO).
-    - Consults `PermissionGuard`.
-    - Logs denied access attempts.
+2.  **PermissionGuard** (The Guardian):
+    - Loads all permissions from `security.profile_method` into an in-memory `Set<string>`.
+    - O(1) permission checks via key format: `profile_id:object_name:method_name`.
+    - **Dynamic Security**: `grant()` and `revoke()` methods for real-time updates.
 
 3.  **TransactionExecutor** (The Executor):
     - Dynamically loads the Business Object (BO).
-    - **Critical Security**: Implements **Path Containment**. Verifies the file to load is strictly within `/BO` and checks for path traversal (`../../etc/passwd`).
+    - **Critical Security**: Implements **Path Containment**. Verifies the file to load is strictly within `/BO`.
     - Injects dependencies (DB, Log, Validator, I18n).
 
 4.  **TransactionMapper** (The Map):
-    - Translates `tx: 1001` -> `{ object: "Auth", method: "register" }`.
+    - Translates `tx: 1001` -> `{ objectName: "Auth", methodName: "register" }`.
 
 ---
 
-## 3. Secure Flow
+## 3. Dynamic Permission Management (Dual Write)
+
+Permissions can be modified at runtime without server restart.
+
+### API:
+
+```typescript
+// Grant a permission (writes to DB + updates memory)
+await security.grantPermission(profileId, objectName, methodName)
+
+// Revoke a permission
+await security.revokePermission(profileId, objectName, methodName)
+```
+
+### How it works:
+
+1. **DB Write**: INSERT/DELETE in `security.profile_method`.
+2. **Memory Update**: Add/remove from `Set<string>` cache.
+3. **Immediate Effect**: Next request sees the change.
+
+---
+
+## 4. Secure Flow
 
 1. **Resolution**: `TransactionMapper` finds the route.
-2. **Route Validation (Anti-Traversal)**: `TransactionOrchestrator` checks for illegal characters.
-3. **Authorization**: `AuthorizationService` verifies permission matrix.
+2. **Route Validation (Anti-Traversal)**: `SecurityService` checks for illegal characters.
+3. **Authorization**: `PermissionGuard.check()` verifies permission matrix.
 4. **Secure Execution**: `TransactionExecutor` resolves absolute path, ensures root containment, and executes.
 5. **Audit**: Success or error is logged.
 
 ---
 
-## 4. Special Profiles
+## 5. Special Profiles
 
 - **Public Profile (Configurable ID)**:
     - Automatically used when a user has no session.
@@ -72,9 +103,21 @@ Authorization is based on the database, loaded into RAM (`PermissionGuard`) for 
 
 ---
 
-## 5. Additional Layers
+## 6. Additional Layers
 
 1.  **CSRF (Cross-Site Request Forgery)**:
     - Synchronized token in cookie and header.
 2.  **Rate Limiting**:
     - Strict strategies for sensitive endpoints (`/login`).
+
+---
+
+## 7. Database Schema Reference
+
+| Table                     | Description                                    |
+| :------------------------ | :--------------------------------------------- |
+| `security.profiles`       | User roles (profile_id, profile_name)          |
+| `security.objects`        | Business Objects (object_id, object_name)      |
+| `security.methods`        | Methods (method_id, method_name, object_id)    |
+| `security.profile_method` | Permission assignments (profile_id, method_id) |
+| `security.user_profile`   | User-to-Role assignments (user_id, profile_id) |

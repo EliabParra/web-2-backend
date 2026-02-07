@@ -40,7 +40,7 @@ Follows the 4-layer architecture and ships **8 files** today (a 9th module file 
     1.  Checks if email or username already exists (Fail Fast).
     2.  Hashes password with `bcryptjs` (auto salt, cost 10).
     3.  Creates user in `security.users`.
-    4.  Creates profile in `security.user_profiles` (configurable initial role).
+    4.  Creates role assignment in `security.user_profile` (configurable initial role).
     5.  If `AUTH_REQUIRE_EMAIL_VERIFICATION=true`, sends a verification email with a token.
 - **Output**: 201 Created.
 
@@ -94,6 +94,6 @@ Follows the 4-layer architecture and ships **8 files** today (a 9th module file 
 ## Involved Tables
 
 - `security.users`: Credentials and status.
-- `security.user_profiles`: Assigned roles.
+- `security.user_profile`: Assigned roles (user_id, profile_id).
 - `security.one_time_codes`: Temporary OTP storage.
 - `security.password_resets`: Reset request history.

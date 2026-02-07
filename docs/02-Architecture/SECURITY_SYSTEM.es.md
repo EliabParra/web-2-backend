@@ -1,4 +1,4 @@
-# Sistema de Seguridad Unificado (Security System)
+# Sistema de Seguridad Unificado
 
 La seguridad en ToProccess es el cimiento de la arquitectura.
 Se basa en un modelo **Transaction-Oriented** donde cada acción de negocio tiene un ID único, permisos granulares y una ejecución orquestada de forma segura.
@@ -20,61 +20,104 @@ En lugar de exponer recursos CRUD tradicionales (`POST /users`), exponemos Inten
 
 Hemos separado las responsabilidades en componentes especializados para cumplir con **SOLID** y mejorar la seguridad:
 
-### A. Matriz de Permisos (`security.permissions`)
+### A. Matriz de Permisos (`security.profile_method`)
 
 Toda la autorización se basa en la base de datos, cargada en memoria RAM (`PermissionGuard`) para velocidad O(1).
 
-| transaction_id (`tx`) | profile_id | descripcion          |
-| :-------------------- | :--------- | :------------------- |
-| 1001 (Register)       | 2 (Public) | Permitido a anónimos |
-| 1002 (Admin Panel)    | 1 (Admin)  | Solo admins          |
+| profile_id | object_name | method_name | descripcion          |
+| :--------- | :---------- | :---------- | :------------------- |
+| 2 (Public) | Auth        | register    | Permitido a anónimos |
+| 1 (Admin)  | Admin       | dashboard   | Solo admins          |
+
+**Esquema:**
+
+```sql
+security.profile_method (
+    profile_method_id PK,
+    profile_id FK -> profiles,
+    method_id FK -> methods
+)
+```
 
 ### B. Componentes del Core (`src/core/*`)
 
-1.  **TransactionOrchestrator** (El Director):
-    - Recibe la petición del controlador.
+1.  **SecurityService** (El Orquestador):
     - Coordina: Resolución -> Validación Ruta -> AuthZ -> Ejecución -> Auditoría.
-    - **Seguridad**: Valida nombres de métodos contra whitelist (Regex) para prevenir ejecución arbitraria.
+    - Delega a componentes especializados.
 
-2.  **AuthorizationService** (El Guardián):
-    - Responsable único de decir SI/NO.
-    - Consulta `PermissionGuard`.
-    - Loguea intentos de acceso denegado.
+2.  **PermissionGuard** (El Guardián):
+    - Carga todos los permisos desde `security.profile_method` a un `Set<string>` en memoria.
+    - Búsqueda O(1) mediante clave: `profile_id:object_name:method_name`.
+    - **Seguridad Dinámica**: Métodos `grant()` y `revoke()` para actualizaciones en tiempo real.
 
 3.  **TransactionExecutor** (El Ejecutor):
     - Carga dinámicamente el Business Object (BO).
-    - **Seguridad Crítica**: Implementa **Path Containment**. Verifica que el archivo a cargar esté realmente dentro de `/BO` y no sea un path traversal (`../../etc/passwd`).
+    - **Seguridad Crítica**: Implementa **Path Containment**. Verifica que el archivo esté dentro de `/BO`.
     - Inyecta dependencias (DB, Log, Validator, I18n).
 
 4.  **TransactionMapper** (El Mapa):
-    - Traduce `tx: 1001` -> `{ object: "Auth", method: "register" }`.
+    - Traduce `tx: 1001` -> `{ objectName: "Auth", methodName: "register" }`.
 
 ---
 
-## 3. Flujo Seguro
+## 3. Gestión Dinámica de Permisos (Dual Write)
+
+Los permisos pueden modificarse en tiempo de ejecución sin reiniciar el servidor.
+
+### API:
+
+```typescript
+// Otorgar un permiso (escribe en DB + actualiza memoria)
+await security.grantPermission(profileId, objectName, methodName)
+
+// Revocar un permiso
+await security.revokePermission(profileId, objectName, methodName)
+```
+
+### Cómo funciona:
+
+1. **Escritura DB**: INSERT/DELETE en `security.profile_method`.
+2. **Actualización Memoria**: Agregar/eliminar del Set<string> en caché.
+3. **Efecto Inmediato**: La siguiente petición ve el cambio.
+
+---
+
+## 4. Flujo Seguro
 
 1. **Resolución**: `TransactionMapper` encuentra la ruta.
-2. **Validación de Ruta (Anti-Traversal)**: `TransactionOrchestrator` verifica caracteres ilegales.
-3. **Autorización**: `AuthorizationService` verifica matriz de permisos.
-4. **Ejecución Segura**: `TransactionExecutor` resuelve path absoluto, verifica contención en root y ejecuta.
+2. **Validación de Ruta (Anti-Traversal)**: `SecurityService` verifica caracteres ilegales.
+3. **Autorización**: `PermissionGuard.check()` verifica matriz de permisos.
+4. **Ejecución Segura**: `TransactionExecutor` resuelve path absoluto, verifica contención y ejecuta.
 5. **Auditoría**: Se registra éxito o error.
 
 ---
 
-## 4. Perfiles Especiales
+## 5. Perfiles Especiales
 
 - **Perfil Público (ID Configurable)**:
-    - Se usa automáticamente cuando un usuario no tiene sesión (cookie).
-    - Define qué puede hacer un anónimo (Login, Registro, Recuperar Password).
+    - Se usa automáticamente cuando un usuario no tiene sesión.
+    - Define qué puede hacer un anónimo.
 - **Super Admin (ID 1)**:
     - Típicamente tiene acceso a todo, pero el sistema lo trata como un perfil más.
-    - No hay "if (admin) bypass" hardcodeado en el código, todo está en la DB.
+    - No hay "if (admin) bypass" hardcodeado.
 
 ---
 
-## 5. Capas Adicionales
+## 6. Capas Adicionales
 
 1.  **CSRF (Cross-Site Request Forgery)**:
     - Token sincronizado en cookie y header.
 2.  **Rate Limiting**:
     - Estrategias estrictas para endpoints sensibles (`/login`).
+
+---
+
+## 7. Referencia del Esquema de Base de Datos
+
+| Tabla                     | Descripción                                    |
+| :------------------------ | :--------------------------------------------- |
+| `security.profiles`       | Roles de usuario (profile_id, profile_name)    |
+| `security.objects`        | Business Objects (object_id, object_name)      |
+| `security.methods`        | Métodos (method_id, method_name, object_id)    |
+| `security.profile_method` | Asignación de permisos (profile_id, method_id) |
+| `security.user_profile`   | Asignación Usuario-Rol (user_id, profile_id)   |

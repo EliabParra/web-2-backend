@@ -26,7 +26,7 @@ const result = await this.db.query<User>(UserQueries.findById, [id])
 const user = result.rows[0] // ← TypeScript sabe que es User | undefined
 
 // Con SQL inline
-const count = await this.db.query<{ count: number }>('SELECT count(*) FROM users', [])
+const count = await this.db.query<{ count: number }>('SELECT count(*) FROM security.users', [])
 ```
 
 ### B. `exeRaw(sql, params)`
@@ -46,12 +46,12 @@ Cada BO tiene su archivo `{Nombre}Queries.ts` con todas las queries SQL.
 ```typescript
 // UserQueries.ts
 export const UserQueries = {
-    findAll: `SELECT * FROM users ORDER BY created_at DESC`,
+    findAll: `SELECT * FROM security.users ORDER BY user_created_at DESC`,
 
     findById: `SELECT * FROM users WHERE user_id = $1`,
 
     create: `
-        INSERT INTO users (name, email, password_hash)
+        INSERT INTO security.users (username, user_email, user_password)
         VALUES ($1, $2, $3)
         RETURNING *
     `,
