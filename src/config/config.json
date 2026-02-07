@@ -1,0 +1,27 @@
+{
+    "app": {
+        "name": "toproc",
+        "lang": "es"
+    },
+    "bo": {
+        "path": "../../BO/"
+    },
+    "log": {
+        "minLevel": "info",
+        "format": "text",
+        "categories": {
+            "Database": "warn"
+        }
+    },
+    "cors": {
+        "enabled": true
+    },
+    "auth": {
+        "loginId": "email",
+        "requireEmailVerification": true
+    },
+    "email": {
+        "mode": "smtp",
+        "from": "toproc@gmail.com"
+    }
+}

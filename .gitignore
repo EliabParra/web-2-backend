@@ -1,0 +1,14 @@
+node_modules/
+.vscode/*
+!.vscode/main.code-snippets
+coverage/
+.env
+.env.*
+!.env.example
+.tmp-server-*.txt
+docs/api/
+.tmp-starterpack/
+chat-historial/
+nodejs-backend-architecture.code-workspace
+*.code-workspace
+dist/

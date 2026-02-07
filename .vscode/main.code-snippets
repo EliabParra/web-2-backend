@@ -1,0 +1,282 @@
+{
+	"Business Object": {
+		"prefix": "tp-bo",
+		"body": [
+			"import { BaseBO, BODependencies, ApiResponse } from '../../src/core/business-objects/index.js'",
+			"import { ${1:Name}Repository, ${1:Name}Service, ${1:Name}Messages, create${1:Name}Schemas, Schemas } from './${1:Name}Module.js'",
+			"",
+			"export class ${1:Name}BO extends BaseBO {",
+			"    private service: ${1:Name}Service",
+			"",
+			"    constructor(deps: BODependencies) {",
+			"        super(deps)",
+			"        const repo = new ${1:Name}Repository(this.db)",
+			"        this.service = new ${1:Name}Service(repo, this.log, this.config, this.db)",
+			"    }",
+			"",
+			"    private get ${1/(.*)/${1:/downcase}/}Messages() {",
+			"        return this.i18n.use(${1:Name}Messages)",
+			"    }",
+			"",
+			"    private get ${1/(.*)/${1:/downcase}/}Schemas() {",
+			"        return create${1:Name}Schemas(this.${1/(.*)/${1:/downcase}/}Messages)",
+			"    }",
+			"",
+			"    async ${2:methodName}(params: Schemas.${3:InputType}): Promise<ApiResponse> {",
+			"        return this.exec<Schemas.${3:InputType}, ${4:ReturnType}>(params, this.${1/(.*)/${1:/downcase}/}Schemas.${2:methodName}, async (data) => {",
+			"            const result = await this.service.${2:methodName}(data)",
+			"            return this.success(result, this.${1/(.*)/${1:/downcase}/}Messages.${5:successMessage})",
+			"        })",
+			"    }",
+			"}"
+		],
+		"description": "ToProccess Business Object with 9-file structure and i18n support"
+	},
+	"BO Method (Transaction)": {
+		"prefix": "tp-bo-method",
+		"body": [
+			"/**",
+			" * ${1:Method Description}",
+			" */",
+			"async ${2:methodName}(params: ${3:InputType}): Promise<ApiResponse> {",
+			"    return this.exec<${3:InputType}, ${4:ReturnType}>(",
+			"        params,",
+			"        this.${5/(.*)/${1:/downcase}/}Schemas.${2:methodName},",
+			"        async (data) => {",
+			"            const result = await this.service.${2:methodName}(data)",
+			"            return this.success(result, this.${5/(.*)/${1:/downcase}/}Messages.${6:successMessage})",
+			"        }",
+			"    )",
+			"}"
+		],
+		"description": "Add a transactional method to BO"
+	},
+	"BO Types File": {
+		"prefix": "tp-types",
+		"body": [
+			"/**",
+			" * Definiciones de tipos para ${1:Name}",
+			" */",
+			"",
+			"export namespace ${1:Name} {",
+			"// ============================================================",
+			"// Tipos de Entidad",
+			"// ============================================================",
+			"",
+			"export interface Entity {",
+			"    ${2:id}: number",
+			"    createdAt: Date",
+			"    updatedAt?: Date",
+			"}",
+			"",
+			"export interface Summary {",
+			"    ${2:id}: number",
+			"}",
+			"",
+			"// ============================================================",
+			"// Tipos de Entrada",
+			"// ============================================================",
+			"",
+			"export interface CreateInput {",
+			"    ${3:field}: string",
+			"}",
+			"",
+			"export interface UpdateInput {",
+			"    ${2:id}: number",
+			"    ${3:field}?: string",
+			"}",
+			"}",
+			"",
+			"export type ${1:Name} = ${1:Name}.Entity",
+			"export type ${1:Name}Summary = ${1:Name}.Summary",
+			"export type Create${1:Name}Input = ${1:Name}.CreateInput",
+			"export type Update${1:Name}Input = ${1:Name}.UpdateInput"
+		],
+		"description": "BO Types File with sectioned interfaces (Entity/Input)"
+	},
+	"BO Messages File": {
+		"prefix": "tp-messages",
+		"body": [
+			"/**",
+			" * Messages for ${1:Name} Business Object",
+			" */",
+			"",
+			"export const ${1:Name}Messages = {",
+			"    es: {",
+			"        createSuccess: '${1:Name} creado exitosamente',",
+			"        updateSuccess: '${1:Name} actualizado exitosamente',",
+			"        deleteSuccess: '${1:Name} eliminado exitosamente',",
+			"        notFound: '${1:Name} no encontrado',",
+			"        validation: {",
+			"            idRequired: 'El ID es requerido',",
+			"            fieldRequired: 'El campo es requerido',",
+			"        }",
+			"    },",
+			"    en: {",
+			"        createSuccess: '${1:Name} created successfully',",
+			"        updateSuccess: '${1:Name} updated successfully',",
+			"        deleteSuccess: '${1:Name} deleted successfully',",
+			"        notFound: '${1:Name} not found',",
+			"        validation: {",
+			"            idRequired: 'ID is required',",
+			"            fieldRequired: 'Field is required',",
+			"        }",
+			"    }",
+			"}"
+		],
+		"description": "BO Messages File with English/Spanish support"
+	},
+	"BO Errors File": {
+		"prefix": "tp-errors",
+		"body": [
+			"/**",
+			" * Custom Errors for ${1:Name} Business Object",
+			" */",
+			"import { BOError, TxKey } from '../../src/core/business-objects/index.js'",
+			"import { ${1:Name}Messages } from './${1:Name}Module.js'",
+			"",
+			"const defaultMessages = ${1:Name}Messages.es",
+			"",
+			"export class ${1:Name}Error extends BOError {",
+			"    constructor(",
+			"        message: TxKey | (string & {}),",
+			"        tag: string,",
+			"        code: number = 500,",
+			"        details?: Record<string, unknown>",
+			"    ) {",
+			"        super(message, tag, code, details)",
+			"        this.name = '${1:Name}Error'",
+			"    }",
+			"}",
+			"",
+			"export class ${1:Name}NotFoundError extends ${1:Name}Error {",
+			"    constructor(${2:id}: number) {",
+			"        super(defaultMessages.notFound, '${1/(.*)/${1:/upcase}/}_NOT_FOUND', 404, { ${2:id} })",
+			"        this.name = '${1:Name}NotFoundError'",
+			"    }",
+			"}",
+			"",
+			"export function is${1:Name}Error(err: unknown): err is ${1:Name}Error {",
+			"    return err instanceof ${1:Name}Error",
+			"}"
+		],
+		"description": "BO Errors File with custom error classes"
+	},
+	"Zod Schema": {
+		"prefix": "tp-schema",
+		"body": [
+			"import { z } from 'zod'",
+			"import { ${1:Name}Messages } from './${1:Name}Messages.js'",
+			"",
+			"export type ${1:Name}MessagesSet = typeof ${1:Name}Messages.es",
+			"",
+			"export const create${1:Name}Schemas = (messages: ${1:Name}MessagesSet = ${1:Name}Messages.es) => {",
+			"    const validation = messages.validation ?? ${1:Name}Messages.es.validation",
+			"",
+			"    return {",
+			"        ${2:method}: z.object({",
+			"            ${3:field}: z.string().min(1, validation.requiredField),",
+			"        }),",
+			"    }",
+			"}",
+			"",
+			"export const ${1:Name}Schemas = create${1:Name}Schemas(${1:Name}Messages.es)",
+			"",
+			"export type ${2/(.*)/${1:/capitalize}/}Input = z.infer<typeof ${1:Name}Schemas.${2:method}>"
+		],
+		"description": "Zod Schema with generated i18n keys"
+	},
+	"Service Class": {
+		"prefix": "tp-service",
+		"body": [
+			"import { BOService } from '../../src/core/business-objects/BOService.js'",
+			"import { ILogger, IConfig, IDatabase } from '../../src/types/core.js'",
+			"import { ${1:Name}Repository } from './${1:Name}Repository.js'",
+			"import type { ${1:Name}, I${1:Name}Service } from './${1:Name}Types.js'",
+			"import { ${1:Name}NotFoundError } from './${1:Name}Errors.js'",
+			"",
+			"export class ${1:Name}Service extends BOService implements I${1:Name}Service {",
+			"    constructor(",
+			"        private readonly repo: ${1:Name}Repository,",
+			"        log: ILogger,",
+			"        config: IConfig,",
+			"        db: IDatabase",
+			"    ) {",
+			"        super(log, config, db)",
+			"    }",
+			"",
+			"    async getById(id: number): Promise<${1:Name}> {",
+			"        const entity = await this.repo.findById(id)",
+			"        if (!entity) throw new ${1:Name}NotFoundError(id)",
+			"        return entity",
+			"    }",
+			"}"
+		],
+		"description": "Service Class matching the new BO pattern"
+	},
+	"Repository Method": {
+		"prefix": "tp-repo-method",
+		"body": [
+			"async ${1:methodName}(${2:params}): Promise<${3:Result} | null> {",
+			"    const result = await this.db.query<${3:Result}>(${4:Name}Queries.${1:methodName}, [${5:args}])",
+			"    return result.rows[0] ?? null",
+			"}"
+		],
+		"description": "Database Access Method with db.query and Queries object"
+	},
+	"Queries File": {
+		"prefix": "tp-queries",
+		"body": [
+			"export const ${1:Name}Queries = {",
+			"    ${2:findAll}: `",
+			"        SELECT * FROM ${3:table}",
+			"    `,",
+			"} as const",
+			"",
+			"export type ${1:Name}QueryKey = keyof typeof ${1:Name}Queries"
+		],
+		"description": "Colocated SQL Queries object"
+	},
+    "Test Suite (Node)": {
+		"prefix": "tp-test",
+		"body": [
+			"import { describe, it } from 'node:test'",
+			"import assert from 'node:assert'",
+			"",
+			"describe('${1:Suite Name}', () => {",
+			"    it('${2:should do something}', () => {",
+			"        assert.strictEqual(1, 1)",
+			"    })",
+			"})"
+		],
+		"description": "Node Test Runner Suite"
+	},
+    "Logger Info": {
+		"prefix": "tp-log",
+		"body": [
+			"this.log.info('${1:Message}')"
+		],
+		"description": "Log an info message"
+	},
+    "Logger Error": {
+		"prefix": "tp-log-error",
+		"body": [
+			"this.log.error('${1:Message}', ${2:error})"
+		],
+		"description": "Log an error message"
+	},
+    "Logger Warn": {
+		"prefix": "tp-log-warn",
+		"body": [
+			"this.log.warn('${1:Message}')"
+		],
+		"description": "Log a warning message"
+	},
+    "Logger Debug": {
+		"prefix": "tp-log-debug",
+		"body": [
+			"this.log.debug('${1:Message}')"
+		],
+		"description": "Log a debug message"
+	}
+}

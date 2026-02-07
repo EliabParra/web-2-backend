@@ -1,0 +1,72 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - '**'
+    pull_request:
+
+jobs:
+    test:
+        name: Test (Node ${{ matrix.node-version }})
+        runs-on: ubuntu-24.04
+
+        strategy:
+            fail-fast: false
+            matrix:
+                node-version: [24.x]
+
+        timeout-minutes: 10
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Run tests
+              run: pnpm test
+
+    coverage:
+        name: Coverage (Node 24.x)
+        runs-on: ubuntu-24.04
+        needs: test
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24.x
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Run coverage
+              run: pnpm run test:coverage
+
+            - name: Upload coverage artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage
+                  path: coverage

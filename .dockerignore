@@ -1,0 +1,16 @@
+# --- Archivos Ignorados por Docker ---
+# Es IMPORTANTE excluir estos archivos para reducir el tamaño del contexto de build
+# y evitar copiar archivos locales, secretos o de sistema innecesarios.
+
+node_modules
+dist
+coverage
+.git
+.vscode
+.env
+.DS_Store
+*.log
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.custom_commands.sh
