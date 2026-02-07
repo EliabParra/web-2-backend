@@ -99,7 +99,7 @@ describe('BORegistrar syncMethods', () => {
         })
 
         const deleteQueries = mockDb.getQueries().filter((q) => q.query.includes('DELETE'))
-        // Expect 2 DELETEs (permission_methods + methods)
+        // Expect 2 DELETEs (profile_method + methods)
         assert.ok(
             deleteQueries.length >= 2,
             `Expected at least 2 DELETE queries, got ${deleteQueries.length}`

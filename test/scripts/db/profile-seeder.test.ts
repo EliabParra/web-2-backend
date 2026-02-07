@@ -23,6 +23,11 @@ describe('ProfileSeeder', () => {
 
         // Verify both profiles were created
         assert.strictEqual(mockDb.exeRaw.mock.calls.length, 2)
+
+        // Verify new schema columns used (profile_id, profile_name)
+        const firstCall = mockDb.exeRaw.mock.calls[0].arguments[0] as string
+        assert.ok(firstCall.includes('profile_id'), 'Should use profile_id column')
+        assert.ok(firstCall.includes('profile_name'), 'Should use profile_name column')
     })
 
     it('should seed admin profile when provided', async () => {
@@ -38,12 +43,16 @@ describe('ProfileSeeder', () => {
         assert.strictEqual(result.created, 3)
     })
 
-    it('should grant permissions to profile', async () => {
+    it('should grant permissions to profile using profile_method table', async () => {
         const mockDb = createMockDb()
         const seeder = new ProfileSeeder(mockDb as any)
 
         const granted = await seeder.grantPermissions(1, [10, 20, 30])
 
         assert.strictEqual(granted, 3)
+
+        // Verify new table name used (profile_method, not permission_methods)
+        const grantCall = mockDb.exeRaw.mock.calls[0].arguments[0] as string
+        assert.ok(grantCall.includes('profile_method'), 'Should use profile_method table')
     })
 })

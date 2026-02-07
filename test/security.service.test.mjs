@@ -80,7 +80,7 @@ test('Security.init loads permissions + tx map and sets isReady', async () => {
             globalThis.db = {
                 query: async (sql) => {
                     // Check for permissions query
-                    if (sql.includes('permission_methods')) {
+                    if (sql.includes('profile_method')) {
                         return { rows: [{ profile_id: 1, method_name: 'm', object_name: 'o' }] }
                     }
                     // Check for tx/methods query
@@ -164,7 +164,7 @@ test('Security.init captures initError and rejects ready when DB fails', async (
 
             globalThis.db = {
                 query: async (sql) => {
-                    if (sql.includes('permission_methods')) throw new Error('db down')
+                    if (sql.includes('profile_method')) throw new Error('db down')
                     if (sql.includes('security.methods')) return { rows: [] }
                     return { rows: [] }
                 },
@@ -241,7 +241,7 @@ test('Security.executeMethod dynamically imports BO and caches the instance', as
                 }
                 globalThis.db = {
                     query: async (sql) => {
-                        if (sql.includes('permission_methods')) return { rows: [] }
+                        if (sql.includes('profile_method')) return { rows: [] }
                         if (sql.includes('security.methods')) return { rows: [] }
                         return { rows: [] }
                     },
@@ -309,7 +309,7 @@ test('Security.executeMethod returns serverError and logs when BO import fails',
 
             globalThis.db = {
                 query: async (sql) => {
-                    if (sql.includes('permission_methods')) return { rows: [] }
+                    if (sql.includes('profile_method')) return { rows: [] }
                     if (sql.includes('security.methods')) return { rows: [] }
                     return { rows: [] }
                 },

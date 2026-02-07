@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { Pool } from 'pg'
-import { PermissionGuard } from '../src/core/security/PermissionGuard.ts'
+import { PermissionGuard } from '../src/core/security/PermissionGuard.js'
 
 // Simple DB wrapper
 const pool = new Pool({

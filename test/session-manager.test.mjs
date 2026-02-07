@@ -218,7 +218,7 @@ test('createSession uses getUserByEmail for email identifier', async () => {
     await sm.createSession(req)
 
     // Check for new schema column name
-    assert.ok(sqlCalled.includes('u.email = $1'), 'Should use email lookup query')
+    assert.ok(sqlCalled.includes('u.user_email = $1'), 'Should use email lookup query')
 })
 
 test('createSession handles error gracefully and logs', async () => {

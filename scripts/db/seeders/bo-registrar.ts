@@ -15,6 +15,7 @@ interface BOInfo {
 
 /**
  * Registers Business Objects and their methods into security.methods.
+ * Updated for new schema: uses profile_id, object_name, method_name, profile_method
  */
 export class BORegistrar {
     constructor(
@@ -83,7 +84,7 @@ export class BORegistrar {
     }): Promise<{ registered: number; bos: string[] }> {
         console.log(`\n📦 Registering Business Objects...`.cyan)
 
-        // Verify profile exists before starting
+        // Verify profile exists before starting (NEW: profile_id column)
         const profileExists = await this.checkProfileExists(options.profileId)
         if (!profileExists) {
             console.log(`   ❌ Error: Profile ID ${options.profileId} does not exist.`.red)
@@ -135,34 +136,38 @@ export class BORegistrar {
         return Number(result.rows[0]?.next_tx) || 1
     }
 
+    // NEW: uses profile_id column
     private async checkProfileExists(profileId: number): Promise<boolean> {
-        const result = await this.db.exeRaw('SELECT 1 FROM security.profiles WHERE id = $1', [
-            profileId,
-        ])
+        const result = await this.db.exeRaw(
+            'SELECT 1 FROM security.profiles WHERE profile_id = $1',
+            [profileId]
+        )
         return (result.rowCount ?? 0) > 0
     }
 
+    // NEW: uses object_name column
     private async upsertObject(objectName: string): Promise<number> {
         const result = await this.db.exeRaw(
-            `INSERT INTO security.objects (name) 
+            `INSERT INTO security.objects (object_name) 
              VALUES ($1) 
-             ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name 
-             RETURNING id as object_id`,
+             ON CONFLICT (object_name) DO UPDATE SET object_name = EXCLUDED.object_name 
+             RETURNING object_id`,
             [objectName]
         )
         return result.rows[0]?.object_id
     }
 
+    // NEW: uses method_name column and method_id return
     private async upsertMethod(
         objectId: number,
         methodName: string,
         tx: number
     ): Promise<{ methodId: number; tx: number }> {
         const result = await this.db.exeRaw(
-            `INSERT INTO security.methods (object_id, name, tx) 
+            `INSERT INTO security.methods (object_id, method_name, tx) 
              VALUES ($1, $2, $3) 
-             ON CONFLICT (object_id, name) DO UPDATE SET tx = security.methods.tx 
-             RETURNING id as method_id, tx`,
+             ON CONFLICT (object_id, method_name) DO UPDATE SET tx = security.methods.tx 
+             RETURNING method_id, tx`,
             [objectId, methodName, tx]
         )
         return {
@@ -171,9 +176,10 @@ export class BORegistrar {
         }
     }
 
+    // NEW: uses profile_method table
     private async grantPermission(profileId: number, methodId: number): Promise<void> {
         await this.db.exeRaw(
-            `INSERT INTO security.permission_methods (profile_id, method_id) 
+            `INSERT INTO security.profile_method (profile_id, method_id) 
              VALUES ($1, $2) 
              ON CONFLICT DO NOTHING`,
             [profileId, methodId]
@@ -265,19 +271,20 @@ export class BORegistrar {
 
     /**
      * Gets all methods currently registered in the database.
+     * NEW: uses object_id, method_id, object_name, method_name columns
      */
     private async getDBMethods(): Promise<
         Array<{ methodId: number; objectName: string; methodName: string; tx: number }>
     > {
         const result = await this.db.exeRaw(`
             SELECT 
-                m.id as method_id, 
-                o.name as object_name, 
-                m.name as method_name, 
+                m.method_id, 
+                o.object_name, 
+                m.method_name, 
                 m.tx
             FROM security.methods m
-            JOIN security.objects o ON o.id = m.object_id
-            ORDER BY o.name, m.name
+            JOIN security.objects o ON o.object_id = m.object_id
+            ORDER BY o.object_name, m.method_name
         `)
 
         return result.rows.map((row: any) => ({
@@ -290,13 +297,12 @@ export class BORegistrar {
 
     /**
      * Deletes a method and its associated permissions.
+     * NEW: uses profile_method table and method_id column
      */
     private async deleteMethod(methodId: number): Promise<void> {
-        // First delete permissions
-        await this.db.exeRaw('DELETE FROM security.permission_methods WHERE method_id = $1', [
-            methodId,
-        ])
-        // Then delete the method
-        await this.db.exeRaw('DELETE FROM security.methods WHERE id = $1', [methodId])
+        // First delete permissions (NEW: profile_method table)
+        await this.db.exeRaw('DELETE FROM security.profile_method WHERE method_id = $1', [methodId])
+        // Then delete the method (NEW: method_id column)
+        await this.db.exeRaw('DELETE FROM security.methods WHERE method_id = $1', [methodId])
     }
 }

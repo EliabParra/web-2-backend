@@ -6,7 +6,7 @@ import { SecurityService } from '../../src/services/SecurityService.js'
 // Mock dependencies
 const mockDb = {
     query: async (sql, params) => {
-        if (sql.includes('permission_methods'))
+        if (sql.includes('profile_method'))
             return {
                 rows: [{ profile_id: 1, method_name: 'testMethod', object_name: 'TestObject' }],
             }

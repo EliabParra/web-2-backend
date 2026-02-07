@@ -15,6 +15,7 @@ export class ProfileSeeder {
 
     /**
      * Creates profiles if they don't exist.
+     * Uses NEW schema: profile_id, profile_name (not id, name)
      */
     async seed(options: ProfileSeedOptions): Promise<{ created: number }> {
         const { publicProfileId, sessionProfileId, adminProfileId } = options
@@ -26,10 +27,10 @@ export class ProfileSeeder {
         // Public profile (for anonymous/unauthenticated users)
         if (publicProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profiles (id, name) 
+                `INSERT INTO security.profiles (profile_id, profile_name) 
                  VALUES ($1, 'public') 
-                 ON CONFLICT (id) DO UPDATE SET name = COALESCE(security.profiles.name, 'public')
-                 RETURNING id`,
+                 ON CONFLICT (profile_id) DO UPDATE SET profile_name = COALESCE(security.profiles.profile_name, 'public')
+                 RETURNING profile_id`,
                 [publicProfileId]
             )
             if (r.rowCount && r.rowCount > 0) created++
@@ -39,10 +40,10 @@ export class ProfileSeeder {
         // Session profile (for logged-in users)
         if (sessionProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profiles (id, name) 
+                `INSERT INTO security.profiles (profile_id, profile_name) 
                  VALUES ($1, 'session') 
-                 ON CONFLICT (id) DO UPDATE SET name = COALESCE(security.profiles.name, 'session')
-                 RETURNING id`,
+                 ON CONFLICT (profile_id) DO UPDATE SET profile_name = COALESCE(security.profiles.profile_name, 'session')
+                 RETURNING profile_id`,
                 [sessionProfileId]
             )
             if (r.rowCount && r.rowCount > 0) created++
@@ -52,10 +53,10 @@ export class ProfileSeeder {
         // Admin profile (optional, for super users)
         if (adminProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profiles (id, name) 
+                `INSERT INTO security.profiles (profile_id, profile_name) 
                  VALUES ($1, 'admin') 
-                 ON CONFLICT (id) DO UPDATE SET name = COALESCE(security.profiles.name, 'admin')
-                 RETURNING id`,
+                 ON CONFLICT (profile_id) DO UPDATE SET profile_name = COALESCE(security.profiles.profile_name, 'admin')
+                 RETURNING profile_id`,
                 [adminProfileId]
             )
             if (r.rowCount && r.rowCount > 0) created++
@@ -68,13 +69,14 @@ export class ProfileSeeder {
 
     /**
      * Grants permissions to a profile for specific methods.
+     * Uses NEW table: profile_method (not permission_methods)
      */
     async grantPermissions(profileId: number, methodIds: number[]): Promise<number> {
         let granted = 0
         for (const methodId of methodIds) {
             try {
                 await this.db.exeRaw(
-                    `INSERT INTO security.permission_methods (profile_id, method_id) 
+                    `INSERT INTO security.profile_method (profile_id, method_id) 
                      VALUES ($1, $2) ON CONFLICT DO NOTHING`,
                     [profileId, methodId]
                 )

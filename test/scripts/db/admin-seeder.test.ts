@@ -15,7 +15,7 @@ const createMockDb = () => {
             if (sql.includes('INSERT INTO security.users')) {
                 return { rows: [{ user_id: 42 }], rowCount: 1 }
             }
-            if (sql.includes('INSERT INTO security.user_profiles')) {
+            if (sql.includes('INSERT INTO security.user_profile')) {
                 return { rows: [], rowCount: 1 }
             }
             return { rows: [], rowCount: 0 }
@@ -37,15 +37,18 @@ describe('AdminSeeder', () => {
         assert.strictEqual(result.userId, 42)
         assert.strictEqual(result.profileId, 1)
 
-        // Verify profile was created
+        // Verify profile was created (using NEW schema: profile_id, profile_name)
         const profileCall = mockDb.calls.find((c) =>
             c.sql.includes('INSERT INTO security.profiles')
         )
         assert.ok(profileCall, 'Profile insert call should exist')
+        assert.ok(profileCall.sql.includes('profile_id'), 'Should use profile_id column')
 
         // Verify user was created with hashed password (not plain text)
+        // Using NEW schema: user_password instead of password_hash
         const userCall = mockDb.calls.find((c) => c.sql.includes('INSERT INTO security.users'))
         assert.ok(userCall, 'User insert call should exist')
+        assert.ok(userCall.sql.includes('user_password'), 'Should use user_password column')
         const passwordParam = userCall.params[1]
         assert.ok(
             passwordParam.startsWith('$2b$') || passwordParam.startsWith('$2a$'),

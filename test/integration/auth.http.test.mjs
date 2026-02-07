@@ -157,7 +157,7 @@ function createDeps() {
             const sql = typeof queryDef === 'string' ? queryDef : queryDef.sql
 
             // Permissions
-            if (sql.includes('permission_methods')) {
+            if (sql.includes('profile_method')) {
                 // Return all permissions
                 const rows = []
                 for (const [pid, perms] of Object.entries(MOCK_PROFILE_PERMISSIONS)) {
@@ -182,15 +182,15 @@ function createDeps() {
             }
 
             // Auth Queries
-            if (sql.includes('WHERE u.email = $1')) {
+            if (sql.includes('WHERE u.user_email = $1')) {
                 // getUserByEmail
                 if (params[0] === 'test@example.com') return { rows: [MOCK_USER] }
                 return { rows: [] }
             }
             if (sql.includes('INSERT INTO security.users')) {
-                return { rows: [{ id: 2 }] } // New user
+                return { rows: [{ user_id: 2 }] } // New user - returns user_id
             }
-            if (sql.includes('INSERT INTO security.user_profiles')) {
+            if (sql.includes('INSERT INTO security.user_profile')) {
                 return { rows: [] }
             }
             if (sql.includes('INSERT INTO security.one_time_codes')) {
