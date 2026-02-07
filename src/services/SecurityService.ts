@@ -174,4 +174,28 @@ export class SecurityService implements ISecurityService {
             return this.i18n.messages.errors.server.serverError
         }
     }
+
+    /**
+     * Otorga un permiso dinámicamente (Dual Write).
+     * Delegado al PermissionGuard para consistencia DB-Memoria.
+     */
+    async grantPermission(
+        profileId: number,
+        objectName: string,
+        methodName: string
+    ): Promise<boolean> {
+        return this.guard.grant(profileId, objectName, methodName)
+    }
+
+    /**
+     * Revoca un permiso dinámicamente (Dual Write).
+     * Delegado al PermissionGuard para consistencia DB-Memoria.
+     */
+    async revokePermission(
+        profileId: number,
+        objectName: string,
+        methodName: string
+    ): Promise<boolean> {
+        return this.guard.revoke(profileId, objectName, methodName)
+    }
 }

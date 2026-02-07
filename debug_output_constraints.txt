@@ -1,0 +1,90 @@
+Connecting to: localhost web2
+--- TABLES ---
+ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÉ
+Ôöé (index) Ôöé table_name           Ôöé
+Ôö£ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö╝ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöñ
+Ôöé 0       Ôöé 'transactions'       Ôöé
+Ôöé 1       Ôöé 'subsystem_object'   Ôöé
+Ôöé 2       Ôöé 'subsystems'         Ôöé
+Ôöé 3       Ôöé 'object_method'      Ôöé
+Ôöé 4       Ôöé 'menus'              Ôöé
+Ôöé 5       Ôöé 'menu_option'        Ôöé
+Ôöé 6       Ôöé 'options'            Ôöé
+Ôöé 7       Ôöé 'profile_option'     Ôöé
+Ôöé 8       Ôöé 'profile_method'     Ôöé
+Ôöé 9       Ôöé 'user_profile'       Ôöé
+Ôöé 10      Ôöé 'user_profiles'      Ôöé
+Ôöé 11      Ôöé 'users'              Ôöé
+Ôöé 12      Ôöé 'profiles'           Ôöé
+Ôöé 13      Ôöé 'objects'            Ôöé
+Ôöé 14      Ôöé 'methods'            Ôöé
+Ôöé 15      Ôöé 'permission_methods' Ôöé
+Ôöé 16      Ôöé 'sessions'           Ôöé
+Ôöé 17      Ôöé 'password_resets'    Ôöé
+Ôöé 18      Ôöé 'one_time_codes'     Ôöé
+Ôöé 19      Ôöé 'user_devices'       Ôöé
+Ôöé 20      Ôöé 'audit_logs'         Ôöé
+ÔööÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö┤ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÿ
+--- CONSTRAINTS ---
+ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö¼ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÉ
+Ôöé (index) Ôöé table_name           Ôöé constraint_name                      Ôöé constraint_type Ôöé column_name           Ôöé
+Ôö£ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö╝ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö╝ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö╝ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö╝ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöñ
+Ôöé 0       Ôöé 'audit_logs'         Ôöé 'audit_logs_pkey'                    Ôöé 'PRIMARY KEY'   Ôöé 'id'                  Ôöé
+Ôöé 1       Ôöé 'audit_logs'         Ôöé 'audit_logs_profile_id_fkey'         Ôöé 'FOREIGN KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 2       Ôöé 'audit_logs'         Ôöé 'audit_logs_user_id_fkey'            Ôöé 'FOREIGN KEY'   Ôöé 'user_id'             Ôöé
+Ôöé 3       Ôöé 'menu_option'        Ôöé 'menu_option_menu_id_fkey'           Ôöé 'FOREIGN KEY'   Ôöé 'menu_id'             Ôöé
+Ôöé 4       Ôöé 'menu_option'        Ôöé 'menu_option_option_id_fkey'         Ôöé 'FOREIGN KEY'   Ôöé 'option_id'           Ôöé
+Ôöé 5       Ôöé 'menu_option'        Ôöé 'menu_option_pkey'                   Ôöé 'PRIMARY KEY'   Ôöé 'menu_option_id'      Ôöé
+Ôöé 6       Ôöé 'menus'              Ôöé 'menus_pkey'                         Ôöé 'PRIMARY KEY'   Ôöé 'menu_id'             Ôöé
+Ôöé 7       Ôöé 'menus'              Ôöé 'menus_subsystem_id_fkey'            Ôöé 'FOREIGN KEY'   Ôöé 'subsystem_id'        Ôöé
+Ôöé 8       Ôöé 'methods'            Ôöé 'methods_object_id_fkey'             Ôöé 'FOREIGN KEY'   Ôöé 'object_id'           Ôöé
+Ôöé 9       Ôöé 'methods'            Ôöé 'methods_pkey'                       Ôöé 'PRIMARY KEY'   Ôöé 'method_id'           Ôöé
+Ôöé 10      Ôöé 'methods'            Ôöé 'uq_method_object'                   Ôöé 'UNIQUE'        Ôöé 'method_name'         Ôöé
+Ôöé 11      Ôöé 'methods'            Ôöé 'uq_method_object'                   Ôöé 'UNIQUE'        Ôöé 'object_id'           Ôöé
+Ôöé 12      Ôöé 'methods'            Ôöé 'uq_method_tx'                       Ôöé 'UNIQUE'        Ôöé 'tx'                  Ôöé
+Ôöé 13      Ôöé 'object_method'      Ôöé 'object_method_method_id_fkey'       Ôöé 'FOREIGN KEY'   Ôöé 'method_id'           Ôöé
+Ôöé 14      Ôöé 'object_method'      Ôöé 'object_method_object_id_fkey'       Ôöé 'FOREIGN KEY'   Ôöé 'object_id'           Ôöé
+Ôöé 15      Ôöé 'object_method'      Ôöé 'object_method_pkey'                 Ôöé 'PRIMARY KEY'   Ôöé 'object_method_id'    Ôöé
+Ôöé 16      Ôöé 'objects'            Ôöé 'objects_name_key'                   Ôöé 'UNIQUE'        Ôöé 'object_name'         Ôöé
+Ôöé 17      Ôöé 'objects'            Ôöé 'objects_pkey'                       Ôöé 'PRIMARY KEY'   Ôöé 'object_id'           Ôöé
+Ôöé 18      Ôöé 'one_time_codes'     Ôöé 'one_time_codes_pkey'                Ôöé 'PRIMARY KEY'   Ôöé 'id'                  Ôöé
+Ôöé 19      Ôöé 'one_time_codes'     Ôöé 'one_time_codes_user_id_fkey'        Ôöé 'FOREIGN KEY'   Ôöé 'user_id'             Ôöé
+Ôöé 20      Ôöé 'options'            Ôöé 'options_pkey'                       Ôöé 'PRIMARY KEY'   Ôöé 'option_id'           Ôöé
+Ôöé 21      Ôöé 'password_resets'    Ôöé 'password_resets_pkey'               Ôöé 'PRIMARY KEY'   Ôöé 'id'                  Ôöé
+Ôöé 22      Ôöé 'password_resets'    Ôöé 'password_resets_user_id_fkey'       Ôöé 'FOREIGN KEY'   Ôöé 'user_id'             Ôöé
+Ôöé 23      Ôöé 'permission_methods' Ôöé 'permission_methods_method_id_fkey'  Ôöé 'FOREIGN KEY'   Ôöé 'method_id'           Ôöé
+Ôöé 24      Ôöé 'permission_methods' Ôöé 'permission_methods_pkey'            Ôöé 'PRIMARY KEY'   Ôöé 'method_id'           Ôöé
+Ôöé 25      Ôöé 'permission_methods' Ôöé 'permission_methods_pkey'            Ôöé 'PRIMARY KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 26      Ôöé 'permission_methods' Ôöé 'permission_methods_profile_id_fkey' Ôöé 'FOREIGN KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 27      Ôöé 'profile_method'     Ôöé 'profile_method_method_id_fkey'      Ôöé 'FOREIGN KEY'   Ôöé 'method_id'           Ôöé
+Ôöé 28      Ôöé 'profile_method'     Ôöé 'profile_method_pkey'                Ôöé 'PRIMARY KEY'   Ôöé 'profile_method_id'   Ôöé
+Ôöé 29      Ôöé 'profile_method'     Ôöé 'profile_method_profile_id_fkey'     Ôöé 'FOREIGN KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 30      Ôöé 'profile_option'     Ôöé 'profile_option_option_id_fkey'      Ôöé 'FOREIGN KEY'   Ôöé 'option_id'           Ôöé
+Ôöé 31      Ôöé 'profile_option'     Ôöé 'profile_option_pkey'                Ôöé 'PRIMARY KEY'   Ôöé 'profile_option_id'   Ôöé
+Ôöé 32      Ôöé 'profile_option'     Ôöé 'profile_option_profile_id_fkey'     Ôöé 'FOREIGN KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 33      Ôöé 'profiles'           Ôöé 'profiles_name_key'                  Ôöé 'UNIQUE'        Ôöé 'profile_name'        Ôöé
+Ôöé 34      Ôöé 'profiles'           Ôöé 'profiles_pkey'                      Ôöé 'PRIMARY KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 35      Ôöé 'sessions'           Ôöé 'sessions_pkey'                      Ôöé 'PRIMARY KEY'   Ôöé 'sid'                 Ôöé
+Ôöé 36      Ôöé 'subsystem_object'   Ôöé 'subsystem_object_object_id_fkey'    Ôöé 'FOREIGN KEY'   Ôöé 'object_id'           Ôöé
+Ôöé 37      Ôöé 'subsystem_object'   Ôöé 'subsystem_object_pkey'              Ôöé 'PRIMARY KEY'   Ôöé 'subsystem_object_id' Ôöé
+Ôöé 38      Ôöé 'subsystem_object'   Ôöé 'subsystem_object_subsystem_id_fkey' Ôöé 'FOREIGN KEY'   Ôöé 'subsystem_id'        Ôöé
+Ôöé 39      Ôöé 'subsystems'         Ôöé 'subsystems_pkey'                    Ôöé 'PRIMARY KEY'   Ôöé 'subsystem_id'        Ôöé
+Ôöé 40      Ôöé 'subsystems'         Ôöé 'subsystems_subsystem_name_key'      Ôöé 'UNIQUE'        Ôöé 'subsystem_name'      Ôöé
+Ôöé 41      Ôöé 'transactions'       Ôöé 'transactions_method_id_fkey'        Ôöé 'FOREIGN KEY'   Ôöé 'method_id'           Ôöé
+Ôöé 42      Ôöé 'transactions'       Ôöé 'transactions_object_id_fkey'        Ôöé 'FOREIGN KEY'   Ôöé 'object_id'           Ôöé
+Ôöé 43      Ôöé 'transactions'       Ôöé 'transactions_pkey'                  Ôöé 'PRIMARY KEY'   Ôöé 'transaction_id'      Ôöé
+Ôöé 44      Ôöé 'transactions'       Ôöé 'transactions_subsystem_id_fkey'     Ôöé 'FOREIGN KEY'   Ôöé 'subsystem_id'        Ôöé
+Ôöé 45      Ôöé 'user_devices'       Ôöé 'user_devices_pkey'                  Ôöé 'PRIMARY KEY'   Ôöé 'id'                  Ôöé
+Ôöé 46      Ôöé 'user_devices'       Ôöé 'user_devices_user_id_fkey'          Ôöé 'FOREIGN KEY'   Ôöé 'user_id'             Ôöé
+Ôöé 47      Ôöé 'user_profile'       Ôöé 'user_profile_pkey'                  Ôöé 'PRIMARY KEY'   Ôöé 'user_profile_id'     Ôöé
+Ôöé 48      Ôöé 'user_profile'       Ôöé 'user_profile_profile_id_fkey'       Ôöé 'FOREIGN KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 49      Ôöé 'user_profile'       Ôöé 'user_profile_user_id_fkey'          Ôöé 'FOREIGN KEY'   Ôöé 'user_id'             Ôöé
+Ôöé 50      Ôöé 'user_profiles'      Ôöé 'user_profiles_pkey'                 Ôöé 'PRIMARY KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 51      Ôöé 'user_profiles'      Ôöé 'user_profiles_pkey'                 Ôöé 'PRIMARY KEY'   Ôöé 'user_id'             Ôöé
+Ôöé 52      Ôöé 'user_profiles'      Ôöé 'user_profiles_profile_id_fkey'      Ôöé 'FOREIGN KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 53      Ôöé 'user_profiles'      Ôöé 'user_profiles_user_id_fkey'         Ôöé 'FOREIGN KEY'   Ôöé 'user_id'             Ôöé
+Ôöé 54      Ôöé 'users'              Ôöé 'users_person_id_fkey'               Ôöé 'FOREIGN KEY'   Ôöé 'person_id'           Ôöé
+Ôöé 55      Ôöé 'users'              Ôöé 'users_pkey'                         Ôöé 'PRIMARY KEY'   Ôöé 'user_id'             Ôöé
+Ôöé 56      Ôöé 'users'              Ôöé 'users_profile_id_fkey'              Ôöé 'FOREIGN KEY'   Ôöé 'profile_id'          Ôöé
+Ôöé 57      Ôöé 'users'              Ôöé 'users_username_key'                 Ôöé 'UNIQUE'        Ôöé 'username'            Ôöé
+ÔööÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö┤ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö┤ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö┤ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔö┤ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÿ

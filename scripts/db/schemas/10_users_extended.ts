@@ -3,10 +3,10 @@
  * Additional columns for user management (email, verification, etc.)
  */
 export const USERS_EXTENDED_SCHEMA = [
-    // Email support
-    `alter table security.users add column if not exists email text;`,
-    `alter table security.users add column if not exists email_verified_at timestamptz;`,
-    `create unique index if not exists uq_users_email on security.users(email) where email is not null;`,
+    // Email support (Refactored to user_email)
+    `alter table security.users add column if not exists user_email text;`,
+    `alter table security.users add column if not exists user_email_verified_at timestamptz;`,
+    `create unique index if not exists uq_users_user_email on security.users(user_email) where user_email is not null;`,
 
     // Sessions table (for express-session)
     `create table if not exists security.sessions (

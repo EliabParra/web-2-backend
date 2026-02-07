@@ -1,17 +1,5 @@
 import { IDatabase, ILogger, IPermissionProvider } from '../../types/core.js'
-
-/**
- * Consultas SQL usadas por el PermissionGuard.
- */
-const PermissionQueries = {
-    loadPermissions: `
-        SELECT o.name as object_name, m.name as method_name, p.id as profile_id
-        FROM security.permission_methods pm 
-        INNER JOIN security.profiles p ON pm.profile_id = p.id 
-        INNER JOIN security.methods m ON m.id = pm.method_id 
-        INNER JOIN security.objects o ON o.id = m.object_id
-    `,
-}
+import { SecurityQueries } from '../../services/queries/security.js'
 
 /**
  * Guardián de permisos basado en base de datos.
@@ -48,7 +36,13 @@ export class PermissionGuard implements IPermissionProvider {
      */
     async load(): Promise<void> {
         try {
-            const res = await this.db.query(PermissionQueries.loadPermissions)
+            // Updated to use SecurityQueries.loadPermissions (new schema)
+            const res = await this.db.query<{
+                profile_id: number
+                object_name: string
+                method_name: string
+            }>(SecurityQueries.loadPermissions)
+
             this.permissions.clear()
 
             if (res && res.rows) {
@@ -86,6 +80,54 @@ export class PermissionGuard implements IPermissionProvider {
 
         const key = this.buildKey(profileId, objectName, methodName)
         return this.permissions.has(key)
+    }
+
+    /**
+     * Otorga un permiso dinámicamente (Dual Write).
+     */
+    async grant(profileId: number, objectName: string, methodName: string): Promise<boolean> {
+        try {
+            // 1. Write to DB
+            await this.db.query(SecurityQueries.grantPermission, [
+                profileId,
+                objectName,
+                methodName,
+            ])
+
+            // 2. Update Memory
+            const key = this.buildKey(profileId, objectName, methodName)
+            this.permissions.add(key)
+
+            this.log.info(`Permission granted: ${key}`)
+            return true
+        } catch (err) {
+            this.log.error(`Failed to grant permission: ${err}`)
+            return false
+        }
+    }
+
+    /**
+     * Revoca un permiso dinámicamente (Dual Write).
+     */
+    async revoke(profileId: number, objectName: string, methodName: string): Promise<boolean> {
+        try {
+            // 1. Write to DB
+            await this.db.query(SecurityQueries.revokePermission, [
+                profileId,
+                objectName,
+                methodName,
+            ])
+
+            // 2. Update Memory
+            const key = this.buildKey(profileId, objectName, methodName)
+            this.permissions.delete(key)
+
+            this.log.info(`Permission revoked: ${key}`)
+            return true
+        } catch (err) {
+            this.log.error(`Failed to revoke permission: ${err}`)
+            return false
+        }
     }
 
     /**

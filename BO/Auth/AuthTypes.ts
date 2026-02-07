@@ -1,12 +1,17 @@
 export namespace Auth {
     export type UserRow = {
-        id: number
+        user_id: number
         username: string
-        email: string
-        password_hash: string
-        email_verified_at?: string | Date | null
-        is_active?: boolean
-        profile_id?: number | null
+        user_email: string
+        user_password: string
+        user_email_verified_at?: string | Date | null
+        user_is_active?: boolean
+        profile_id: number // FK remains profile_id
+        user_created_at?: string | Date
+        user_updated_at?: string | Date
+        user_last_login_at?: string | Date | null
+        user_solvent?: boolean
+        person_id?: number | null
     }
 
     export type OneTimeCodeRow = {
@@ -20,7 +25,7 @@ export namespace Auth {
     }
 
     export type UserId = {
-        id: number // Was user_id
+        user_id: number // Renamed from id
     }
 
     export type UserWithProfileId = {
@@ -30,8 +35,8 @@ export namespace Auth {
 
     export type InsertUserParams = {
         username: string | null
-        email: string | null
-        passwordHash: string
+        user_email: string | null
+        user_password: string
     }
 
     export type PasswordResetRow = {
@@ -67,22 +72,28 @@ export namespace Auth {
         tokenHash: string
     }
 
+    // User Interface matching DB schema as requested
     export interface User {
-        userId: number
-        email: string
-        name?: string
-        passwordHash: string
-        isEmailVerified: boolean
-        isActive: boolean
-        createdAt: Date
-        updatedAt?: Date
+        user_id: number
+        user_email: string
+        username?: string
+        user_password?: string
+        user_is_active: boolean
+        user_created_at: Date
+        user_updated_at?: Date
+        user_last_login_at?: Date | null
+        user_email_verified_at?: Date | null
+
+        // Additional business fields
+        user_solvent?: boolean
+        person_id?: number | null
     }
 
     export interface UserSummary {
-        userId: number
-        email: string
-        name?: string
-        isActive: boolean
+        user_id: number
+        user_email: string
+        name?: string // username
+        user_is_active: boolean
     }
 
     export interface Session {

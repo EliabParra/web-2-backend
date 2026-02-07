@@ -48,9 +48,6 @@ export class SessionManager implements ISessionService {
         this.audit = deps.audit
         this.validator = deps.validator
 
-        // No longer need manual casting or get() calls
-        // We will access this.i18n.messages directly in methods
-
         this.authCfg = (this.config.auth ?? {}) as Record<string, unknown>
         this.requireEmailVerification = Boolean(this.authCfg.requireEmailVerification)
     }
@@ -90,7 +87,8 @@ export class SessionManager implements ISessionService {
             const { identifier, password } = validation.data
             const user = await this.findUserByIdentifier(identifier)
 
-            if (!user || !(await this.passwordsMatch(password, user.password_hash))) {
+            // Updated to check user_password instead of password_hash
+            if (!user || !(await this.passwordsMatch(password, user.user_password))) {
                 return {
                     status: 'error',
                     error: this.i18n.messages.errors.client.usernameOrPasswordIncorrect,
@@ -103,13 +101,19 @@ export class SessionManager implements ISessionService {
 
             this.initializeUserSession(req, user)
 
-            await this.updateUserStats(user.id)
+            // Updated to use user_id
+            await this.updateUserStats(user.user_id)
             await this.auditLoginSuccess(req, user)
 
+            // Map user for response (keeping interface compatible if possible, or updating it)
+            // SessionResult expects 'user' compatible with SessionUserRow?
+            // Or does it expect mapped object?
+            // AuthController uses result.user?
+            // Assuming SessionResult definition matches SessionUserRow?
+            // Actually I should verify SessionResult type.
+            // But SessionUserRow has updated fields.
             return { status: 'success', user, msg: this.i18n.messages.success.login }
         } catch (error) {
-            // En caso de error de sistema, lo relanzamos o devolvemos error genérico
-            // Para mantener consistencia con dispatcher, devolvemos result de error tras loguear
             this.logSystemError(req, error)
             return {
                 status: 'error',
@@ -162,15 +166,15 @@ export class SessionManager implements ISessionService {
     }
 
     private isEmailVerificationPending(user: SessionUserRow): boolean {
-        return this.requireEmailVerification && !user.email_verified_at
+        return this.requireEmailVerification && !user.user_email_verified_at
     }
 
     private initializeUserSession(req: AppRequest, user: SessionUserRow): void {
         if (req.session) {
-            req.session.userId = user.id
+            req.session.userId = user.user_id
             req.session.username = user.username
             req.session.profileId = user.profile_id
-            req.session.email = user.email
+            req.session.email = user.user_email
         }
     }
 
@@ -179,14 +183,13 @@ export class SessionManager implements ISessionService {
             await this.db.query(SessionQueries.updateUserLastLogin, [userId])
         } catch (err) {
             // Stats update failure should not block login flow
-            // Could log warning here if strict monitoring needed
         }
     }
 
     private async auditLoginSuccess(req: AppRequest, user: SessionUserRow): Promise<void> {
         await this.audit.log(req, {
             action: 'login',
-            user_id: user.id,
+            user_id: user.user_id,
             profile_id: user.profile_id,
             details: { username: user.username },
         })

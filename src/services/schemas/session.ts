@@ -6,11 +6,11 @@ export const LoginSchema = z.object({
 })
 
 export const SessionUserSchema = z.object({
-    id: z.number(),
+    user_id: z.number(),
     username: z.string(),
-    email: z.email(),
-    password_hash: z.string(),
-    email_verified_at: z.date().nullable(),
+    user_email: z.string().email(),
+    user_password: z.string(),
+    user_email_verified_at: z.date().nullable().or(z.string().nullable()),
     profile_id: z.number(),
 })
 

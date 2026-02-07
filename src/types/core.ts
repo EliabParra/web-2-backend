@@ -181,12 +181,16 @@ export interface ISecurityService {
     getDataTx(tx: unknown): { objectName: string; methodName: string } | false
     /** Verifica permisos de acceso */
     getPermissions(data: { profileId: number; methodName: string; objectName: string }): boolean
-    /** Ejecuta un método de negocio */
     executeMethod(data: {
         objectName: string
         methodName: string
         params: Record<string, unknown>
     }): Promise<{ code: number; msg: string; [key: string]: unknown }>
+
+    /** Otorga un permiso dinámicamente */
+    grantPermission(profileId: number, objectName: string, methodName: string): Promise<boolean>
+    /** Revoca un permiso dinámicamente */
+    revokePermission(profileId: number, objectName: string, methodName: string): Promise<boolean>
 }
 
 /**
@@ -195,7 +199,7 @@ export interface ISecurityService {
 export type SessionResult =
     | {
           status: 'success'
-          user: { id: number; username: string; email: string; profile_id: number }
+          user: { user_id: number; username: string; user_email: string; profile_id: number }
           msg: { code: number; msg: string }
       }
     | { status: 'error'; error: { code: number; msg: string } }

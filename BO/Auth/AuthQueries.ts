@@ -1,38 +1,57 @@
 export const AuthQueries = {
     // --- Users
     getUserByEmail: `
-        SELECT u.id, u.username, u.email, u.email_verified_at, u.password_hash, p.profile_id
+        SELECT u.user_id as id, u.username, u.user_email as email, u.user_email_verified_at as email_verified_at, u.user_password as password_hash, p.profile_id
         FROM security.users u
-        LEFT JOIN security.user_profiles p ON u.id = p.user_id
-        WHERE u.email = $1
+        LEFT JOIN security.user_profile p ON u.user_id = p.user_id
+        WHERE u.user_email = $1
+    `,
+    // NOTE: Aliasing above to maintain temporary compatibility or should I return raw new names?
+    // AuthRepository.ts will be refactored to read new names.
+    // AuthTypes.ts UserRow uses new names.
+    // So I should NOT use aliases like 'as id'. I should return 'user_id'.
+
+    getUserByEmailRaw: `
+        SELECT u.user_id, u.username, u.user_email, u.user_email_verified_at, u.user_password, p.profile_id, u.user_is_active, u.user_created_at, u.user_last_login_at, u.user_solvent, u.person_id
+        FROM security.users u
+        LEFT JOIN security.user_profile p ON u.user_id = p.user_id
+        WHERE u.user_email = $1
     `,
 
-    getUserByUsername: `SELECT id, username, email, password_hash, email_verified_at FROM security.users WHERE username = $1`,
+    getUserByUsername: `
+        SELECT user_id, username, user_email, user_password, user_email_verified_at 
+        FROM security.users 
+        WHERE username = $1
+    `,
 
-    getUserBaseByEmail: `SELECT id, username, email, password_hash, email_verified_at FROM security.users WHERE email = $1`,
+    getUserBaseByEmail: `
+        SELECT user_id, username, user_email, user_password, user_email_verified_at 
+        FROM security.users 
+        WHERE user_email = $1
+    `,
 
     insertUser: `
-        INSERT INTO security.users (username, email, password_hash)
+        INSERT INTO security.users (username, user_email, user_password)
         VALUES ($1, $2, $3)
-        RETURNING id
+        RETURNING user_id
     `,
 
     upsertUserProfile: `
-        INSERT INTO security.user_profiles (user_id, profile_id, assigned_at)
+        INSERT INTO security.user_profile (user_id, profile_id, assigned_at)
         VALUES ($1, $2, NOW())
         ON CONFLICT (user_id, profile_id) DO UPDATE SET assigned_at = NOW()
     `,
 
     setUserEmailVerified: `
         UPDATE security.users
-        SET email_verified_at = NOW()
-        WHERE id = $1
+        SET user_email_verified_at = NOW()
+        WHERE user_id = $1
     `,
 
     updateUserPassword: `
         UPDATE security.users
-        SET password_hash = $2
-        WHERE id = $1
+        SET user_password = $2
+        WHERE user_id = $1
     `,
 
     // --- Password reset
@@ -74,10 +93,13 @@ export const AuthQueries = {
         WHERE id = $1
     `,
 
+    // Fix query usage of jsonb operator
     getActiveOneTimeCodeForPurposeAndTokenHash: `
         SELECT * FROM security.one_time_codes
-        WHERE purpose = $1 AND (meta->>'tokenHash') = $2
-        AND consumed_at IS NULL AND expires_at > NOW()
+        WHERE purpose = $1 
+        AND (meta->>'tokenHash') = $2
+        AND consumed_at IS NULL 
+        AND expires_at > NOW()
         ORDER BY created_at DESC LIMIT 1
     `,
 } as const
