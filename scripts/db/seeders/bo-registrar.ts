@@ -14,8 +14,8 @@ interface BOInfo {
 }
 
 /**
- * Registers Business Objects and their methods into security.methods.
- * Updated for new schema: uses profile_id, object_name, method_name, profile_method
+ * Registers Business Objects and their methods into security tables.
+ * Updated for new schema: uses object_method and transactions tables
  */
 export class BORegistrar {
     constructor(
@@ -84,7 +84,7 @@ export class BORegistrar {
     }): Promise<{ registered: number; bos: string[] }> {
         console.log(`\n📦 Registering Business Objects...`.cyan)
 
-        // Verify profile exists before starting (NEW: profile_id column)
+        // Verify profile exists before starting
         const profileExists = await this.checkProfileExists(options.profileId)
         if (!profileExists) {
             console.log(`   ❌ Error: Profile ID ${options.profileId} does not exist.`.red)
@@ -106,7 +106,7 @@ export class BORegistrar {
             `   📊 Found ${bos.length} BOs: ${bos.map((b) => b.objectName).join(', ')}`.gray
         )
 
-        // Get next available tx
+        // Get next available tx from transactions table
         let nextTx = options.txStart ?? (await this.getNextTx())
         let registered = 0
         const boNames: string[] = []
@@ -129,14 +129,16 @@ export class BORegistrar {
         return { registered, bos: boNames }
     }
 
+    /**
+     * Gets next TX number from transactions table
+     */
     private async getNextTx(): Promise<number> {
         const result = await this.db.exeRaw(
-            'SELECT COALESCE(MAX(tx), 0) + 1 AS next_tx FROM security.methods'
+            'SELECT COALESCE(MAX(transaction_number::integer), 0) + 1 AS next_tx FROM security.transactions'
         )
         return Number(result.rows[0]?.next_tx) || 1
     }
 
-    // NEW: uses profile_id column
     private async checkProfileExists(profileId: number): Promise<boolean> {
         const result = await this.db.exeRaw(
             'SELECT 1 FROM security.profiles WHERE profile_id = $1',
@@ -145,7 +147,6 @@ export class BORegistrar {
         return (result.rowCount ?? 0) > 0
     }
 
-    // NEW: uses object_name column
     private async upsertObject(objectName: string): Promise<number> {
         const result = await this.db.exeRaw(
             `INSERT INTO security.objects (object_name) 
@@ -157,39 +158,77 @@ export class BORegistrar {
         return result.rows[0]?.object_id
     }
 
-    // NEW: uses method_name column and method_id return
+    /**
+     * Upserts a method and creates object_method and transaction links
+     */
     private async upsertMethod(
         objectId: number,
         methodName: string,
         tx: number
     ): Promise<{ methodId: number; tx: number }> {
-        const result = await this.db.exeRaw(
-            `INSERT INTO security.methods (object_id, method_name, tx) 
-             VALUES ($1, $2, $3) 
-             ON CONFLICT (object_id, method_name) DO UPDATE SET tx = security.methods.tx 
-             RETURNING method_id, tx`,
-            [objectId, methodName, tx]
+        // 1. Upsert method (methods table only has method_id, method_name)
+        const methodResult = await this.db.exeRaw(
+            `INSERT INTO security.methods (method_name) 
+             VALUES ($1) 
+             ON CONFLICT DO NOTHING 
+             RETURNING method_id`,
+            [methodName]
         )
-        return {
-            methodId: result.rows[0]?.method_id,
-            tx: Number(result.rows[0]?.tx),
+
+        let methodId = methodResult.rows[0]?.method_id
+
+        // If no insert happened, get existing method_id
+        if (!methodId) {
+            const existingMethod = await this.db.exeRaw(
+                'SELECT method_id FROM security.methods WHERE method_name = $1',
+                [methodName]
+            )
+            methodId = existingMethod.rows[0]?.method_id
         }
+
+        // 2. Link object to method (object_method table)
+        await this.db.exeRaw(
+            `INSERT INTO security.object_method (object_id, method_id) 
+             VALUES ($1, $2) 
+             ON CONFLICT (object_id, method_id) DO NOTHING`,
+            [objectId, methodId]
+        )
+
+        // 3. Create or get transaction entry
+        // First check if transaction exists for this method + object combo
+        const existingTx = await this.db.exeRaw(
+            `SELECT transaction_number FROM security.transactions 
+             WHERE method_id = $1 AND object_id = $2`,
+            [methodId, objectId]
+        )
+
+        let finalTx = tx
+        if (existingTx.rows[0]?.transaction_number) {
+            finalTx = Number(existingTx.rows[0].transaction_number)
+        } else {
+            // Insert new transaction
+            await this.db.exeRaw(
+                `INSERT INTO security.transactions (transaction_number, method_id, object_id) 
+                 VALUES ($1, $2, $3) 
+                 ON CONFLICT (transaction_number) DO NOTHING`,
+                [tx.toString(), methodId, objectId]
+            )
+        }
+
+        return { methodId, tx: finalTx }
     }
 
-    // NEW: uses profile_method table
     private async grantPermission(profileId: number, methodId: number): Promise<void> {
         await this.db.exeRaw(
             `INSERT INTO security.profile_method (profile_id, method_id) 
              VALUES ($1, $2) 
-             ON CONFLICT DO NOTHING`,
+             ON CONFLICT (profile_id, method_id) DO NOTHING`,
             [profileId, methodId]
         )
     }
 
     /**
      * Syncs methods between code and database.
-     * - Registers new methods from code
-     * - Optionally prunes orphaned methods (in DB but not in code)
      */
     async syncMethods(options: {
         profileId: number
@@ -271,7 +310,7 @@ export class BORegistrar {
 
     /**
      * Gets all methods currently registered in the database.
-     * NEW: uses object_id, method_id, object_name, method_name columns
+     * Uses object_method and transactions tables for the join
      */
     private async getDBMethods(): Promise<
         Array<{ methodId: number; objectName: string; methodName: string; tx: number }>
@@ -281,9 +320,11 @@ export class BORegistrar {
                 m.method_id, 
                 o.object_name, 
                 m.method_name, 
-                m.tx
+                COALESCE(t.transaction_number::integer, 0) as tx
             FROM security.methods m
-            JOIN security.objects o ON o.object_id = m.object_id
+            JOIN security.object_method om ON om.method_id = m.method_id
+            JOIN security.objects o ON o.object_id = om.object_id
+            LEFT JOIN security.transactions t ON t.method_id = m.method_id AND t.object_id = om.object_id
             ORDER BY o.object_name, m.method_name
         `)
 
@@ -297,12 +338,15 @@ export class BORegistrar {
 
     /**
      * Deletes a method and its associated permissions.
-     * NEW: uses profile_method table and method_id column
      */
     private async deleteMethod(methodId: number): Promise<void> {
-        // First delete permissions (NEW: profile_method table)
+        // Delete permissions
         await this.db.exeRaw('DELETE FROM security.profile_method WHERE method_id = $1', [methodId])
-        // Then delete the method (NEW: method_id column)
+        // Delete object_method links
+        await this.db.exeRaw('DELETE FROM security.object_method WHERE method_id = $1', [methodId])
+        // Delete transactions
+        await this.db.exeRaw('DELETE FROM security.transactions WHERE method_id = $1', [methodId])
+        // Delete the method
         await this.db.exeRaw('DELETE FROM security.methods WHERE method_id = $1', [methodId])
     }
 }

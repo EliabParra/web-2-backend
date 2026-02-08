@@ -34,11 +34,11 @@ export class AdminSeeder {
 
         // Upsert user (using NEW schema: user_password instead of password_hash)
         const result = await this.db.exeRaw(
-            `INSERT INTO security.users (username, user_email, user_password) 
-             VALUES ($1, $1, $2) 
-             ON CONFLICT (user_email) DO UPDATE SET user_password = EXCLUDED.user_password 
+            `INSERT INTO security.users (username, user_password, profile_id) 
+             VALUES ($1, $2, $3) 
+             ON CONFLICT (username) DO UPDATE SET user_password = EXCLUDED.user_password 
              RETURNING user_id`,
-            [username, passwordHash]
+            [username, passwordHash, profileId]
         )
         const userId = result.rows[0]?.user_id
 

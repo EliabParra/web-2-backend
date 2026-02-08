@@ -88,11 +88,19 @@ export class PermissionGuard implements IPermissionProvider {
     async grant(profileId: number, objectName: string, methodName: string): Promise<boolean> {
         try {
             // 1. Write to DB
-            await this.db.query(SecurityQueries.grantPermission, [
+            const res = await this.db.query(SecurityQueries.grantPermission, [
                 profileId,
                 objectName,
                 methodName,
             ])
+
+            // Check if insert was successful (method/object existing)
+            if (!res.rowCount && (!res.rows || res.rows.length === 0)) {
+                this.log.warn(
+                    `Grant failed: Method ${objectName}.${methodName} not found or permission already exists`
+                )
+                return false
+            }
 
             // 2. Update Memory
             const key = this.buildKey(profileId, objectName, methodName)
@@ -112,11 +120,19 @@ export class PermissionGuard implements IPermissionProvider {
     async revoke(profileId: number, objectName: string, methodName: string): Promise<boolean> {
         try {
             // 1. Write to DB
-            await this.db.query(SecurityQueries.revokePermission, [
+            const res = await this.db.query(SecurityQueries.revokePermission, [
                 profileId,
                 objectName,
                 methodName,
             ])
+
+            // Check if delete was successful
+            if (!res.rowCount && (!res.rows || res.rows.length === 0)) {
+                this.log.warn(
+                    `Revoke failed: Method ${objectName}.${methodName} not found or permission did not exist`
+                )
+                return false
+            }
 
             // 2. Update Memory
             const key = this.buildKey(profileId, objectName, methodName)
