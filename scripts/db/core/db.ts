@@ -49,6 +49,7 @@ export class Database implements IDatabase {
             if (cfg[key] === undefined) delete cfg[key]
         })
 
+        console.log('DB Connect Config:', JSON.stringify(cfg, null, 2))
         this._pool = new pg.Pool(cfg)
     }
 

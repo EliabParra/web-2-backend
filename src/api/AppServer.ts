@@ -40,6 +40,7 @@ import { AuthorizationService } from '../core/security/AuthorizationService.js'
 import { TransactionMapper } from '../core/transaction/TransactionMapper.js'
 import { TransactionExecutor } from '../core/transaction/TransactionExecutor.js'
 import { TransactionOrchestrator } from '../core/transaction/TransactionOrchestrator.js'
+import { SecurityService } from '../services/SecurityService.js'
 
 // Handlers
 import { AuthController } from './http/controllers/AuthController.js'
@@ -121,6 +122,7 @@ export class AppServer {
         this.email = deps.email
 
         this.app = express()
+
         this.server = null
         this.initialized = false
 
@@ -168,13 +170,15 @@ export class AppServer {
      */
     async init(): Promise<void> {
         // 0. Inicializar Core Services (New Architecture)
-        const permissionGuard = new PermissionGuard(this.db, this.log)
-        await permissionGuard.load()
+        // Usar la instancia de PermissionGuard iniciada en SecurityService
+        const permissionGuard = (this.security as SecurityService).getGuard()
 
         this.authorization = new AuthorizationService(permissionGuard, this.log)
 
-        const transactionMapper = new TransactionMapper(this.db, this.log)
-        await transactionMapper.load()
+        // Nota: SecurityService ya inicia TransactionMapper internamente.
+        // Usamos la instancia existente para evitar doble carga y logs duplicados.
+        const transactionMapper = (this.security as SecurityService).getMapper()
+        // await transactionMapper.load() // REMOVED: Ya cargado por SecurityService
 
         // BO Dependencies para Executor
         const boDeps = {
@@ -186,7 +190,7 @@ export class AppServer {
             validator: this.validator,
             security: this.security, // Legacy support
             i18n: this.i18n,
-            email: this.email
+            email: this.email,
         }
 
         const transactionExecutor = new TransactionExecutor(boDeps)
@@ -299,11 +303,11 @@ export class AppServer {
 
     serverOn(): Server {
         if (!this.initialized) throw new Error('AppServer not initialized')
-        this.server = this.app.listen(this.config.app.port, () =>
+        this.server = this.app.listen(this.config.app.port, '0.0.0.0', () => {
             this.log.info(
                 `Servidor ejecutándose en http://${this.config.app.host}:${this.config.app.port}`
             )
-        )
+        })
         return this.server
     }
 

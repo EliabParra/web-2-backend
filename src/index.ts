@@ -7,9 +7,23 @@
  */
 import { appServer, log, security } from './foundation.js'
 
-await security.init()
-await appServer.init()
-appServer.serverOn()
+try {
+    log.info('--> Iniciando SecurityService...')
+    await security.init()
+    log.info('--> SecurityService Iniciado.')
+
+    log.info('--> Iniciando AppServer...')
+    await appServer.init()
+    log.info('--> AppServer Iniciado.')
+
+    appServer.serverOn()
+} catch (error) {
+    console.error('FATAL STARTUP ERROR:', error)
+    if (error instanceof Error) {
+        log.error(`Startup failed: ${error.message}`, error)
+    }
+    process.exit(1)
+}
 
 // Manejo de cierre graceful
 let shuttingDown = false

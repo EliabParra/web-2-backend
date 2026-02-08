@@ -49,8 +49,11 @@ export class TransactionOrchestrator {
         params: Record<string, unknown>
     ): Promise<unknown> {
         // 1. Resolución
+        // 1. Resolución
         const route = this.mapper.resolve(tx)
+
         if (!route) {
+            this.log.warn(`Orchestrator: Transaction not found for TX`, { tx })
             return this.errorResponse('server.serverError', 500, 'Transaction not found')
         }
 

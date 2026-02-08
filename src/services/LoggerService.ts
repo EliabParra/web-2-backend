@@ -165,7 +165,18 @@ export class AppLogger implements ILogger {
 
         if (level < minLevel) return
 
-        const timestamp = new Date().toISOString()
+        // Formato local con offset (e.g. 2026-02-08T02:01:34.297-04:00)
+        const now = new Date()
+        const offsetMinutes = now.getTimezoneOffset()
+        const offsetHours = Math.abs(Math.floor(offsetMinutes / 60))
+        const offsetMinsRemainder = Math.abs(offsetMinutes % 60)
+        const offsetSign = offsetMinutes > 0 ? '-' : '+'
+        const offsetStr = `${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinsRemainder).padStart(2, '0')}`
+
+        // Ajustar hora para obtener la fecha local correcta en formato ISO
+        const localTime = new Date(now.getTime() - offsetMinutes * 60 * 1000)
+        const isoString = localTime.toISOString().slice(0, -1) // Quitar la 'Z'
+        const timestamp = `${isoString}${offsetStr}`
         const hasCtx = Object.keys(mergedCtx).length > 0
 
         if (this.format === 'json') {

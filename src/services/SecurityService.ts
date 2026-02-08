@@ -198,4 +198,20 @@ export class SecurityService implements ISecurityService {
     ): Promise<boolean> {
         return this.guard.revoke(profileId, objectName, methodName)
     }
+
+    /**
+     * Devuelve la instancia interna del PermissionGuard.
+     * Útil para inyectar en otros servicios (e.g. AuthorizationService).
+     */
+    getGuard(): PermissionGuard {
+        return this.guard
+    }
+
+    /**
+     * Devuelve la instancia interna del TransactionMapper.
+     * Útil para inyectar en TransactionOrchestrator.
+     */
+    getMapper(): TransactionMapper {
+        return this.mapper
+    }
 }
