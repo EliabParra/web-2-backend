@@ -2,9 +2,10 @@ import { IDatabase, ILogger, ITransactionMapper, TransactionRoute } from '../../
 
 const TxQueries = {
     loadDataTx: `
-        SELECT m.tx, o.object_name, m.method_name 
-        FROM security.methods m 
-        INNER JOIN security.objects o ON m.object_id = o.object_id
+        SELECT t.transaction_number as tx, o.object_name, m.method_name 
+        FROM security.transactions t
+        INNER JOIN security.methods m ON t.method_id = m.method_id
+        INNER JOIN security.objects o ON t.object_id = o.object_id
     `,
 }
 
