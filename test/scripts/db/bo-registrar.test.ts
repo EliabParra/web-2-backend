@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { BORegistrar } from '../../../scripts/db/seeders/bo-registrar.js'
+import { BORegistrar } from '../../../scripts/db/seeders/bo-register.js'
 
 // Simple mock that tracks queries
 function createMockDB(initialMethods: any[] = []) {

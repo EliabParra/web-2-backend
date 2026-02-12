@@ -12,7 +12,9 @@ import type {
 } from '../types/index.js'
 import { TransactionMapper } from '../core/transaction/TransactionMapper.js'
 import { PermissionGuard } from '../core/security/PermissionGuard.js'
+import { MenuProvider } from '../core/security/MenuProvider.js'
 import { TransactionExecutor } from '../core/transaction/TransactionExecutor.js'
+import { MenuStructure } from '../types/security.js'
 
 /**
  * Servicio de seguridad y orquestador principal del framework.
@@ -39,6 +41,7 @@ export class SecurityService implements ISecurityService {
     private mapper: TransactionMapper
     private guard: PermissionGuard
     private executor: TransactionExecutor
+    private menuProvider: MenuProvider
 
     // config/i18n/log needed for error handling/responses
     private config: IConfig
@@ -72,6 +75,7 @@ export class SecurityService implements ISecurityService {
         // Initialize sub-components
         this.mapper = new TransactionMapper(deps.db, deps.log)
         this.guard = new PermissionGuard(deps.db, deps.log)
+        this.menuProvider = new MenuProvider(deps.db, deps.log)
 
         // Construct BO Dependencies package (injecting self as security)
         const boDeps: BODependencies = {
@@ -100,7 +104,7 @@ export class SecurityService implements ISecurityService {
 
         this.ready = (async () => {
             try {
-                await Promise.all([this.guard.load(), this.mapper.load()])
+                await Promise.all([this.guard.load(), this.mapper.load(), this.menuProvider.load()])
                 this.isReady = true
                 return true
             } catch (err: unknown) {
@@ -197,6 +201,60 @@ export class SecurityService implements ISecurityService {
         methodName: string
     ): Promise<boolean> {
         return this.guard.revoke(profileId, objectName, methodName)
+    }
+
+    /**
+     * Construye y retorna la estructura de menús accesible para el perfil.
+     * Filtra opciones según permisos.
+     */
+    async getMenuStructure(profileId: number): Promise<MenuStructure> {
+        return this.menuProvider.getStructure(profileId)
+    }
+
+    // --- Security Structure Management API ---
+
+    async createSubsystem(name: string) {
+        return this.menuProvider.createSubsystem(name)
+    }
+
+    async deleteSubsystem(id: number) {
+        return this.menuProvider.deleteSubsystem(id)
+    }
+
+    async assignSubsystem(profileId: number, subsystemId: number) {
+        return this.menuProvider.assignSubsystem(profileId, subsystemId)
+    }
+
+    async revokeSubsystem(profileId: number, subsystemId: number) {
+        return this.menuProvider.revokeSubsystem(profileId, subsystemId)
+    }
+
+    async createMenu(name: string, subsystemId: number) {
+        return this.menuProvider.createMenu(name, subsystemId)
+    }
+
+    async assignMenu(profileId: number, menuId: number) {
+        return this.menuProvider.assignMenu(profileId, menuId)
+    }
+
+    async revokeMenu(profileId: number, menuId: number) {
+        return this.menuProvider.revokeMenu(profileId, menuId)
+    }
+
+    async createOption(name: string, methodId?: number) {
+        return this.menuProvider.createOption(name, methodId)
+    }
+
+    async assignOptionToMenu(menuId: number, optionId: number) {
+        return this.menuProvider.assignOptionToMenu(menuId, optionId)
+    }
+
+    async assignOptionToProfile(profileId: number, optionId: number) {
+        return this.menuProvider.assignOptionToProfile(profileId, optionId)
+    }
+
+    async revokeOptionFromProfile(profileId: number, optionId: number) {
+        return this.menuProvider.revokeOptionFromProfile(profileId, optionId)
     }
 
     /**

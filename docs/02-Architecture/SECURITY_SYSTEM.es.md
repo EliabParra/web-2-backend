@@ -112,7 +112,39 @@ await security.revokePermission(profileId, objectName, methodName)
 
 ---
 
-## 7. Referencia del Esquema de Base de Datos
+---
+
+## 7. Gestión Dinámica de Menús y Estructura
+
+El sistema ahora soporta una estructura de menús dinámica basada en base de datos con control de visibilidad granular por perfil.
+
+### Concepto Core
+
+- **Estructura Estricta**: La base de datos define _solo_ la jerarquía (Subsistemas -> Menús -> Opciones) y relaciones lógicas.
+- **Sin Acoplamiento UI**: Campos como `icon`, `url`, `order` NO se guardan en la base de datos. El Frontend es responsable de mapear IDs/Nombres a componentes UI.
+- **Asignación Granular**: La visibilidad se controla mediante tablas de asignación explícita (`profile_subsystem`, `profile_menu`).
+
+### API de Gestión (Dual Write)
+
+Operada vía `SecurityService`, que actualiza tanto la DB como la Memoria Caché instantáneamente.
+
+```typescript
+// Definir Estructura
+await security.createSubsystem('Ventas')
+await security.createMenu('Pedidos', subId)
+
+// Asignar Visibilidad
+await security.assignSubsystem(profileId, subId)
+await security.assignMenu(profileId, menuId)
+```
+
+### Recuperación
+
+`security.getMenuStructure(profileId)` retorna la estructura jerárquica filtrada por lo que ha sido explícitamente asignado a ese perfil.
+
+---
+
+## 8. Referencia del Esquema de Base de Datos
 
 | Tabla                     | Descripción                                    |
 | :------------------------ | :--------------------------------------------- |

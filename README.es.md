@@ -10,7 +10,7 @@ _**ToProccess core**: tx-driven secure dispatch backend._
 [![Node.js (ESM)](https://img.shields.io/badge/Node.js-ESM-3c873a?style=for-the-badge)](#)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge)](#)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-required-336791?style=for-the-badge)](#)
-[![Tests](https://img.shields.io/badge/Tests-160%20passing-2f6feb?style=for-the-badge)](#)
+[![Tests](https://img.shields.io/badge/Tests-161%20passing-2f6feb?style=for-the-badge)](#)
 [![CI](https://img.shields.io/github/actions/workflow/status/EliabParra/toproc/ci.yml?branch=master&style=for-the-badge)](https://github.com/EliabParra/toproc/actions/workflows/ci.yml)
 [![Licencia: MIT](https://img.shields.io/badge/License-MIT-2f6feb?style=for-the-badge)](LICENSE)
 
@@ -29,6 +29,7 @@ A diferencia de los frameworks MVC tradicionales, Toproc no expone recursos (End
 - **Single Entry Point**: Todo el tráfico pasa por `POST /toProccess`.
 - **Deny by Default**: Si una Transacción (ej. `1001`) no está mapeada y autorizada en DB, no existe.
 - **Auditoría Granular**: Sabemos exactamente _quién_, _cuándo_ y _con qué_ parámetros intentó ejecutar cada acción.
+- **Gestión Dinámica de Perfiles**: Menús y permisos gestionados dinámicamente en BD con asignación granular a Perfiles (Subsistemas, Menús, Opciones).
 
 ### 🧩 Arquitectura Robusta & DI
 

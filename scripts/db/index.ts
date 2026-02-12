@@ -15,7 +15,7 @@ import { ConfigBuilder } from './core/config-builder.js'
 import { Interactor } from './interactor/prompts.js'
 import { AdminSeeder } from './seeders/admin.js'
 import { ProfileSeeder } from './seeders/profiles.js'
-import { BORegistrar } from './seeders/bo-registrar.js'
+import { BORegistrar } from './seeders/bo-register.js'
 import { DatabaseResetter } from './seeders/resetter.js'
 
 // Setup paths for ESM

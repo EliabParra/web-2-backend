@@ -177,12 +177,13 @@ Una vez el sistema sea estable, implementa la lógica de permisos en `SecuritySe
 | -------------------------------------- | ------ | --------------------------------------------- |
 | **Fase 1**: DB Migration + Core Repair | ✅     | Schema migrado, Auth/Session refactorizados   |
 | **Fase 2**: Seguridad Dinámica         | ✅     | `PermissionGuard` con Dual Write implementado |
-| **Fase 3**: QA + Docs                  | ✅     | 144 tests, documentación sincronizada         |
+| **Fase 3**: QA + Docs                  | ✅     | 161 tests, documentación sincronizada         |
+| **Fase 4**: Gestión de Menús (Nuevo)   | ✅     | `MenuProvider`, CRUD API, Perfiles Granulares |
 
 ### Archivos Modificados (Resumen)
 
 - **Migraciones**: `50_refactor_phase1.ts`
 - **Auth/Session**: `AuthQueries.ts`, `AuthTypes.ts`, `SessionService.ts`
 - **Security Core**: `SecurityService.ts`, `PermissionGuard.ts`, `SecurityQueries.ts`
-- **Seeders**: `admin.ts`, `profiles.ts`, `bo-registrar.ts`
+- **Seeders**: `admin.ts`, `profiles.ts`, `bo-register.ts`
 - **Tests**: 10+ archivos actualizados para nuevo schema

@@ -111,7 +111,7 @@ export class SyncCommand {
         // Connect to DB and sync
         await this.ctx.ensureGlobals()
 
-        const { BORegistrar } = await import('../../db/seeders/bo-registrar.js')
+        const { BORegistrar } = await import('../../db/seeders/bo-register.js')
         const { Database } = await import('../../db/core/db.js')
 
         const db = new Database({
@@ -168,7 +168,7 @@ export class SyncCommand {
 
         await this.ctx.ensureGlobals()
 
-        const { BORegistrar } = await import('../../db/seeders/bo-registrar.js')
+        const { BORegistrar } = await import('../../db/seeders/bo-register.js')
         const { Database } = await import('../../db/core/db.js')
 
         const db = new Database({

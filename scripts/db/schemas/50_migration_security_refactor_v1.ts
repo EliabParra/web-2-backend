@@ -119,7 +119,8 @@ export const REFACTOR_PHASE1_SCHEMA = [
     );`,
     `CREATE TABLE IF NOT EXISTS security.options (
         option_id SERIAL PRIMARY KEY,
-        option_name TEXT NOT NULL
+        option_name TEXT NOT NULL,
+        method_id INTEGER REFERENCES security.methods(method_id)
     );`,
     `CREATE TABLE IF NOT EXISTS security.menu_option (
         menu_option_id SERIAL PRIMARY KEY,
@@ -147,16 +148,29 @@ export const REFACTOR_PHASE1_SCHEMA = [
     END $$;`,
 
     // Profile Relations
+    `CREATE TABLE IF NOT EXISTS security.profile_subsystem (
+        profile_subsystem_id SERIAL PRIMARY KEY,
+        profile_id INTEGER REFERENCES security.profiles(profile_id) ON DELETE CASCADE,
+        subsystem_id INTEGER REFERENCES security.subsystems(subsystem_id) ON DELETE CASCADE,
+        UNIQUE(profile_id, subsystem_id)
+    );`,
+    `CREATE TABLE IF NOT EXISTS security.profile_menu (
+        profile_menu_id SERIAL PRIMARY KEY,
+        profile_id INTEGER REFERENCES security.profiles(profile_id) ON DELETE CASCADE,
+        menu_id INTEGER REFERENCES security.menus(menu_id) ON DELETE CASCADE,
+        UNIQUE(profile_id, menu_id)
+    );`,
     `CREATE TABLE IF NOT EXISTS security.profile_option (
         profile_option_id SERIAL PRIMARY KEY,
-        profile_id INTEGER REFERENCES security.profiles(profile_id),
-        option_id INTEGER REFERENCES security.options(option_id)
+        profile_id INTEGER REFERENCES security.profiles(profile_id) ON DELETE CASCADE,
+        option_id INTEGER REFERENCES security.options(option_id) ON DELETE CASCADE,
+        UNIQUE(profile_id, option_id)
     );`,
     `CREATE TABLE IF NOT EXISTS security.profile_method (
         profile_method_id SERIAL PRIMARY KEY,
-        profile_id INTEGER REFERENCES security.profiles(profile_id),
-        method_id INTEGER REFERENCES security.methods(method_id),
-        CONSTRAINT uq_profile_method UNIQUE (profile_id, method_id)
+        profile_id INTEGER REFERENCES security.profiles(profile_id) ON DELETE CASCADE,
+        method_id INTEGER REFERENCES security.methods(method_id) ON DELETE CASCADE,
+        UNIQUE (profile_id, method_id)
     );`,
 
     // User Profile (Singular) - Create and Migrate

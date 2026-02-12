@@ -7,20 +7,22 @@
  */
 import { appServer, log, security } from './foundation.js'
 
-try {
-    log.info('--> Iniciando SecurityService...')
-    await security.init()
-    log.info('--> SecurityService Iniciado.')
+const logger = log.child({ category: 'Main' })
 
-    log.info('--> Iniciando AppServer...')
+try {
+    logger.info('--> Iniciando SecurityService...')
+    await security.init()
+    logger.info('--> SecurityService Iniciado.')
+
+    logger.info('--> Iniciando AppServer...')
     await appServer.init()
-    log.info('--> AppServer Iniciado.')
+    logger.info('--> AppServer Iniciado.')
 
     appServer.serverOn()
 } catch (error) {
     console.error('FATAL STARTUP ERROR:', error)
     if (error instanceof Error) {
-        log.error(`Startup failed: ${error.message}`, error)
+        logger.error(`Startup failed: ${error.message}`, error)
     }
     process.exit(1)
 }
@@ -37,13 +39,13 @@ async function shutdown(signal: string): Promise<void> {
     if (shuttingDown) return
     shuttingDown = true
     try {
-        log.info(`Cerrando aplicación (${signal})...`)
+        logger.info(`Cerrando aplicación (${signal})...`)
         await appServer.shutdown()
         process.exit(0)
     } catch (err: unknown) {
         try {
             const message = err instanceof Error ? err.message : String(err)
-            log.error(`Error en cierre: ${message}`)
+            logger.error(`Error en cierre: ${message}`)
         } catch {
             // Silenciar errores en el logger durante cierre
         }

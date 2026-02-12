@@ -112,7 +112,39 @@ await security.revokePermission(profileId, objectName, methodName)
 
 ---
 
-## 7. Database Schema Reference
+---
+
+## 7. Dynamic Menu & Structure Management
+
+The system now supports a dynamic, database-driven menu structure with granular visibility control per profile.
+
+### Core Concept
+
+- **Strict Structure**: The database defines _only_ the hierarchy (Subsystems -> Menus -> Options) and logic relationships.
+- **No UI Coupling**: Fields like `icon`, `url`, `order` are NOT stored in the database. The Frontend is responsible for mapping IDs/Names to UI components.
+- **Granular Assignment**: Visibility is controlled by explicit assignment tables (`profile_subsystem`, `profile_menu`).
+
+### Management API (Dual Write)
+
+Operated via `SecurityService`, which updates both DB and In-Memory Cache instantly.
+
+```typescript
+// Define Structure
+await security.createSubsystem('Sales')
+await security.createMenu('Orders', subId)
+
+// Assign Visibility
+await security.assignSubsystem(profileId, subId)
+await security.assignMenu(profileId, menuId)
+```
+
+### Retrieval
+
+`security.getMenuStructure(profileId)` returns the hierarchical structure filtered by what has been explicitly assigned to that profile.
+
+---
+
+## 8. Database Schema Reference
 
 | Table                     | Description                                    |
 | :------------------------ | :--------------------------------------------- |
