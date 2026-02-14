@@ -1,5 +1,5 @@
 // Bootstrap: Inicialización de servicios core.
-// 100% Dependency Injection - No globals
+// 100% Dependency Injection - Container como única fuente de verdad
 import 'dotenv/config'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -14,6 +14,7 @@ import { SessionManager } from './services/SessionService.js'
 import { EmailService } from './services/EmailService.js'
 import { AppServer } from './api/AppServer.js'
 import { AuditService } from './services/AuditService.js'
+import { DatabaseService } from './services/DatabaseService.js'
 import { es } from './locales/es.js'
 import { en } from './locales/en.js'
 
@@ -29,79 +30,36 @@ function repoPath(...parts: string[]): string {
     return path.resolve(repoRoot, ...parts)
 }
 
-// 1. Cargar configuración
+// ═══════════════════════════════════════════════════════════════════════════════
+// Registro de servicios en el contenedor IoC
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// 1. Configuración (síncrono, sin deps)
 const config = ConfigLoader.load(repoPath('.'))
 container.register('config', config)
 
-// 2. Inicializar I18n
+// 2. I18n (síncrono, sin deps)
 const i18n = new I18nService(config.app.lang)
 i18n.register('es', es)
 i18n.register('en', en)
 container.register('i18n', i18n)
 
-// 3. Feature Flags
-const features = new FeatureFlags(config)
-container.register('features', features)
+// 3. Feature Flags (síncrono, solo config)
+container.register('features', new FeatureFlags(config))
 
-// 4. Validador (Zod)
-const validator = new ValidatorService(i18n)
-container.register('validator', validator)
+// 4. Validador (síncrono, solo i18n)
+container.register('validator', new ValidatorService(i18n))
 
-// 5. Logger
-const log = new AppLogger({ config })
-container.register('log', log)
+// 5. Logger (síncrono, solo config)
+container.register('log', new AppLogger({ config }))
 
-// 6. Base de Datos
-import { DatabaseService } from './services/DatabaseService.js'
-const db = new DatabaseService({ config, i18n, log: log })
-container.register('db', db)
+// 6. Factories para servicios con múltiples dependencias (lazy)
+container.registerFactory('db', (c) => new DatabaseService(c))
+container.registerFactory('audit', (c) => new AuditService(c))
+container.registerFactory('email', (c) => new EmailService(c))
+container.registerFactory('session', (c) => new SessionManager(c))
+container.registerFactory('security', (c) => new SecurityService(c))
+container.registerFactory('appServer', (c) => new AppServer(c))
 
-// 7. Capa de Servicios
-
-// Auditoría
-const audit = new AuditService({ db, log: log })
-container.register('audit', audit)
-
-// Servicio de Email
-const email = new EmailService({ config, log })
-container.register('email', email)
-
-// Gestor de Sesiones
-const session = new SessionManager({
-    db,
-    log,
-    config,
-    i18n,
-    audit,
-    validator,
-})
-container.register('session', session)
-
-// Servicio de Seguridad
-const security = new SecurityService({
-    db,
-    log,
-    config,
-    i18n,
-    audit,
-    session,
-    validator,
-    email,
-})
-container.register('security', security)
-
-// AppServer (Punto de entrada HTTP)
-const appServer = new AppServer({
-    config,
-    log,
-    security,
-    session,
-    i18n,
-    audit,
-    db,
-    validator,
-    email,
-})
-
-// Exportar servicios
-export { container, appServer, log, db, config, validator, session, security, i18n, email, audit }
+// Exportar solo el container — fuente única de verdad
+export { container }

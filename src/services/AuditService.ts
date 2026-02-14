@@ -1,4 +1,4 @@
-import type { IAuditService, IDatabase, ILogger, AppRequest } from '../types/index.js'
+import type { IAuditService, IContainer, IDatabase, ILogger, AppRequest } from '../types/index.js'
 import { redactSecrets } from '../utils/sanitize.js'
 import { AuditQueries } from './queries/audit.js'
 
@@ -22,9 +22,9 @@ export class AuditService implements IAuditService {
     private db: IDatabase
     private logger: ILogger
 
-    constructor(deps: { db: IDatabase; log: ILogger }) {
-        this.db = deps.db
-        this.logger = deps.log.child({ category: 'Audit' })
+    constructor(container: IContainer) {
+        this.db = container.resolve<IDatabase>('db')
+        this.logger = container.resolve<ILogger>('log').child({ category: 'Audit' })
     }
 
     async log(req: AppRequest, args: AuditArgs): Promise<void> {

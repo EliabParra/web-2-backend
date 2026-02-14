@@ -1,5 +1,6 @@
 import type {
     BODependencies,
+    IContainer,
     IAuditService,
     IConfig,
     IDatabase,
@@ -27,7 +28,7 @@ import { MenuStructure } from '../types/security.js'
  *
  * @example
  * ```typescript
- * const security = new SecurityService({ db, log, config, i18n, audit, session, validator })
+ * const security = new SecurityService(container)
  * await security.init() // Carga permisos y mapeos
  *
  * // Uso típico en Dispatcher:
@@ -56,38 +57,39 @@ export class SecurityService implements ISecurityService {
     /**
      * Crea una instancia de SecurityService.
      *
-     * @param deps - Dependencias de infraestructura
+     * @param container - Contenedor IoC con las dependencias registradas
      */
-    constructor(deps: {
-        db: IDatabase
-        log: ILogger
-        config: IConfig
-        i18n: II18nService
-        audit: IAuditService
-        session: ISessionService
-        validator: IValidator
-        email: IEmailService
-    }) {
-        this.log = deps.log.child({ category: 'Security' })
-        this.config = deps.config
-        this.i18n = deps.i18n
+    constructor(container: IContainer) {
+        const db = container.resolve<IDatabase>('db')
+        const log = container.resolve<ILogger>('log')
+        const config = container.resolve<IConfig>('config')
+        const i18n = container.resolve<II18nService>('i18n')
+        const audit = container.resolve<IAuditService>('audit')
+        const session = container.resolve<ISessionService>('session')
+        const validator = container.resolve<IValidator>('validator')
+        const email = container.resolve<IEmailService>('email')
+
+        this.log = log.child({ category: 'Security' })
+        this.config = config
+        this.i18n = i18n
 
         // Initialize sub-components
-        this.mapper = new TransactionMapper(deps.db, deps.log)
-        this.guard = new PermissionGuard(deps.db, deps.log)
-        this.menuProvider = new MenuProvider(deps.db, deps.log)
+        this.mapper = new TransactionMapper(db, log)
+        this.guard = new PermissionGuard(db, log)
+        this.menuProvider = new MenuProvider(db, log)
 
         // Construct BO Dependencies package (injecting self as security)
+        // TODO: Eliminar cuando TransactionExecutor migre a IContainer (Fase 5)
         const boDeps: BODependencies = {
-            db: deps.db,
-            log: deps.log,
-            config: deps.config,
-            audit: deps.audit,
-            session: deps.session,
-            validator: deps.validator,
+            db,
+            log,
+            config,
+            audit,
+            session,
+            validator,
             security: this,
-            i18n: deps.i18n,
-            email: deps.email,
+            i18n,
+            email,
         }
         this.executor = new TransactionExecutor(boDeps)
     }
@@ -183,7 +185,11 @@ export class SecurityService implements ISecurityService {
      * Otorga un permiso dinámicamente (Dual Write).
      * Delegado al PermissionGuard para consistencia DB-Memoria.
      */
-    async grantPermission(profileId: number, objectName: string, methodName: string): Promise<boolean> {
+    async grantPermission(
+        profileId: number,
+        objectName: string,
+        methodName: string
+    ): Promise<boolean> {
         return this.guard.grant(profileId, objectName, methodName)
     }
 
@@ -191,7 +197,11 @@ export class SecurityService implements ISecurityService {
      * Revoca un permiso dinámicamente (Dual Write).
      * Delegado al PermissionGuard para consistencia DB-Memoria.
      */
-    async revokePermission(profileId: number, objectName: string, methodName: string): Promise<boolean> {
+    async revokePermission(
+        profileId: number,
+        objectName: string,
+        methodName: string
+    ): Promise<boolean> {
         return this.guard.revoke(profileId, objectName, methodName)
     }
 

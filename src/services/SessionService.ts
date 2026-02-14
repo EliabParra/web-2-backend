@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import type {
+    IContainer,
     IDatabase,
     ILogger,
     ISessionService,
@@ -33,20 +34,13 @@ export class SessionManager implements ISessionService {
     private authCfg: Record<string, unknown>
     private requireEmailVerification: boolean
 
-    constructor(deps: {
-        db: IDatabase
-        log: ILogger
-        config: IConfig
-        i18n: II18nService
-        audit: IAuditService
-        validator: ValidatorService
-    }) {
-        this.db = deps.db
-        this.log = deps.log.child({ category: 'Session' })
-        this.config = deps.config
-        this.i18n = deps.i18n
-        this.audit = deps.audit
-        this.validator = deps.validator
+    constructor(container: IContainer) {
+        this.db = container.resolve<IDatabase>('db')
+        this.log = container.resolve<ILogger>('log').child({ category: 'Session' })
+        this.config = container.resolve<IConfig>('config')
+        this.i18n = container.resolve<II18nService>('i18n')
+        this.audit = container.resolve<IAuditService>('audit')
+        this.validator = container.resolve<ValidatorService>('validator')
 
         this.authCfg = (this.config.auth ?? {}) as Record<string, unknown>
         this.requireEmailVerification = Boolean(this.authCfg.requireEmailVerification)

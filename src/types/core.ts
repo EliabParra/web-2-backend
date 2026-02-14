@@ -295,6 +295,14 @@ export interface ISecurityService {
     ready: Promise<boolean>
 
     /**
+     * Inicializa los subsistemas de seguridad (Mapper, Guard, MenuProvider).
+     * Carga permisos y mapeos desde la base de datos.
+     *
+     * @returns `true` si la inicialización fue exitosa
+     */
+    init(): Promise<boolean>
+
+    /**
      * Resuelve un código de transacción a su ruta de ejecución (BO/Método).
      *
      * @param tx - Código de transacción

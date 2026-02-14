@@ -2,27 +2,33 @@
  * Punto de entrada principal de la aplicación.
  *
  * Inicializa los servicios core y configura el manejo de señales de cierre.
+ * Todas las dependencias se resuelven desde el contenedor IoC.
  *
  * @module index
  */
-import { appServer, log, security } from './foundation.js'
+import { container } from './foundation.js'
+import type { ILogger, ISecurityService } from './types/index.js'
+import type { AppServer } from './api/AppServer.js'
 
-const logger = log.child({ category: 'Main' })
+const log = container.resolve<ILogger>('log').child({ category: 'Main' })
+
 
 try {
-    logger.info('--> Iniciando SecurityService...')
+    log.trace('Iniciando SecurityService...')
+    const security = container.resolve<ISecurityService>('security')
     await security.init()
-    logger.info('--> SecurityService Iniciado.')
+    log.info('SecurityService Iniciado.')
 
-    logger.info('--> Iniciando AppServer...')
+    log.trace('Iniciando AppServer...')
+    const appServer = container.resolve<AppServer>('appServer')
     await appServer.init()
-    logger.info('--> AppServer Iniciado.')
+    log.info('AppServer Iniciado.')
 
     appServer.serverOn()
 } catch (error) {
     console.error('FATAL STARTUP ERROR:', error)
     if (error instanceof Error) {
-        logger.error(`Startup failed: ${error.message}`, error)
+        log.error(`Startup failed: ${error.message}`, error)
     }
     process.exit(1)
 }
@@ -39,13 +45,14 @@ async function shutdown(signal: string): Promise<void> {
     if (shuttingDown) return
     shuttingDown = true
     try {
-        logger.info(`Cerrando aplicación (${signal})...`)
+        log.info(`Cerrando aplicación (${signal})...`)
+        const appServer = container.resolve<AppServer>('appServer')
         await appServer.shutdown()
         process.exit(0)
     } catch (err: unknown) {
         try {
             const message = err instanceof Error ? err.message : String(err)
-            logger.error(`Error en cierre: ${message}`)
+            log.error(`Error en cierre: ${message}`)
         } catch {
             // Silenciar errores en el logger durante cierre
         }

@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { IEmailService, IConfig, ILogger } from '../types/core.js'
+import { IEmailService, IConfig, ILogger, IContainer } from '../types/core.js'
 
 function maskEmail(email: string) {
     const s = String(email ?? '').trim()
@@ -66,9 +66,9 @@ export class EmailService implements IEmailService {
     logIncludeSecrets: boolean
     _transport: unknown
 
-    constructor(deps: { log: ILogger; config: IConfig }) {
-        this.log = deps.log.child({ category: 'Email' })
-        this.config = deps.config
+    constructor(container: IContainer) {
+        this.log = container.resolve<ILogger>('log').child({ category: 'Email' })
+        this.config = container.resolve<IConfig>('config')
 
         this.cfg = (this.config?.email ?? {}) as EmailConfig
         this.mode = String(this.cfg.mode ?? 'log')

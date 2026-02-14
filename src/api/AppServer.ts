@@ -1,6 +1,7 @@
 import express, { Express, RequestHandler } from 'express'
 import { Server } from 'http'
 import {
+    IContainer,
     IConfig,
     ILogger,
     ISecurityService,
@@ -46,21 +47,6 @@ import { SecurityService } from '../services/SecurityService.js'
 import { AuthController } from './http/controllers/AuthController.js'
 import { TransactionController } from './http/controllers/TransactionController.js'
 import { ProbeController } from './http/controllers/ProbeController.js'
-
-/**
- * Dependencias requeridas para instanciar el AppServer.
- */
-interface AppServerDependencies {
-    config: IConfig
-    log: ILogger
-    security: ISecurityService // Mantener por ahora para probeController
-    session: ISessionService
-    i18n: II18nService
-    audit: IAuditService
-    db: IDatabase
-    validator: IValidator // [NEW] Required for BOs
-    email: IEmailService
-}
 
 /**
  * Servidor de Aplicación (AppServer).
@@ -110,16 +96,16 @@ export class AppServer {
     private csrfProtection: RequestHandler
     private _toProccessRateLimiter: RequestHandler | null = null
 
-    constructor(deps: AppServerDependencies) {
-        this.config = deps.config
-        this.log = deps.log.child({ category: 'System' })
-        this.security = deps.security
-        this.session = deps.session
-        this.i18n = deps.i18n
-        this.audit = deps.audit
-        this.db = deps.db
-        this.validator = deps.validator
-        this.email = deps.email
+    constructor(container: IContainer) {
+        this.config = container.resolve<IConfig>('config')
+        this.log = container.resolve<ILogger>('log').child({ category: 'System' })
+        this.security = container.resolve<ISecurityService>('security')
+        this.session = container.resolve<ISessionService>('session')
+        this.i18n = container.resolve<II18nService>('i18n')
+        this.audit = container.resolve<IAuditService>('audit')
+        this.db = container.resolve<IDatabase>('db')
+        this.validator = container.resolve<IValidator>('validator')
+        this.email = container.resolve<IEmailService>('email')
 
         this.app = express()
 

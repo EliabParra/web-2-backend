@@ -1,5 +1,6 @@
 import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg'
 import type {
+    IContainer,
     IDatabase,
     ILogger,
     IConfig,
@@ -28,10 +29,12 @@ export class DatabaseService implements IDatabase {
      * Crea una instancia de DatabaseService.
      * Inicializa el pool de conexiones con la configuración proporcionada.
      *
-     * @param deps - Dependencias requeridas (config, i18n, log)
+     * @param container - Contenedor IoC con las dependencias registradas
      */
-    constructor(deps: { config: IConfig; i18n: II18nService; log: ILogger }) {
-        const { config, i18n, log } = deps
+    constructor(container: IContainer) {
+        const config = container.resolve<IConfig>('config')
+        const i18n = container.resolve<II18nService>('i18n')
+        const log = container.resolve<ILogger>('log')
         this.pool = new Pool(config.db)
         this.i18n = i18n
         this.log = log.child({ category: 'Database' })
