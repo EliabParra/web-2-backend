@@ -10,9 +10,11 @@
  */
 export function createMockContainer(deps = {}) {
     const store = { ...deps }
-    return {
+    const container = {
         resolve(key) {
-            if (!(key in store)) throw new Error(`Mock container: '${key}' not registered`)
+            if (!(key in store)) {
+                throw new Error(`Mock container: '${key}' not registered`)
+            }
             return store[key]
         },
         register(key, value) {
@@ -20,12 +22,16 @@ export function createMockContainer(deps = {}) {
         },
         registerFactory(key, factory) {
             Object.defineProperty(store, key, {
-                get: () => factory(),
+                get: () => {
+                    return factory(container)
+                },
                 configurable: true,
+                enumerable: true,
             })
         },
         has(key) {
             return key in store
         },
     }
+    return container
 }

@@ -348,7 +348,7 @@ export function templateBO(className: string, methods: string[]) {
         })
         .join('\n\n')
 
-    return `import { BaseBO, BODependencies, ApiResponse } from '../../src/core/business-objects/index.js'
+    return `import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
 import { ${pascalName}Repository, ${pascalName}Service, ${pascalName}Messages, create${pascalName}Schemas, Schemas } from './${pascalName}Module.js'
 import type { Types } from './${pascalName}Module.js'
 
@@ -360,10 +360,10 @@ import type { Types } from './${pascalName}Module.js'
 export class ${boClassName} extends BaseBO {
     private service: ${pascalName}Service
 
-    constructor(deps: BODependencies) {
-        super(deps)
-        const repo = new ${pascalName}Repository(this.db)
-        this.service = new ${pascalName}Service(repo, this.log, this.config, this.db)
+    constructor(container: IContainer) {
+        super(container)
+        const repo = new ${pascalName}Repository(container.db)
+        this.service = new ${pascalName}Service(container)
     }
 
     /**

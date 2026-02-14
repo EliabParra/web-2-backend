@@ -1,16 +1,4 @@
-import type {
-    BODependencies,
-    IContainer,
-    IAuditService,
-    IConfig,
-    IDatabase,
-    IEmailService,
-    II18nService,
-    ILogger,
-    ISecurityService,
-    ISessionService,
-    IValidator,
-} from '../types/index.js'
+import type { IContainer, II18nService, ILogger, ISecurityService } from '../types/index.js'
 import { TransactionMapper } from '../core/transaction/TransactionMapper.js'
 import { PermissionGuard } from '../core/security/PermissionGuard.js'
 import { MenuProvider } from '../core/security/MenuProvider.js'
@@ -44,8 +32,6 @@ export class SecurityService implements ISecurityService {
     private executor: TransactionExecutor
     private menuProvider: MenuProvider
 
-    // config/i18n/log needed for error handling/responses
-    private config: IConfig
     private i18n: II18nService
     private log: ILogger
 
@@ -60,18 +46,8 @@ export class SecurityService implements ISecurityService {
      * @param container - Contenedor IoC con las dependencias registradas
      */
     constructor(container: IContainer) {
-        const db = container.resolve<IDatabase>('db')
-        const log = container.resolve<ILogger>('log')
-        const config = container.resolve<IConfig>('config')
-        const i18n = container.resolve<II18nService>('i18n')
-        const audit = container.resolve<IAuditService>('audit')
-        const session = container.resolve<ISessionService>('session')
-        const validator = container.resolve<IValidator>('validator')
-        const email = container.resolve<IEmailService>('email')
-
-        this.log = log.child({ category: 'Security' })
-        this.config = config
-        this.i18n = i18n
+        this.log = container.resolve<ILogger>('log').child({ category: 'Security' })
+        this.i18n = container.resolve<II18nService>('i18n')
 
         // Initialize sub-components
         this.mapper = new TransactionMapper(container)

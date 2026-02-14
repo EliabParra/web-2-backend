@@ -45,13 +45,26 @@ function createTestBO() {
 
     const validator = new ValidatorService(i18nStub)
 
-    return new TestBO({
-        db: dbStub,
-        log: logStub,
-        config: configStub,
-        i18n: i18nStub,
-        validator: validator,
-    })
+    const mockContainer = {
+        resolve: (key) => {
+            switch (key) {
+                case 'db':
+                    return dbStub
+                case 'log':
+                    return logStub
+                case 'config':
+                    return configStub
+                case 'i18n':
+                    return i18nStub
+                case 'validator':
+                    return validator
+                default:
+                    throw new Error(`Unknown dependency: ${key}`)
+            }
+        },
+    }
+
+    return new TestBO(mockContainer)
 }
 
 test('BaseBO.validate returns ok=true for valid data', async () => {

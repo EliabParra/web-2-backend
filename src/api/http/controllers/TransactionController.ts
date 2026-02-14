@@ -116,6 +116,9 @@ export class TransactionController {
             effectiveParams._request = {
                 ip: req.ip ?? null,
                 userAgent: req.get?.('User-Agent') ?? null,
+                // Inyectamos el request completo (oculto) si se necesita
+                // ADVERTENCIA: Usar con precaución, acopla el BO a Express
+                req,
             }
 
             // 4. Ejecutar vía Orchestrator

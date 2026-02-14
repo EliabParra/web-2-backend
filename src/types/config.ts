@@ -20,6 +20,8 @@ export interface AppConfig {
     lang: string
     /** Modo de frontend: 'spa', 'pages', 'none' */
     frontendMode: 'spa' | 'pages' | 'none'
+    /** URL del frontend */
+    frontendUrl?: string
     /** Límite de tamaño para body de requests (e.g. '100kb') */
     bodyLimit?: string
     /** Configuración de trust proxy para Express */

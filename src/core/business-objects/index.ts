@@ -1,5 +1,6 @@
-export { BaseBO } from './BaseBO.js'
-export { CrudBO } from './CrudBO.js'
-export { BOService } from './BOService.js'
+export * from './BaseBO.js'
+export * from './BOService.js'
+
+// Re-export common types for convenience
+export type { IContainer, ILogger, WithRequest } from '../../types/index.js'
 export { BOError } from './BOError.js'
-export type { BODependencies, ApiResponse, TxKey, IDatabase, IConfig, II18nService, IEmailService } from './BaseBO.js'

@@ -520,22 +520,3 @@ export interface ISessionService {
 // ═══════════════════════════════════════════════════════════════════════════════
 // 7. Legacy (Deprecated — se eliminará en fases posteriores)
 // ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Dependencias inyectables para Business Objects (BO).
- *
- * @deprecated Usar `IContainer` en su lugar. Los BOs deben recibir `IContainer`
- * y resolver sus dependencias directamente. Se eliminará cuando todos los BOs,
- * `TransactionExecutor` y `SecurityService` migren al container.
- */
-export interface BODependencies {
-    db: IDatabase
-    log: ILogger
-    config: IAppConfig
-    audit: IAuditService
-    security: ISecurityService
-    session: ISessionService
-    validator: IValidator
-    i18n: II18nService
-    email: IEmailService
-}

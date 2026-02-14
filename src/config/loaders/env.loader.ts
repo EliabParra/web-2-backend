@@ -19,6 +19,7 @@ export class EnvLoader {
                 env: env.NODE_ENV as any,
                 lang: env.APP_LANG as any,
                 frontendMode: env.APP_FRONTEND_MODE as any,
+                frontendUrl: env.APP_FRONTEND_URL,
                 trustProxy:
                     env.APP_TRUST_PROXY === 'true'
                         ? true

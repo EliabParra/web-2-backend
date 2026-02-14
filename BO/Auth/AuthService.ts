@@ -1,4 +1,4 @@
-import { BOService, IConfig, IDatabase, II18nService, IEmailService, } from '../../src/core/business-objects/index.js'
+import { BOService, II18nService, IEmailService, IContainer } from '../../src/core/business-objects/index.js'
 import { AuthRepository, AuthMessages, Errors, Types } from './AuthModule.js'
 import { createHash, randomBytes } from 'node:crypto'
 import bcrypt from 'bcryptjs'
@@ -12,17 +12,11 @@ export class AuthService extends BOService implements Types.IAuthService {
     private i18n: II18nService
     private email: IEmailService
 
-    constructor(
-        log: any,
-        config: IConfig,
-        db: IDatabase,
-        i18n: II18nService,
-        email: IEmailService
-    ) {
-        super(log, config, db)
-        this.repo = new AuthRepository(db)
-        this.i18n = i18n
-        this.email = email
+    constructor(container: IContainer) {
+        super(container)
+        this.repo = container.resolve<AuthRepository>('AuthRepository')
+        this.i18n = container.resolve<II18nService>('i18n')
+        this.email = container.resolve<IEmailService>('email')
     }
 
     private get messages() {
@@ -30,7 +24,7 @@ export class AuthService extends BOService implements Types.IAuthService {
     }
 
     async register(data: Types.RegisterData): Promise<Types.User> {
-        this.log.info('Creating new user: ' + data.email)
+        this.log.trace('Creating new user: ' + data.email)
 
         const exists = await this.repo.getUserBaseByEmail(data.email)
         if (exists) {
@@ -100,7 +94,6 @@ export class AuthService extends BOService implements Types.IAuthService {
         const user = await this.repo.getUserByEmail(email)
         if (!user || !user.user_email) return
 
-        const purpose = String(this.config.auth.passwordResetPurpose ?? 'password_reset')
         const expiresSeconds = 900
 
         await this.repo.invalidateActivePasswordResetsForUser(user.user_id)
@@ -120,8 +113,9 @@ export class AuthService extends BOService implements Types.IAuthService {
             subject: `${this.config.app.name}: Password Reset`,
             templatePath: 'auth/password-reset.html',
             data: {
+                year: new Date().getFullYear(),
+                frontendUrl: this.config.app.frontendUrl,
                 appName: this.config.app.name,
-                code: '000000', // Placeholder as per original
                 token,
             },
         })

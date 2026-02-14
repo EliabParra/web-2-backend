@@ -16,9 +16,17 @@ const mockDeps = {
     },
 }
 
+// Mock container
+const mockContainer = {
+    resolve: (key) => {
+        if (key in mockDeps) return mockDeps[key]
+        throw new Error(`Unknown dependency: ${key}`)
+    },
+}
+
 class TestBO extends BaseBO {
     constructor() {
-        super(mockDeps)
+        super(mockContainer)
     }
 
     testSuccess(data, msg) {

@@ -332,6 +332,7 @@ describe('Auth Module Integration (HTTP)', async () => {
         if (res.status !== 200 && res.status !== 201) {
             console.error('Register FAILS. Status:', res.status)
             const logs = testDeps?.logs || []
+            console.log('All Logs:', JSON.stringify(logs, null, 2)) // DEBUG
             const errLog = logs.find((l) => l.type === 1) // Find TYPE_ERROR
             if (errLog) {
                 console.error('BaseBO Error Msg:', errLog.ctx?.message || errLog.msg)

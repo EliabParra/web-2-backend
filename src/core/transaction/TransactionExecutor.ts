@@ -1,17 +1,4 @@
-import {
-    BODependencies,
-    ITransactionExecutor,
-    ILogger,
-    IContainer,
-    IDatabase,
-    IConfig,
-    IAuditService,
-    ISessionService,
-    IValidator,
-    ISecurityService,
-    II18nService,
-    IEmailService,
-} from '../../types/index.js'
+import { ITransactionExecutor, ILogger, IContainer, IConfig } from '../../types/index.js'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -30,7 +17,7 @@ export class TransactionExecutor implements ITransactionExecutor {
     private instances: Map<string, Record<string, unknown>> = new Map()
     private readonly boBasePath: string
     private log: ILogger
-    private deps: BODependencies
+    private container: IContainer
 
     /**
      * Crea una instancia de TransactionExecutor.
@@ -38,39 +25,12 @@ export class TransactionExecutor implements ITransactionExecutor {
      * @param container - Contenedor de dependencias
      */
     constructor(container: IContainer) {
-        this.deps = {
-            get db() {
-                return container.resolve<IDatabase>('db')
-            },
-            get log() {
-                return container.resolve<ILogger>('log')
-            },
-            get config() {
-                return container.resolve<IConfig>('config')
-            },
-            get audit() {
-                return container.resolve<IAuditService>('audit')
-            },
-            get session() {
-                return container.resolve<ISessionService>('session')
-            },
-            get validator() {
-                return container.resolve<IValidator>('validator')
-            },
-            get security() {
-                return container.resolve<ISecurityService>('security')
-            },
-            get i18n() {
-                return container.resolve<II18nService>('i18n')
-            },
-            get email() {
-                return container.resolve<IEmailService>('email')
-            },
-        }
-
+        this.container = container
         this.log = container.resolve<ILogger>('log').child({ category: 'TransactionExecutor' })
+
+        const config = container.resolve<IConfig>('config')
         // Resolver ruta base una sola vez y asegurar que es absoluta
-        const configPath = this.deps.config.bo.path || '../../BO/'
+        const configPath = config.bo.path || '../../BO/'
         // Si el usuario configuró 'BO', lo normalizamos a 'BO/'
         const cleanPath = configPath.includes('BO') ? 'BO/' : configPath
         this.boBasePath = path.resolve(process.cwd(), cleanPath)
@@ -143,9 +103,9 @@ export class TransactionExecutor implements ITransactionExecutor {
                 throw new Error(`Clase de BO no encontrada: ${ctorName} en ${expectedPath}`)
             }
 
-            // Inyección automática de dependencias
-            const instance = new (ctor as new (deps: BODependencies) => Record<string, unknown>)(
-                this.deps
+            // Instantiate BO with Container
+            const instance = new (ctor as new (container: IContainer) => Record<string, unknown>)(
+                this.container
             )
             return { instance }
         } catch (err: unknown) {

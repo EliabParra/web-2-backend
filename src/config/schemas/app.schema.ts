@@ -6,6 +6,7 @@ export const AppConfigSchema = z.object({
     port: z.number().int().min(1).max(65535).default(3000),
     env: z.enum(['development', 'production', 'test', 'staging']).default('development'),
     frontendMode: z.enum(['none', 'pages', 'spa']).default('none'),
+    frontendUrl: z.url().optional(),
     trustProxy: z.union([z.boolean(), z.number(), z.string()]).default(false),
     lang: z.enum(['es', 'en']).default('es'),
 })

@@ -1,44 +1,37 @@
-import { BaseBO, BODependencies, ApiResponse } from '../../src/core/business-objects/index.js'
-import { AuthService, AuthMessages, createAuthSchemas, Schemas } from './AuthModule.js'
+import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
+import { AuthService, AuthMessages, AuthSchemas, Inputs, registerAuth } from './AuthModule.js'
 
 export class AuthBO extends BaseBO {
     private service: AuthService
 
-    constructor(deps: BODependencies) {
-        super(deps)
-        this.service = new AuthService(deps.log, deps.config, deps.db, deps.i18n, deps.email)
+    constructor(container: IContainer) {
+        super(container)
+        registerAuth(container)
+        this.service = container.resolve<AuthService>('AuthService')
     }
 
     private get authMessages() {
         return this.i18n.use(AuthMessages)
     }
 
-    private get authSchemas() {
-        return createAuthSchemas(this.authMessages)
-    }
-
-    async register(params: Schemas.RegisterInput): Promise<ApiResponse> {
-        return this.exec<Schemas.RegisterInput, void>(params, this.authSchemas.register, async (data) => {
+    async register(params: Inputs.RegisterInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RegisterInput, void>(params, AuthSchemas.register, async (data) => {
             await this.service.register(data)
             return this.created(null, this.authMessages.registerSuccess)
         })
     }
 
-    async verifyEmail(params: Schemas.VerifyEmailInput): Promise<ApiResponse> {
-        return this.exec<Schemas.VerifyEmailInput, void>(
-            params,
-            this.authSchemas.verifyEmail,
-            async (data) => {
-                await this.service.verifyEmail(data.token)
-                return this.success(null, this.authMessages.emailVerified)
-            }
-        )
+    async verifyEmail(params: Inputs.VerifyEmailInput): Promise<ApiResponse> {
+        return this.exec<Inputs.VerifyEmailInput, void>(params, AuthSchemas.verifyEmail, async (data) => {
+            await this.service.verifyEmail(data.token)
+            return this.success(null, this.authMessages.emailVerified)
+        })
     }
 
-    async requestEmailVerification(params: Schemas.RequestEmailVerificationInput): Promise<ApiResponse> {
-        return this.exec<Schemas.RequestEmailVerificationInput, void>(
+    async requestEmailVerification(params: Inputs.RequestEmailVerificationInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RequestEmailVerificationInput, void>(
             params,
-            this.authSchemas.requestEmailVerification,
+            AuthSchemas.requestEmailVerification,
             async (data) => {
                 await this.service.requestEmailVerification(data.identifier)
                 return this.success(
@@ -51,10 +44,10 @@ export class AuthBO extends BaseBO {
         )
     }
 
-    async requestPasswordReset(params: Schemas.RequestPasswordResetInput): Promise<ApiResponse> {
-        return this.exec<Schemas.RequestPasswordResetInput, void>(
+    async requestPasswordReset(params: Inputs.RequestPasswordResetInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RequestPasswordResetInput, void>(
             params,
-            this.authSchemas.requestResetPassword,
+            AuthSchemas.requestResetPassword,
             async (data) => {
                 await this.service.requestPasswordReset(data.email)
                 return this.success(null, this.authMessages.passwordResetSent)
@@ -62,10 +55,10 @@ export class AuthBO extends BaseBO {
         )
     }
 
-    async verifyPasswordReset(params: Schemas.VerifyPasswordResetInput): Promise<ApiResponse> {
-        return this.exec<Schemas.VerifyPasswordResetInput, void>(
+    async verifyPasswordReset(params: Inputs.VerifyPasswordResetInput): Promise<ApiResponse> {
+        return this.exec<Inputs.VerifyPasswordResetInput, void>(
             params,
-            this.authSchemas.verifyPasswordReset,
+            AuthSchemas.verifyPasswordReset,
             async (data) => {
                 // Just verification of token existence/validity
                 await this.service.verifyPasswordResetToken(data.token)
@@ -74,10 +67,10 @@ export class AuthBO extends BaseBO {
         )
     }
 
-    async resetPassword(params: Schemas.ResetPasswordConfirmInput): Promise<ApiResponse> {
-        return this.exec<Schemas.ResetPasswordConfirmInput, void>(
+    async resetPassword(params: Inputs.ResetPasswordConfirmInput): Promise<ApiResponse> {
+        return this.exec<Inputs.ResetPasswordConfirmInput, void>(
             params,
-            this.authSchemas.resetPasswordConfirm,
+            AuthSchemas.resetPasswordConfirm,
             async (data) => {
                 await this.service.resetPassword(data.token, data.newPassword)
                 return this.success(null, this.authMessages.passwordChanged)

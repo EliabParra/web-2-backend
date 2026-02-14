@@ -62,3 +62,14 @@ export interface SessionUser {
     profileName: string
     email: string
 }
+
+/**
+ * Tipo para inyectar el request en los parámetros de la transacción.
+ */
+export type WithRequest<T> = T & {
+    _request?: {
+        ip?: string | null
+        userAgent?: string | null
+        req?: AppRequest
+    }
+}

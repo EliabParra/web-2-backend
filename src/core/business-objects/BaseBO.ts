@@ -9,16 +9,16 @@ import type {
     ISessionService,
     ISecurityService,
     IAuditService,
-    BODependencies,
     ApiResponse,
     TxKey,
     ValidationError,
     AppMessages,
     AppRequest,
-    IEmailService
+    IEmailService,
+    IContainer,
 } from '../../types/index.js'
 
-export type { BODependencies, ApiResponse, TxKey, IDatabase, IConfig, II18nService, IEmailService }
+export type { ApiResponse, TxKey, IDatabase, IConfig, II18nService, IEmailService }
 
 /**
  * Clase base para todos los Business Objects (BOs) en el framework ToProccess.
@@ -62,7 +62,7 @@ export abstract class BaseBO {
     protected readonly config: IConfig
 
     /** Validador para validación de entrada (soporta esquemas Zod) */
-    protected readonly validator: IValidator
+    protected validator?: IValidator
 
     /** Servicio i18n */
     protected readonly i18n: II18nService
@@ -87,22 +87,30 @@ export abstract class BaseBO {
     /**
      * Crea una nueva instancia de Business Object.
      *
-     * @param deps - Dependencias requeridas inyectadas por el Dispatcher
+     * @param container - Contenedor de dependencias
      */
-    constructor(deps: Partial<BODependencies> = {}) {
-        if (!deps.db || !deps.log || !deps.config || !deps.validator || !deps.i18n) {
-            throw new Error('Missing required dependencies')
-        }
+    constructor(container: IContainer) {
+        this.db = container.resolve<IDatabase>('db')
+        this.log = container.resolve<ILogger>('log')
+        this.config = container.resolve<IConfig>('config')
+        this.i18n = container.resolve<II18nService>('i18n')
 
-        this.db = deps.db
-        this.log = deps.log
-        this.config = deps.config
-        this.validator = deps.validator
-        this.i18n = deps.i18n
-        this.security = deps.security
-        this.session = deps.session
-        this.audit = deps.audit
-        this.email = deps.email
+        // Optional/Lazy dependencies
+        try {
+            this.validator = container.resolve<IValidator>('validator')
+        } catch {}
+        try {
+            this.security = container.resolve<ISecurityService>('security')
+        } catch {}
+        try {
+            this.session = container.resolve<ISessionService>('session')
+        } catch {}
+        try {
+            this.audit = container.resolve<IAuditService>('audit')
+        } catch {}
+        try {
+            this.email = container.resolve<IEmailService>('email')
+        } catch {}
     }
 
     /**
@@ -207,7 +215,7 @@ export abstract class BaseBO {
     }
 
     protected conflict(
-        msg: TxKey | (string & {}) = 'errors.client.invalidParameters'
+        msg: TxKey | (string & {}) = 'errors.client.invalidParameters.msg'
     ): ApiResponse {
         return this.error(msg, 409)
     }
@@ -255,6 +263,9 @@ export abstract class BaseBO {
         data: unknown,
         schema: ZodType<T>
     ): { ok: true; data: T } | { ok: false; alerts: string[]; errors: ValidationError[] } {
+        if (!this.validator) {
+            return { ok: false, alerts: ['Validator service not available'], errors: [] }
+        }
         const result = this.validator.validate<T>(data, schema)
         if (result.valid && result.data) {
             return { ok: true, data: result.data }

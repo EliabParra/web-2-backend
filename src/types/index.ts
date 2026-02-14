@@ -26,6 +26,7 @@ export type {
     LoginRequestBody,
     ToProccessRequestBody,
     SessionUser,
+    WithRequest,
 } from './http.js'
 
 // Tipos de configuración
@@ -53,7 +54,6 @@ export type {
     IEmailService,
     IContainer,
     IAuditService,
-    BODependencies,
     SessionResult,
     TxKey,
     AppMessages,
