@@ -6,6 +6,7 @@ import {
     II18nService,
     AppMessages,
     ISecurityContext,
+    IContainer,
 } from '../../types/index.js'
 import { AuthorizationService } from '../security/AuthorizationService.js'
 
@@ -23,15 +24,20 @@ import { AuthorizationService } from '../security/AuthorizationService.js'
  */
 export class TransactionOrchestrator {
     private readonly validNameRegex = /^[a-zA-Z0-9]+$/
-    constructor(
-        private mapper: ITransactionMapper,
-        private auth: AuthorizationService,
-        private executor: ITransactionExecutor,
-        private log: ILogger,
-        private audit: IAuditService,
-        private i18n: II18nService
-    ) {
-        this.log = log.child({ category: 'TransactionOrchestrator' })
+    private mapper: ITransactionMapper
+    private auth: AuthorizationService
+    private executor: ITransactionExecutor
+    private log: ILogger
+    private audit: IAuditService
+    private i18n: II18nService
+
+    constructor(container: IContainer) {
+        this.mapper = container.resolve<ITransactionMapper>('mapper')
+        this.auth = container.resolve<AuthorizationService>('authorization')
+        this.executor = container.resolve<ITransactionExecutor>('executor')
+        this.log = container.resolve<ILogger>('log').child({ category: 'TransactionOrchestrator' })
+        this.audit = container.resolve<IAuditService>('audit')
+        this.i18n = container.resolve<II18nService>('i18n')
     }
 
     /**

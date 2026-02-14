@@ -1,4 +1,4 @@
-import { IDatabase, ILogger } from '../../types/core.js'
+import { IDatabase, ILogger, IContainer } from '../../types/core.js'
 import {
     SecuritySubsystem,
     SecurityMenu,
@@ -21,6 +21,7 @@ import { SecurityQueries } from './SecurityQueries.js'
  * 4. Providing CRUD operations for structure and assignments (Dual Write).
  */
 export class MenuProvider {
+    private db: IDatabase
     private log: ILogger
     // Structural Maps
     private subsystems = new Map<number, SecuritySubsystem>()
@@ -36,8 +37,9 @@ export class MenuProvider {
     private profileMenus = new Map<number, Set<number>>()
     private profileOptions = new Map<number, Set<number>>()
 
-    constructor(private db: IDatabase, log: ILogger) {
-        this.log = log.child({ category: 'MenuProvider' })
+    constructor(container: IContainer) {
+        this.db = container.resolve<IDatabase>('db')
+        this.log = container.resolve<ILogger>('log').child({ category: 'MenuProvider' })
     }
 
     /**

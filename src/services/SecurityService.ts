@@ -74,24 +74,13 @@ export class SecurityService implements ISecurityService {
         this.i18n = i18n
 
         // Initialize sub-components
-        this.mapper = new TransactionMapper(db, log)
-        this.guard = new PermissionGuard(db, log)
-        this.menuProvider = new MenuProvider(db, log)
+        this.mapper = new TransactionMapper(container)
+        this.guard = new PermissionGuard(container)
+        this.menuProvider = new MenuProvider(container)
 
-        // Construct BO Dependencies package (injecting self as security)
-        // TODO: Eliminar cuando TransactionExecutor migre a IContainer (Fase 5)
-        const boDeps: BODependencies = {
-            db,
-            log,
-            config,
-            audit,
-            session,
-            validator,
-            security: this,
-            i18n,
-            email,
-        }
-        this.executor = new TransactionExecutor(boDeps)
+        // Initialize Executor with Container
+        // Note: TransactionExecutor uses lazy resolution for security to avoid circular dependency
+        this.executor = new TransactionExecutor(container)
     }
 
     /**

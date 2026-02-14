@@ -1,4 +1,17 @@
-import { BODependencies, ITransactionExecutor, ILogger } from '../../types/index.js'
+import {
+    BODependencies,
+    ITransactionExecutor,
+    ILogger,
+    IContainer,
+    IDatabase,
+    IConfig,
+    IAuditService,
+    ISessionService,
+    IValidator,
+    ISecurityService,
+    II18nService,
+    IEmailService,
+} from '../../types/index.js'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -17,14 +30,45 @@ export class TransactionExecutor implements ITransactionExecutor {
     private instances: Map<string, Record<string, unknown>> = new Map()
     private readonly boBasePath: string
     private log: ILogger
+    private deps: BODependencies
 
     /**
      * Crea una instancia de TransactionExecutor.
      *
-     * @param deps - Dependencias de negocio (BODependencies)
+     * @param container - Contenedor de dependencias
      */
-    constructor(private deps: BODependencies) {
-        this.log = deps.log.child({ category: 'TransactionExecutor' })
+    constructor(container: IContainer) {
+        this.deps = {
+            get db() {
+                return container.resolve<IDatabase>('db')
+            },
+            get log() {
+                return container.resolve<ILogger>('log')
+            },
+            get config() {
+                return container.resolve<IConfig>('config')
+            },
+            get audit() {
+                return container.resolve<IAuditService>('audit')
+            },
+            get session() {
+                return container.resolve<ISessionService>('session')
+            },
+            get validator() {
+                return container.resolve<IValidator>('validator')
+            },
+            get security() {
+                return container.resolve<ISecurityService>('security')
+            },
+            get i18n() {
+                return container.resolve<II18nService>('i18n')
+            },
+            get email() {
+                return container.resolve<IEmailService>('email')
+            },
+        }
+
+        this.log = container.resolve<ILogger>('log').child({ category: 'TransactionExecutor' })
         // Resolver ruta base una sola vez y asegurar que es absoluta
         const configPath = this.deps.config.bo.path || '../../BO/'
         // Si el usuario configuró 'BO', lo normalizamos a 'BO/'

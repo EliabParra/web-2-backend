@@ -4,9 +4,12 @@ import path from 'node:path'
 import { TransactionMapper } from '../../../src/core/transaction/TransactionMapper.js'
 import { TransactionExecutor } from '../../../src/core/transaction/TransactionExecutor.js'
 
+import { createMockContainer } from '../../_helpers/mock-container.mjs'
+
 describe('Transaction Core Components', () => {
     describe('TransactionMapper', () => {
         it('load() populates map from DB', async () => {
+            // ... mockDb ...
             const mockDb = {
                 query: async () => ({
                     rows: [
@@ -26,7 +29,8 @@ describe('Transaction Core Components', () => {
                 child: () => mockLog,
             }
 
-            const mapper = new TransactionMapper(mockDb, mockLog)
+            const container = createMockContainer({ db: mockDb, log: mockLog })
+            const mapper = new TransactionMapper(container)
             await mapper.load()
 
             assert.deepEqual(mapper.resolve(100), { objectName: 'Auth', methodName: 'login' })
@@ -51,7 +55,8 @@ describe('Transaction Core Components', () => {
         const cwd = process.cwd()
 
         it('execute() throws security error for Path Traversal', async () => {
-            const executor = new TransactionExecutor({ config: mockConfig, log: mockLog })
+            const container = createMockContainer({ config: mockConfig, log: mockLog })
+            const executor = new TransactionExecutor(container)
 
             await assert.rejects(
                 async () => await executor.execute('../../Secrets', 'steal', {}),
@@ -60,7 +65,8 @@ describe('Transaction Core Components', () => {
         })
 
         it('execute() throws security error if path resolves outside BO root', async () => {
-            const executor = new TransactionExecutor({ config: mockConfig, log: mockLog })
+            const container = createMockContainer({ config: mockConfig, log: mockLog })
+            const executor = new TransactionExecutor(container)
 
             // Even if valid file syntax, if it goes up
             await assert.rejects(

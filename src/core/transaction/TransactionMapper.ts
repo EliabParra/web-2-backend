@@ -1,4 +1,10 @@
-import { IDatabase, ILogger, ITransactionMapper, TransactionRoute } from '../../types/core.js'
+import {
+    IDatabase,
+    ILogger,
+    IContainer,
+    ITransactionMapper,
+    TransactionRoute,
+} from '../../types/core.js'
 
 const TxQueries = {
     loadDataTx: `
@@ -29,19 +35,17 @@ interface TxRow {
  */
 export class TransactionMapper implements ITransactionMapper {
     private txMap: Map<number, TransactionRoute> = new Map()
+    private db: IDatabase
     private log: ILogger
 
     /**
      * Crea una instancia de TransactionMapper.
      *
-     * @param db - Acceso a base de datos para cargar mapeos
-     * @param log - Logger para diagnósticos
+     * @param container - Contenedor IoC
      */
-    constructor(
-        private db: IDatabase,
-        log: ILogger
-    ) {
-        this.log = log.child({ category: 'TransactionMapper' })
+    constructor(container: IContainer) {
+        this.db = container.resolve<IDatabase>('db')
+        this.log = container.resolve<ILogger>('log').child({ category: 'TransactionMapper' })
     }
 
     /**

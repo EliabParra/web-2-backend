@@ -1,4 +1,4 @@
-import { IDatabase, ILogger, IPermissionProvider } from '../../types/core.js'
+import { IDatabase, ILogger, IPermissionProvider, IContainer } from '../../types/core.js'
 import { SecurityQueries } from '../../services/queries/security.js'
 
 /**
@@ -19,12 +19,11 @@ export class PermissionGuard implements IPermissionProvider {
     /**
      * Crea una instancia de PermissionGuard.
      *
-     * @param db - Cliente de base de datos para cargar permisos
-     * @param log - Servicio de logging
+     * @param container - Contenedor de dependencias
      */
-    constructor(db: IDatabase, log: ILogger) {
-        this.db = db
-        this.log = log.child({ category: 'PermissionGuard' })
+    constructor(container: IContainer) {
+        this.db = container.resolve<IDatabase>('db')
+        this.log = container.resolve<ILogger>('log').child({ category: 'PermissionGuard' })
     }
 
     /**

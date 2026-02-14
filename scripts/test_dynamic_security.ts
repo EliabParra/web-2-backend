@@ -31,7 +31,15 @@ const log: any = {
 async function main() {
     console.log('=== PermissionGuard Dual-Write Test ===\n')
 
-    const guard = new PermissionGuard(db, log)
+    const container = {
+        resolve: (key: string) => {
+            if (key === 'db') return db
+            if (key === 'log') return log
+            throw new Error(`Unexpected key: ${key}`)
+        },
+    } as any
+
+    const guard = new PermissionGuard(container)
 
     try {
         // Setup test data

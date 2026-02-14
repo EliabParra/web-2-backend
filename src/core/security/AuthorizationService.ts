@@ -1,4 +1,4 @@
-import { IPermissionProvider, ILogger } from '../../types/core.js'
+import { IPermissionProvider, ILogger, IContainer } from '../../types/core.js'
 
 /**
  * Servicio de Autorización.
@@ -12,19 +12,17 @@ import { IPermissionProvider, ILogger } from '../../types/core.js'
  * @class AuthorizationService
  */
 export class AuthorizationService {
+    private guard: IPermissionProvider
     private log: ILogger
 
     /**
      * Crea una instancia de AuthorizationService.
      *
-     * @param guard - Proveedor de permisos (e.g. PermissionGuard)
-     * @param log - Logger para auditoría de decisiones
+     * @param container - Contenedor de dependencias
      */
-    constructor(
-        private guard: IPermissionProvider,
-        log: ILogger
-    ) {
-        this.log = log.child({ category: 'Authorization' })
+    constructor(container: IContainer) {
+        this.guard = container.resolve<IPermissionProvider>('guard')
+        this.log = container.resolve<ILogger>('log').child({ category: 'Authorization' })
     }
 
     /**

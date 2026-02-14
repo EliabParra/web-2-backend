@@ -156,38 +156,22 @@ export class AppServer {
     async init(): Promise<void> {
         // 0. Inicializar Core Services (New Architecture)
         // Usar la instancia de PermissionGuard iniciada en SecurityService
-        const permissionGuard = (this.security as SecurityService).getGuard()
+        const securityService = this.security as SecurityService
 
-        this.authorization = new AuthorizationService(permissionGuard, this.log)
+        // Register Guard & Mapper (from SecurityService) so other services can resolve them
+        this.container.register('guard', securityService.getGuard())
+        this.container.register('mapper', securityService.getMapper())
 
-        // Nota: SecurityService ya inicia TransactionMapper internamente.
-        // Usamos la instancia existente para evitar doble carga y logs duplicados.
-        const transactionMapper = (this.security as SecurityService).getMapper()
+        // 1. Authorization Service
+        this.authorization = new AuthorizationService(this.container)
+        this.container.register('authorization', this.authorization)
 
-        // BO Dependencies para Executor
-        // TODO: Eliminar cuando TransactionExecutor migre a IContainer (Fase 5)
-        const boDeps = {
-            db: this.db,
-            log: this.log,
-            config: this.config,
-            audit: this.audit,
-            session: this.session,
-            validator: this.validator,
-            security: this.security,
-            i18n: this.i18n,
-            email: this.email,
-        }
+        // 2. Transaction Executor
+        const transactionExecutor = new TransactionExecutor(this.container)
+        this.container.register('executor', transactionExecutor)
 
-        const transactionExecutor = new TransactionExecutor(boDeps)
-
-        this.orchestrator = new TransactionOrchestrator(
-            transactionMapper,
-            this.authorization,
-            transactionExecutor,
-            this.log,
-            this.audit,
-            this.i18n
-        )
+        // 3. Orchestrator
+        this.orchestrator = new TransactionOrchestrator(this.container)
 
         // Registrar orchestrator en el contenedor para que los controllers lo resuelvan
         this.container.register('orchestrator', this.orchestrator)

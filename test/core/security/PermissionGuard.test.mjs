@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { PermissionGuard } from '../../../src/core/security/PermissionGuard.js'
+import { createMockContainer } from '../../_helpers/mock-container.mjs'
 
 test('PermissionGuard Unit Tests', async (t) => {
     await t.test('load() should fetch permissions and populate cache', async () => {
@@ -25,7 +26,8 @@ test('PermissionGuard Unit Tests', async (t) => {
             child: () => mockLog,
         }
 
-        const guard = new PermissionGuard(mockDb, mockLog)
+        const container = createMockContainer({ db: mockDb, log: mockLog })
+        const guard = new PermissionGuard(container)
         await guard.load()
 
         assert.equal(guard.check(1, 'Auth', 'login'), true)
@@ -43,7 +45,8 @@ test('PermissionGuard Unit Tests', async (t) => {
             critical: () => {},
             child: () => mockLog,
         }
-        const guard = new PermissionGuard({}, mockLog)
+        const container = createMockContainer({ db: {}, log: mockLog })
+        const guard = new PermissionGuard(container)
         // Pre-load empty to avoid error if load called
         // In this case we test check directly knowing internal set is empty
         assert.equal(guard.check(null, 'Auth', 'login'), false)
@@ -70,7 +73,8 @@ test('PermissionGuard Unit Tests', async (t) => {
             child: () => mockLog,
         }
 
-        const guard = new PermissionGuard(mockDb, mockLog)
+        const container = createMockContainer({ db: mockDb, log: mockLog })
+        const guard = new PermissionGuard(container)
 
         await assert.rejects(async () => await guard.load(), /DB Connection Failed/)
         assert.ok(loggedError.msg.includes('Fallo al cargar permisos'))
