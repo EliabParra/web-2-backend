@@ -1,10 +1,24 @@
-import type { AppRequest, AppResponse, ISecurityService } from '../../../types/index.js'
+import type {
+    AppRequest,
+    AppResponse,
+    IContainer,
+    ISecurityService,
+    IConfig,
+} from '../../../types/index.js'
 
+/**
+ * Controlador de Probes (Health/Readiness).
+ *
+ * Expone endpoints para Kubernetes/Docker health checks.
+ */
 export class ProbeController {
-    constructor(
-        private security: ISecurityService,
-        private appName: string
-    ) {}
+    private security: ISecurityService
+    private appName: string
+
+    constructor(container: IContainer) {
+        this.security = container.resolve<ISecurityService>('security')
+        this.appName = container.resolve<IConfig>('config').app.name
+    }
 
     /**
      * Liveness Probe (Health Check).

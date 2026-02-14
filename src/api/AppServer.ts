@@ -69,6 +69,9 @@ export class AppServer {
     /** Indica si init() fue ejecutado */
     public initialized: boolean
 
+    // Contenedor IoC
+    private readonly container: IContainer
+
     // Dependencias inyectadas
     private readonly config: IConfig
     private readonly log: ILogger
@@ -97,6 +100,7 @@ export class AppServer {
     private _toProccessRateLimiter: RequestHandler | null = null
 
     constructor(container: IContainer) {
+        this.container = container
         this.config = container.resolve<IConfig>('config')
         this.log = container.resolve<ILogger>('log').child({ category: 'System' })
         this.security = container.resolve<ISecurityService>('security')
@@ -164,9 +168,9 @@ export class AppServer {
         // Nota: SecurityService ya inicia TransactionMapper internamente.
         // Usamos la instancia existente para evitar doble carga y logs duplicados.
         const transactionMapper = (this.security as SecurityService).getMapper()
-        // await transactionMapper.load() // REMOVED: Ya cargado por SecurityService
 
         // BO Dependencies para Executor
+        // TODO: Eliminar cuando TransactionExecutor migre a IContainer (Fase 5)
         const boDeps = {
             db: this.db,
             log: this.log,
@@ -174,7 +178,7 @@ export class AppServer {
             audit: this.audit,
             session: this.session,
             validator: this.validator,
-            security: this.security, // Legacy support
+            security: this.security,
             i18n: this.i18n,
             email: this.email,
         }
@@ -190,25 +194,13 @@ export class AppServer {
             this.i18n
         )
 
-        // 1. Instanciar Controladores
-        this.authController = new AuthController({
-            session: this.session,
-            audit: this.audit,
-            log: this.log,
-            i18n: this.i18n,
-        })
+        // Registrar orchestrator en el contenedor para que los controllers lo resuelvan
+        this.container.register('orchestrator', this.orchestrator)
 
-        this.txController = new TransactionController({
-            orchestrator: this.orchestrator,
-            security: this.security,
-            session: this.session,
-            audit: this.audit,
-            config: this.config,
-            i18n: this.i18n,
-            log: this.log,
-        })
-
-        this.probeController = new ProbeController(this.security, this.config.app.name)
+        // 1. Instanciar Controladores (todos reciben el container)
+        this.authController = new AuthController(this.container)
+        this.txController = new TransactionController(this.container)
+        this.probeController = new ProbeController(this.container)
 
         // 2. Session Middleware
         const { applySessionMiddleware } =
@@ -219,13 +211,15 @@ export class AppServer {
             db: this.db,
         })
 
+        const sessionAdapter = {
+            sessionExists: (req: AppRequest) => this.session.sessionExists(req),
+        }
+
         // 3. Frontend Pre-API (SPA support)
         await registerFrontendHosting(this.app, {
-            session: { sessionExists: (req: AppRequest) => this.session.sessionExists(req) },
+            container: this.container,
+            session: sessionAdapter,
             stage: 'preApi',
-            config: this.config,
-            i18n: this.i18n,
-            log: this.log,
         })
 
         // 4. Rutas API
@@ -233,11 +227,9 @@ export class AppServer {
 
         // 5. Frontend Post-API (Fallbacks)
         await registerFrontendHosting(this.app, {
-            session: { sessionExists: (req: AppRequest) => this.session.sessionExists(req) },
+            container: this.container,
+            session: sessionAdapter,
             stage: 'postApi',
-            config: this.config,
-            i18n: this.i18n,
-            log: this.log,
         })
 
         // 6. Error Handler Final

@@ -1,8 +1,8 @@
 import type { Application } from 'express'
-import type { IConfig, ILogger, II18nService, ISessionService } from '../types/index.js'
+import type { IContainer, IConfig, ISessionService } from '../types/index.js'
 
 function getFrontendMode(config: IConfig) {
-    const raw = String((config as any)?.app?.frontendMode ?? 'pages')
+    const raw = String(config.app.frontendMode)
         .trim()
         .toLowerCase()
     if (raw === 'pages' || raw === 'spa' || raw === 'none') return raw
@@ -10,11 +10,9 @@ function getFrontendMode(config: IConfig) {
 }
 
 type RegisterFrontendHostingArgs = {
+    container: IContainer
     session: Pick<ISessionService, 'sessionExists'>
     stage: 'preApi' | 'postApi'
-    config: IConfig
-    i18n: II18nService
-    log: ILogger
 }
 
 /**
@@ -26,15 +24,16 @@ type RegisterFrontendHostingArgs = {
  */
 export async function registerFrontendHosting(
     app: Application,
-    { session, stage, config, i18n, log }: RegisterFrontendHostingArgs
+    { container, session, stage }: RegisterFrontendHostingArgs
 ) {
+    const config = container.resolve<IConfig>('config')
     const mode = getFrontendMode(config)
 
     if (mode === 'none') return
 
     if (stage === 'preApi' && mode === 'pages') {
         const { registerPagesHosting } = await import('./pages.adapter.js')
-        await registerPagesHosting(app, { session, config, i18n, log })
+        await registerPagesHosting(app, { container, session })
         return
     }
 

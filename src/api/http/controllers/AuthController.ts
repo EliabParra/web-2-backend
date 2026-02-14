@@ -1,4 +1,5 @@
 import {
+    IContainer,
     ISessionService,
     IAuditService,
     II18nService,
@@ -7,18 +8,6 @@ import {
     ILogger,
 } from '../../../types/index.js'
 import { sendInvalidParameters } from '../../../utils/http-responses.js'
-
-/**
- * Dependencias requeridas por el controlador de autenticación.
- */
-interface AuthControllerDeps {
-    session: ISessionService
-    audit: IAuditService
-    log: ILogger
-    i18n: {
-        get(key: string): unknown
-    }
-}
 
 /**
  * Controlador de Autenticación.
@@ -32,16 +21,11 @@ export class AuthController {
     private log: ILogger
     private i18n: II18nService
 
-    constructor(deps: {
-        session: ISessionService
-        audit: IAuditService
-        log: ILogger
-        i18n: II18nService
-    }) {
-        this.session = deps.session
-        this.audit = deps.audit
-        this.log = deps.log.child({ category: 'AuthController' })
-        this.i18n = deps.i18n
+    constructor(container: IContainer) {
+        this.session = container.resolve<ISessionService>('session')
+        this.audit = container.resolve<IAuditService>('audit')
+        this.log = container.resolve<ILogger>('log').child({ category: 'AuthController' })
+        this.i18n = container.resolve<II18nService>('i18n')
     }
 
     /**

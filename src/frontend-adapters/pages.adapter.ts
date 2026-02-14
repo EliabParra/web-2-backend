@@ -1,27 +1,23 @@
 import express, { type Application } from 'express'
-import { II18nService, IConfig, ILogger, ISessionService } from '../types/core.js'
+import { IContainer, ISessionService } from '../types/core.js'
 
 /**
  * Configura el hosting de páginas estáticas o SSR.
  *
  * @param app - Instancia de Express
- * @param options - Dependencias ({ session, config, i18n, log })
+ * @param options - Dependencias ({ container, session })
  */
 export async function registerPagesHosting(
     app: Application,
     {
+        container,
         session,
-        config,
-        i18n,
-        log,
     }: {
+        container: IContainer
         session: Pick<ISessionService, 'sessionExists'>
-        config: IConfig
-        i18n: II18nService
-        log: ILogger
     }
 ) {
     const { buildPagesRouter, pagesPath } = await import('../api/http/router/pages.js')
     app.use(express.static(pagesPath))
-    app.use(buildPagesRouter({ session, config, i18n, log }))
+    app.use(buildPagesRouter({ container, session }))
 }

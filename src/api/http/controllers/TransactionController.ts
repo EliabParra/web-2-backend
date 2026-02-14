@@ -1,7 +1,6 @@
 import {
-    ISecurityService,
+    IContainer,
     ISessionService,
-    IAuditService,
     IConfig,
     II18nService,
     AppRequest,
@@ -10,19 +9,6 @@ import {
 } from '../../../types/index.js'
 import { sendInvalidParameters } from '../../../utils/http-responses.js'
 import { TransactionOrchestrator } from '../../../core/transaction/TransactionOrchestrator.js'
-
-/**
- * Dependencias del controlador de transacciones.
- */
-interface TransactionControllerDeps {
-    orchestrator: TransactionOrchestrator // [NEW] Use Orchestrator
-    security: ISecurityService // Kept for backward compat or other methods if needed, but primary logic moves
-    session: ISessionService
-    audit: IAuditService
-    config: IConfig
-    i18n: II18nService
-    log: ILogger
-}
 
 /**
  * Controlador de Transacciones de Negocio.
@@ -37,12 +23,12 @@ export class TransactionController {
     private i18n: II18nService
     private log: ILogger
 
-    constructor(deps: TransactionControllerDeps) {
-        this.orchestrator = deps.orchestrator
-        this.session = deps.session
-        this.config = deps.config
-        this.i18n = deps.i18n
-        this.log = deps.log.child({ category: 'TransactionController' })
+    constructor(container: IContainer) {
+        this.orchestrator = container.resolve<TransactionOrchestrator>('orchestrator')
+        this.session = container.resolve<ISessionService>('session')
+        this.config = container.resolve<IConfig>('config')
+        this.i18n = container.resolve<II18nService>('i18n')
+        this.log = container.resolve<ILogger>('log').child({ category: 'TransactionController' })
     }
 
     /**

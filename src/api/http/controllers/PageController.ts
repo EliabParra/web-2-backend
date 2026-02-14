@@ -1,15 +1,25 @@
 import path from 'path'
 import { pagesPath } from '../router/routes.js'
-import type { AppRequest, AppResponse, ILogger, II18nService } from '../../../types/index.js'
+import type {
+    AppRequest,
+    AppResponse,
+    IContainer,
+    ILogger,
+    II18nService,
+} from '../../../types/index.js'
 
+/**
+ * Controlador de Páginas Estáticas.
+ *
+ * Sirve archivos HTML directamente desde el directorio de páginas.
+ */
 export class PageController {
     private log: ILogger
+    private i18n: II18nService
 
-    constructor(
-        log: ILogger,
-        private i18n: II18nService
-    ) {
-        this.log = log.child({ category: 'PageController' })
+    constructor(container: IContainer) {
+        this.log = container.resolve<ILogger>('log').child({ category: 'PageController' })
+        this.i18n = container.resolve<II18nService>('i18n')
     }
 
     /**

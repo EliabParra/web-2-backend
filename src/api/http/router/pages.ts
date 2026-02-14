@@ -4,6 +4,7 @@ import { routes, pagesPath } from './routes.js'
 import { createAuthCheckMiddleware } from '../middleware/auth-check.js'
 import { PageController } from '../controllers/PageController.js'
 import type {
+    IContainer,
     IConfig,
     ILogger,
     II18nService,
@@ -20,10 +21,8 @@ interface PageRoute {
 }
 
 type PagesRouterArgs = {
+    container: IContainer
     session?: Pick<ISessionService, 'sessionExists'>
-    config: IConfig
-    i18n: II18nService
-    log: ILogger
     routes?: PageRoute[]
 }
 
@@ -31,19 +30,13 @@ type PagesRouterArgs = {
  * Construye el router de páginas (SSR/Static).
  * Mapea definiciones de rutas a archivos HTML y aplica protección de sesión si es necesario.
  *
- * @param args - Configuración ({ session, config, i18n, log, routes })
+ * @param args - Configuración ({ container, session, routes })
  * @returns Express Router
  */
-export function buildPagesRouter({
-    session,
-    config,
-    i18n,
-    log,
-    routes: providedRoutes,
-}: PagesRouterArgs) {
+export function buildPagesRouter({ container, session, routes: providedRoutes }: PagesRouterArgs) {
     const activeRoutes = providedRoutes || routes
     const router = express.Router()
-    const pageController = new PageController(log, i18n)
+    const pageController = new PageController(container)
 
     const requireAuth = session
         ? createAuthCheckMiddleware(session)
