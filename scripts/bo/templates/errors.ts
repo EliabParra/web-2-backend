@@ -1,19 +1,9 @@
 /**
- * Generador de plantillas para archivos Errors.ts de BO
- * Contiene clases de error personalizadas y utilidades de manejo de errores
+ * Genera el archivo Errors
  */
-
-/**
- * Genera el contenido del archivo Errors.ts para un Business Object
- *
- * @param objectName - Nombre del objeto (ej: "Product")
- * @param _methods - Lista de métodos del BO (no usado actualmente)
- * @returns Contenido del archivo Errors.ts generado
- */
-export function templateErrors(objectName: string, _methods: string[]) {
+export function templateErrors(objectName: string) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
-    const lowerName = cleanName.toLowerCase()
     const upperName = cleanName.toUpperCase()
 
     return `/**

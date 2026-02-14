@@ -28,47 +28,40 @@ export const AuthPreset = {
     // Plantillas
     // ============================================================
 
-    bo: () => `import { BaseBO, BODependencies, ApiResponse } from '../../src/core/business-objects/index.js'
-import { AuthService, AuthMessages, createAuthSchemas, Schemas } from './AuthModule.js'
+    bo: () => `import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
+import { AuthService, AuthMessages, AuthSchemas, Inputs, registerAuth } from './AuthModule.js'
 
 export class AuthBO extends BaseBO {
     private service: AuthService
 
-    constructor(deps: BODependencies) {
-        super(deps)
-        this.service = new AuthService(deps.log, deps.config, deps.db, deps.i18n, deps.email)
+    constructor(container: IContainer) {
+        super(container)
+        registerAuth(container)
+        this.service = container.resolve<AuthService>('AuthService')
     }
 
     private get authMessages() {
         return this.i18n.use(AuthMessages)
     }
 
-    private get authSchemas() {
-        return createAuthSchemas(this.authMessages)
-    }
-
-    async register(params: Schemas.RegisterInput): Promise<ApiResponse> {
-        return this.exec<Schemas.RegisterInput, void>(params, this.authSchemas.register, async (data) => {
+    async register(params: Inputs.RegisterInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RegisterInput, void>(params, AuthSchemas.register, async (data) => {
             await this.service.register(data)
             return this.created(null, this.authMessages.registerSuccess)
         })
     }
 
-    async verifyEmail(params: Schemas.VerifyEmailInput): Promise<ApiResponse> {
-        return this.exec<Schemas.VerifyEmailInput, void>(
-            params,
-            this.authSchemas.verifyEmail,
-            async (data) => {
-                await this.service.verifyEmail(data.token)
-                return this.success(null, this.authMessages.emailVerified)
-            }
-        )
+    async verifyEmail(params: Inputs.VerifyEmailInput): Promise<ApiResponse> {
+        return this.exec<Inputs.VerifyEmailInput, void>(params, AuthSchemas.verifyEmail, async (data) => {
+            await this.service.verifyEmail(data.token)
+            return this.success(null, this.authMessages.emailVerified)
+        })
     }
 
-    async requestEmailVerification(params: Schemas.RequestEmailVerificationInput): Promise<ApiResponse> {
-        return this.exec<Schemas.RequestEmailVerificationInput, void>(
+    async requestEmailVerification(params: Inputs.RequestEmailVerificationInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RequestEmailVerificationInput, void>(
             params,
-            this.authSchemas.requestEmailVerification,
+            AuthSchemas.requestEmailVerification,
             async (data) => {
                 await this.service.requestEmailVerification(data.identifier)
                 return this.success(
@@ -81,10 +74,10 @@ export class AuthBO extends BaseBO {
         )
     }
 
-    async requestPasswordReset(params: Schemas.RequestPasswordResetInput): Promise<ApiResponse> {
-        return this.exec<Schemas.RequestPasswordResetInput, void>(
+    async requestPasswordReset(params: Inputs.RequestPasswordResetInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RequestPasswordResetInput, void>(
             params,
-            this.authSchemas.requestResetPassword,
+            AuthSchemas.requestResetPassword,
             async (data) => {
                 await this.service.requestPasswordReset(data.email)
                 return this.success(null, this.authMessages.passwordResetSent)
@@ -92,10 +85,10 @@ export class AuthBO extends BaseBO {
         )
     }
 
-    async verifyPasswordReset(params: Schemas.VerifyPasswordResetInput): Promise<ApiResponse> {
-        return this.exec<Schemas.VerifyPasswordResetInput, void>(
+    async verifyPasswordReset(params: Inputs.VerifyPasswordResetInput): Promise<ApiResponse> {
+        return this.exec<Inputs.VerifyPasswordResetInput, void>(
             params,
-            this.authSchemas.verifyPasswordReset,
+            AuthSchemas.verifyPasswordReset,
             async (data) => {
                 // Just verification of token existence/validity
                 await this.service.verifyPasswordResetToken(data.token)
@@ -104,10 +97,10 @@ export class AuthBO extends BaseBO {
         )
     }
 
-    async resetPassword(params: Schemas.ResetPasswordConfirmInput): Promise<ApiResponse> {
-        return this.exec<Schemas.ResetPasswordConfirmInput, void>(
+    async resetPassword(params: Inputs.ResetPasswordConfirmInput): Promise<ApiResponse> {
+        return this.exec<Inputs.ResetPasswordConfirmInput, void>(
             params,
-            this.authSchemas.resetPasswordConfirm,
+            AuthSchemas.resetPasswordConfirm,
             async (data) => {
                 await this.service.resetPassword(data.token, data.newPassword)
                 return this.success(null, this.authMessages.passwordChanged)
@@ -118,221 +111,249 @@ export class AuthBO extends BaseBO {
 `,
 
     service:
-        () => `import { BOService, IConfig, IDatabase, II18nService, IEmailService } from '../../src/core/business-objects/index.js'
-    import { AuthRepository, AuthMessages, Errors, Types } from './AuthModule.js'
-    import { createHash, randomBytes } from 'node:crypto'
-    import bcrypt from 'bcryptjs'
+        () => `import { BOService, II18nService, IEmailService, IContainer } from '../../src/core/business-objects/index.js'
+import { AuthRepository, AuthMessages, Errors, Types } from './AuthModule.js'
+import { createHash, randomBytes } from 'node:crypto'
+import bcrypt from 'bcryptjs'
 
-    function sha256Hex(value: string): string {
-        return createHash('sha256').update(value, 'utf8').digest('hex')
+function sha256Hex(value: string): string {
+    return createHash('sha256').update(value, 'utf8').digest('hex')
+}
+
+export class AuthService extends BOService implements Types.IAuthService {
+    private repo: AuthRepository
+    private i18n: II18nService
+    private email: IEmailService
+
+    constructor(container: IContainer) {
+        super(container)
+        this.repo = container.resolve<AuthRepository>('AuthRepository')
+        this.i18n = container.resolve<II18nService>('i18n')
+        this.email = container.resolve<IEmailService>('email')
     }
 
-    export class AuthService extends BOService implements Types.IAuthService {
-        private repo: AuthRepository
-        private i18n: II18nService
-        private email: IEmailService
+    private get messages() {
+        return this.i18n.use(AuthMessages)
+    }
 
-        constructor(log: any, config: IConfig, db: IDatabase, i18n: II18nService, email: IEmailService) {
-            super(log, config, db)
-            this.repo = new AuthRepository(db)
-            this.i18n = i18n
-            this.email = email
+    async register(data: Types.RegisterData): Promise<Types.User> {
+        this.log.trace('Creating new user: ' + data.email)
+
+        const exists = await this.repo.getUserBaseByEmail(data.email)
+        if (exists) {
+            throw new Errors.AuthEmailExistsError(this.messages.emailAlreadyExists, data.email)
         }
 
-        private get messages() {
-            return this.i18n.use(AuthMessages)
+        const hash = await bcrypt.hash(data.password, 10)
+
+        const user = await this.repo.insertUser({
+            username: data.name ?? null,
+            user_email: data.email,
+            user_password: hash,
+        })
+
+        const sessionProfileId = Number(this.config.auth.sessionProfileId ?? 1)
+        await this.repo.upsertUserProfile({
+            userId: user.user_id,
+            profileId: sessionProfileId,
+        })
+
+        if (this.config.auth.requireEmailVerification) {
+            await this.sendVerificationEmail(user.user_id, data.email)
         }
 
-        async register(data: Types.RegisterData): Promise<Types.User> {
-            this.log.info('Creating new user: ' + data.email)
+        return this.mapUser({
+            ...user,
+            user_email: data.email,
+            username: data.name ?? '',
+            user_password: hash,
+            user_email_verified_at: null,
+            user_is_active: true,
+            profile_id: sessionProfileId,
+            user_created_at: new Date(),
+            user_updated_at: new Date(),
+        })
+    }
 
-            const exists = await this.repo.getUserBaseByEmail(data.email)
-            if (exists) {
-                throw new Errors.AuthEmailExistsError(this.messages.emailAlreadyExists, data.email)
-            }
-
-            const hash = await bcrypt.hash(data.password, 10)
-
-            const user = await this.repo.insertUser({
-                username: data.name ?? null,
-                email: data.email,
-                passwordHash: hash,
-            })
-
-            const sessionProfileId = Number(this.config.auth.sessionProfileId ?? 1)
-            await this.repo.upsertUserProfile({
-                userId: user.id,
-                profileId: sessionProfileId,
-            })
-
-            if (this.config.auth.requireEmailVerification) {
-                await this.sendVerificationEmail(user.id, data.email)
-            }
-
-            return this.mapUser({
-                ...user,
-                email: data.email,
-                username: data.name ?? '',
-                password_hash: hash,
-                email_verified_at: null,
-                is_active: true,
-                profile_id: sessionProfileId,
-            })
+    async requestEmailVerification(identifier: string): Promise<void> {
+        let user: Types.UserRow | null = null
+        if (identifier.includes('@')) {
+            user = await this.repo.getUserByEmail(identifier)
+        } else {
+            user = await this.repo.getUserByUsername(identifier)
         }
 
-        async requestEmailVerification(identifier: string): Promise<void> {
-            let user: Types.UserRow | null = null
-            if (identifier.includes('@')) {
-                user = await this.repo.getUserByEmail(identifier)
-            } else {
-                user = await this.repo.getUserByUsername(identifier)
-            }
-
-            if (user && user.email) {
-                await this.sendVerificationEmail(user.id, user.email)
-            }
-        }
-
-        async verifyEmail(token: string): Promise<void> {
-            const purpose = String(this.config.auth.emailVerificationPurpose ?? 'email_verification')
-            const tokenHash = sha256Hex(token)
-
-            const otp = await this.repo.getActiveOneTimeCodeForPurposeAndTokenHash({
-                purpose,
-                tokenHash,
-            })
-
-            if (!otp) throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
-
-            await this.repo.setUserEmailVerified(otp.user_id)
-            await this.repo.consumeOneTimeCode(otp.id)
-        }
-
-        async requestPasswordReset(email: string): Promise<void> {
-            const user = await this.repo.getUserByEmail(email)
-            if (!user || !user.email) return
-
-            const purpose = String(this.config.auth.passwordResetPurpose ?? 'password_reset')
-            const expiresSeconds = 900
-
-            await this.repo.invalidateActivePasswordResetsForUser(user.id)
-
-            const token = randomBytes(32).toString('hex')
-            const tokenHash = sha256Hex(token)
-
-            await this.repo.insertPasswordReset({
-                userId: user.id,
-                tokenHash,
-                sentTo: user.email,
-                expiresSeconds,
-            })
-
-            await this.email.sendTemplate({
-                to: user.email,
-                subject: \`\${this.config.app.name}: Password Reset\`,
-                templatePath: 'auth/password-reset.html',
-                data: {
-                    appName: this.config.app.name,
-                    code: '000000', // Placeholder as per original
-                    token,
-                },
-            })
-        }
-
-        async resetPassword(token: string, newPassword: string): Promise<void> {
-            const tokenHash = sha256Hex(token)
-            const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
-
-            if (!reset || reset.used_at) throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
-
-            const hash = await bcrypt.hash(newPassword, 10)
-            await this.repo.updateUserPassword({ userId: reset.user_id, passwordHash: hash })
-            await this.repo.markPasswordResetUsed(reset.id)
-        }
-
-        async verifyPasswordResetToken(token: string): Promise<void> {
-            const tokenHash = sha256Hex(token)
-            const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
-            if (!reset || reset.used_at) throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
-        }
-
-        private async sendVerificationEmail(userId: number, emailAddr: string) {
-            const purpose = String(this.config.auth.emailVerificationPurpose ?? 'email_verification')
-            const expiresSeconds = 900
-
-            const token = randomBytes(32).toString('hex')
-            const tokenHash = sha256Hex(token)
-
-            await this.repo.insertOneTimeCode({
-                userId,
-                purpose,
-                codeHash: tokenHash,
-                expiresSeconds,
-                meta: { tokenHash },
-            })
-
-            await this.email.sendTemplate({
-                to: emailAddr,
-                subject: \`\${this.config.app.name}: Verify your email\`,
-                templatePath: 'auth/email-verification.html',
-                data: {
-                    appName: this.config.app.name,
-                    code: '000000', // Placeholder
-                    token,
-                },
-            })
-        }
-
-        private mapUser(row: Types.UserRow): Types.User {
-            return {
-                userId: row.id,
-                email: row.email!,
-                name: row.username ?? undefined,
-                passwordHash: row.password_hash ?? '',
-                isEmailVerified: !!row.email_verified_at,
-                isActive: !!row.is_active,
-                createdAt: new Date(),
-            }
+        if (user && user.user_email) {
+            await this.sendVerificationEmail(user.user_id, user.user_email)
         }
     }
 
+    async verifyEmail(token: string): Promise<void> {
+        const purpose = String(this.config.auth.emailVerificationPurpose ?? 'email_verification')
+        const tokenHash = sha256Hex(token)
+
+        const otp = await this.repo.getActiveOneTimeCodeForPurposeAndTokenHash({
+            purpose,
+            tokenHash,
+        })
+
+        if (!otp) throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
+
+        await this.repo.setUserEmailVerified(otp.user_id)
+        await this.repo.consumeOneTimeCode(otp.id)
+    }
+
+    async requestPasswordReset(email: string): Promise<void> {
+        const user = await this.repo.getUserByEmail(email)
+        if (!user || !user.user_email) return
+
+        const expiresSeconds = 900
+
+        await this.repo.invalidateActivePasswordResetsForUser(user.user_id)
+
+        const token = randomBytes(32).toString('hex')
+        const tokenHash = sha256Hex(token)
+
+        await this.repo.insertPasswordReset({
+            userId: user.user_id,
+            tokenHash,
+            sentTo: user.user_email,
+            expiresSeconds,
+        })
+
+        await this.email.sendTemplate({
+            to: user.user_email,
+            subject: \`\${this.config.app.name}: Password Reset\`,
+            templatePath: 'auth/password-reset.html',
+            data: {
+                year: new Date().getFullYear(),
+                frontendUrl: this.config.app.frontendUrl,
+                appName: this.config.app.name,
+                token,
+            },
+        })
+    }
+
+    async resetPassword(token: string, newPassword: string): Promise<void> {
+        const tokenHash = sha256Hex(token)
+        const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
+
+        if (!reset || reset.used_at)
+            throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
+
+        const hash = await bcrypt.hash(newPassword, 10)
+        await this.repo.updateUserPassword({ userId: reset.user_id, passwordHash: hash })
+        await this.repo.markPasswordResetUsed(reset.id)
+    }
+
+    async verifyPasswordResetToken(token: string): Promise<void> {
+        const tokenHash = sha256Hex(token)
+        const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
+        if (!reset || reset.used_at)
+            throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
+    }
+
+    private async sendVerificationEmail(userId: number, emailAddr: string) {
+        const purpose = String(this.config.auth.emailVerificationPurpose ?? 'email_verification')
+        const expiresSeconds = 900
+
+        const token = randomBytes(32).toString('hex')
+        const tokenHash = sha256Hex(token)
+
+        await this.repo.insertOneTimeCode({
+            userId,
+            purpose,
+            codeHash: tokenHash,
+            expiresSeconds,
+            meta: { tokenHash },
+        })
+
+        await this.email.sendTemplate({
+            to: emailAddr,
+            subject: \`\${this.config.app.name}: Verify your email\`,
+            templatePath: 'auth/email-verification.html',
+            data: {
+                appName: this.config.app.name,
+                code: '000000', // Placeholder
+                token,
+            },
+        })
+    }
+
+    private mapUser(row: Types.UserRow): Types.User {
+        return {
+            user_id: row.user_id,
+            user_email: row.user_email,
+            username: row.username ?? undefined,
+            user_password: row.user_password,
+            user_email_verified_at: row.user_email_verified_at
+                ? new Date(row.user_email_verified_at)
+                : null,
+            user_is_active: !!row.user_is_active,
+            user_created_at: row.user_created_at ? new Date(row.user_created_at) : new Date(),
+            user_updated_at: row.user_updated_at ? new Date(row.user_updated_at) : undefined,
+            user_last_login_at: row.user_last_login_at ? new Date(row.user_last_login_at) : null,
+            user_solvent: row.user_solvent,
+            person_id: row.person_id,
+        }
+    }
+}
 `,
 
     queries: () => `export const AuthQueries = {
     // --- Users
     getUserByEmail: \`
-        SELECT u.id, u.username, u.email, u.email_verified_at, u.password_hash, p.profile_id
+        SELECT u.user_id as id, u.username, u.user_email as email, u.user_email_verified_at as email_verified_at, u.user_password as password_hash, p.profile_id
         FROM security.users u
-        LEFT JOIN security.user_profiles p ON u.id = p.user_id
-        WHERE u.email = $1
+        LEFT JOIN security.user_profile p ON u.user_id = p.user_id
+        WHERE u.user_email = $1
+    \`,
+    // NOTE: Aliasing above to maintain temporary compatibility or should I return raw new names?
+    // AuthRepository.ts will be refactored to read new names.
+    // AuthTypes.ts UserRow uses new names.
+    // So I should NOT use aliases like 'as id'. I should return 'user_id'.
+
+    getUserByEmailRaw: \`
+        SELECT u.user_id, u.username, u.user_email, u.user_email_verified_at, u.user_password, p.profile_id, u.user_is_active, u.user_created_at, u.user_last_login_at, u.user_solvent, u.person_id
+        FROM security.users u
+        LEFT JOIN security.user_profile p ON u.user_id = p.user_id
+        WHERE u.user_email = $1
     \`,
 
-    getUserByUsername: \`SELECT id, username, email, password_hash, email_verified_at FROM security.users WHERE username = $1\`,
+    getUserByUsername: \`
+        SELECT user_id, username, user_email, user_password, user_email_verified_at 
+        FROM security.users 
+        WHERE username = $1
+    \`,
 
-    getUserBaseByEmail: \`SELECT id, username, email, password_hash, email_verified_at FROM security.users WHERE email = $1\`,
+    getUserBaseByEmail: \`
+        SELECT user_id, username, user_email, user_password, user_email_verified_at 
+        FROM security.users 
+        WHERE user_email = $1
+    \`,
 
     insertUser: \`
-        INSERT INTO security.users (username, email, password_hash)
+        INSERT INTO security.users (username, user_email, user_password)
         VALUES ($1, $2, $3)
-        RETURNING id
+        RETURNING user_id
     \`,
 
     upsertUserProfile: \`
-        INSERT INTO security.user_profiles (user_id, profile_id, assigned_at)
+        INSERT INTO security.user_profile (user_id, profile_id, assigned_at)
         VALUES ($1, $2, NOW())
         ON CONFLICT (user_id, profile_id) DO UPDATE SET assigned_at = NOW()
     \`,
 
     setUserEmailVerified: \`
         UPDATE security.users
-        SET email_verified_at = NOW()
-        WHERE id = $1
+        SET user_email_verified_at = NOW()
+        WHERE user_id = $1
     \`,
 
     updateUserPassword: \`
         UPDATE security.users
-        SET password_hash = $2
-        WHERE id = $1
+        SET user_password = $2
+        WHERE user_id = $1
     \`,
 
     // --- Password reset
@@ -374,21 +395,22 @@ export class AuthBO extends BaseBO {
         WHERE id = $1
     \`,
 
+    // Fix query usage of jsonb operator
     getActiveOneTimeCodeForPurposeAndTokenHash: \`
         SELECT * FROM security.one_time_codes
-        WHERE purpose = $1 AND (meta->>'tokenHash') = $2
-        AND consumed_at IS NULL AND expires_at > NOW()
+        WHERE purpose = $1 
+        AND (meta->>'tokenHash') = $2
+        AND consumed_at IS NULL 
+        AND expires_at > NOW()
         ORDER BY created_at DESC LIMIT 1
     \`,
 } as const
 
 export type AuthQueryKey = keyof typeof AuthQueries
-
 `,
 
     repository: () => `import { IDatabase } from '../../src/core/business-objects/index.js'
 import { AuthQueries, Types } from './AuthModule.js'
-
 
 /*
 Auth Repository
@@ -401,7 +423,7 @@ export class AuthRepository implements Types.IAuthRepository {
 
     // --- Users
     async getUserByEmail(email: string): Promise<Types.UserRow | null> {
-        const r = await this.db.query<Types.UserRow>(AuthQueries.getUserByEmail, [email])
+        const r = await this.db.query<Types.UserRow>(AuthQueries.getUserByEmailRaw, [email])
         return r.rows[0]
     }
 
@@ -418,30 +440,27 @@ export class AuthRepository implements Types.IAuthRepository {
     async insertUser(params: Types.InsertUserParams): Promise<Types.UserId> {
         const r = await this.db.query<Types.UserId>(AuthQueries.insertUser, [
             params.username,
-            params.email,
-            params.passwordHash,
+            params.user_email,
+            params.user_password,
         ])
         const row = r.rows[0]
-        if (!row.id) throw new Error('insertUser did not return id')
+        if (!row.user_id) throw new Error('insertUser did not return user_id')
         return row
     }
 
     async upsertUserProfile(params: Types.UserWithProfileId): Promise<boolean> {
-        await this.db.query<Types.UserId>(AuthQueries.upsertUserProfile, [
-            params.userId,
-            params.profileId,
-        ])
+        await this.db.query(AuthQueries.upsertUserProfile, [params.userId, params.profileId])
         return true
     }
 
     async setUserEmailVerified(userId: number): Promise<boolean> {
-        await this.db.query<Types.UserId>(AuthQueries.setUserEmailVerified, [userId])
+        await this.db.query(AuthQueries.setUserEmailVerified, [userId])
         return true
     }
 
     // --- Password reset
     async insertPasswordReset(params: Types.PasswordReset): Promise<void> {
-        await this.db.query<Types.UserId>(AuthQueries.insertPasswordReset, [
+        await this.db.query(AuthQueries.insertPasswordReset, [
             params.userId,
             params.tokenHash,
             String(params.expiresSeconds),
@@ -452,25 +471,26 @@ export class AuthRepository implements Types.IAuthRepository {
     }
 
     async invalidateActivePasswordResetsForUser(userId: number): Promise<boolean> {
-        await this.db.query<Types.UserId>(AuthQueries.invalidateActivePasswordResetsForUser, [userId])
+        await this.db.query(AuthQueries.invalidateActivePasswordResetsForUser, [userId])
         return true
     }
 
     async getPasswordResetByTokenHash(tokenHash: string): Promise<Types.PasswordResetRow | null> {
-        const r = await this.db.query<Types.PasswordResetRow>(AuthQueries.getPasswordResetByTokenHash, [
-            tokenHash,
-        ])
+        const r = await this.db.query<Types.PasswordResetRow>(
+            AuthQueries.getPasswordResetByTokenHash,
+            [tokenHash]
+        )
         return r.rows[0]
     }
 
     async markPasswordResetUsed(resetId: number): Promise<boolean> {
-        await this.db.query<Types.UserId>(AuthQueries.markPasswordResetUsed, [resetId])
+        await this.db.query(AuthQueries.markPasswordResetUsed, [resetId])
         return true
     }
 
     // --- One-time codes
     async insertOneTimeCode(params: Types.OneTimeCode): Promise<boolean> {
-        await this.db.query<Types.UserId>(AuthQueries.insertOneTimeCode, [
+        await this.db.query(AuthQueries.insertOneTimeCode, [
             params.userId,
             params.purpose,
             params.codeHash,
@@ -481,7 +501,7 @@ export class AuthRepository implements Types.IAuthRepository {
     }
 
     async consumeOneTimeCode(codeId: number): Promise<boolean> {
-        await this.db.query<Types.UserId>(AuthQueries.consumeOneTimeCode, [codeId])
+        await this.db.query(AuthQueries.consumeOneTimeCode, [codeId])
         return true
     }
 
@@ -496,10 +516,7 @@ export class AuthRepository implements Types.IAuthRepository {
     }
 
     async updateUserPassword(params: Types.UserPasswordResetParams): Promise<boolean> {
-        await this.db.query<Types.UserId>(AuthQueries.updateUserPassword, [
-            params.userId,
-            params.passwordHash,
-        ])
+        await this.db.query(AuthQueries.updateUserPassword, [params.userId, params.passwordHash])
         return true
     }
 }
@@ -568,18 +585,22 @@ export type RequestPasswordResetInput = z.infer<typeof AuthSchemas.requestResetP
 export type VerifyPasswordResetInput = z.infer<typeof AuthSchemas.verifyPasswordReset>
 export type ResetPasswordConfirmInput = z.infer<typeof AuthSchemas.resetPasswordConfirm>
 export type ChangePasswordInput = z.infer<typeof AuthSchemas.changePassword>
-
 `,
 
     types: () => `export namespace Auth {
     export type UserRow = {
-        id: number
+        user_id: number
         username: string
-        email: string
-        password_hash: string
-        email_verified_at?: string | Date | null
-        is_active?: boolean
-        profile_id?: number | null
+        user_email: string
+        user_password: string
+        user_email_verified_at?: string | Date | null
+        user_is_active?: boolean
+        profile_id: number // FK remains profile_id
+        user_created_at?: string | Date
+        user_updated_at?: string | Date
+        user_last_login_at?: string | Date | null
+        user_solvent?: boolean
+        person_id?: number | null
     }
 
     export type OneTimeCodeRow = {
@@ -593,7 +614,7 @@ export type ChangePasswordInput = z.infer<typeof AuthSchemas.changePassword>
     }
 
     export type UserId = {
-        id: number // Was user_id
+        user_id: number // Renamed from id
     }
 
     export type UserWithProfileId = {
@@ -603,8 +624,8 @@ export type ChangePasswordInput = z.infer<typeof AuthSchemas.changePassword>
 
     export type InsertUserParams = {
         username: string | null
-        email: string | null
-        passwordHash: string
+        user_email: string | null
+        user_password: string
     }
 
     export type PasswordResetRow = {
@@ -640,22 +661,28 @@ export type ChangePasswordInput = z.infer<typeof AuthSchemas.changePassword>
         tokenHash: string
     }
 
+    // User Interface matching DB schema as requested
     export interface User {
-        userId: number
-        email: string
-        name?: string
-        passwordHash: string
-        isEmailVerified: boolean
-        isActive: boolean
-        createdAt: Date
-        updatedAt?: Date
+        user_id: number
+        user_email: string
+        username?: string
+        user_password?: string
+        user_is_active: boolean
+        user_created_at: Date
+        user_updated_at?: Date
+        user_last_login_at?: Date | null
+        user_email_verified_at?: Date | null
+
+        // Additional business fields
+        user_solvent?: boolean
+        person_id?: number | null
     }
 
     export interface UserSummary {
-        userId: number
-        email: string
-        name?: string
-        isActive: boolean
+        user_id: number
+        user_email: string
+        name?: string // username
+        user_is_active: boolean
     }
 
     export interface Session {
@@ -748,7 +775,6 @@ export type LoginResult = Auth.LoginResult
 export type RegisterResult = Auth.RegisterResult
 export type IAuthRepository = Auth.Repository
 export type IAuthService = Auth.Service
-
 `,
 
     messages: () => `export const AuthMessages = {
@@ -810,96 +836,109 @@ export type IAuthService = Auth.Service
 `,
 
     errors: () => `import { BOError, TxKey } from '../../src/core/business-objects/index.js'
-    import { AuthMessages } from './AuthModule.js'
+import { AuthMessages } from './AuthModule.js'
 
-    const defaultMessages = AuthMessages.es
+const defaultMessages = AuthMessages.es
 
-    export class AuthError extends BOError {
-        constructor(
-            message: TxKey | (string & {}),
-            tag: string,
-            code: number = 500,
-            details?: Record<string, unknown>
-        ) {
-            super(message, tag, code, details)
-            this.name = 'AuthError'
-        }
+export class AuthError extends BOError {
+    constructor(
+        message: TxKey | (string & {}),
+        tag: string,
+        code: number = 500,
+        details?: Record<string, unknown>
+    ) {
+        super(message, tag, code, details)
+        this.name = 'AuthError'
     }
+}
 
-    export class AuthNotFoundError extends AuthError {
-        constructor(message?: string) {
-            super(message ?? defaultMessages.userNotFound, 'AUTH_USER_NOT_FOUND', 404)
-            this.name = 'AuthNotFoundError'
-        }
+export class AuthNotFoundError extends AuthError {
+    constructor(message?: string) {
+        super(message ?? defaultMessages.userNotFound, 'AUTH_USER_NOT_FOUND', 404)
+        this.name = 'AuthNotFoundError'
     }
+}
 
-    export class AuthInvalidCredentialsError extends AuthError {
-        constructor(message?: string) {
-            super(message ?? defaultMessages.invalidCredentials, 'AUTH_INVALID_CREDENTIALS', 401)
-            this.name = 'AuthInvalidCredentialsError'
-        }
+export class AuthInvalidCredentialsError extends AuthError {
+    constructor(message?: string) {
+        super(message ?? defaultMessages.invalidCredentials, 'AUTH_INVALID_CREDENTIALS', 401)
+        this.name = 'AuthInvalidCredentialsError'
     }
+}
 
-    export class AuthEmailNotVerifiedError extends AuthError {
-        constructor(message?: string) {
-            super(message ?? defaultMessages.emailNotVerified, 'AUTH_EMAIL_NOT_VERIFIED', 403)
-            this.name = 'AuthEmailNotVerifiedError'
-        }
+export class AuthEmailNotVerifiedError extends AuthError {
+    constructor(message?: string) {
+        super(message ?? defaultMessages.emailNotVerified, 'AUTH_EMAIL_NOT_VERIFIED', 403)
+        this.name = 'AuthEmailNotVerifiedError'
     }
+}
 
-    export class AuthSessionExpiredError extends AuthError {
-        constructor(message?: string) {
-            super(message ?? defaultMessages.sessionExpired, 'AUTH_SESSION_EXPIRED', 401)
-            this.name = 'AuthSessionExpiredError'
-        }
+export class AuthSessionExpiredError extends AuthError {
+    constructor(message?: string) {
+        super(message ?? defaultMessages.sessionExpired, 'AUTH_SESSION_EXPIRED', 401)
+        this.name = 'AuthSessionExpiredError'
     }
+}
 
-    export class AuthTokenInvalidError extends AuthError {
-        constructor(message?: string) {
-            super(message ?? defaultMessages.tokenInvalid, 'AUTH_TOKEN_INVALID', 400)
-            this.name = 'AuthTokenInvalidError'
-        }
+export class AuthTokenInvalidError extends AuthError {
+    constructor(message?: string) {
+        super(message ?? defaultMessages.tokenInvalid, 'AUTH_TOKEN_INVALID', 400)
+        this.name = 'AuthTokenInvalidError'
     }
+}
 
-    export class AuthEmailExistsError extends AuthError {
-        constructor(message?: string, email?: string) {
-            super(message ?? defaultMessages.emailAlreadyExists, 'AUTH_EMAIL_EXISTS', 409, { email })
-            this.name = 'AuthEmailExistsError'
-        }
+export class AuthEmailExistsError extends AuthError {
+    constructor(message?: string, email?: string) {
+        super(message ?? defaultMessages.emailAlreadyExists, 'AUTH_EMAIL_EXISTS', 409, { email })
+        this.name = 'AuthEmailExistsError'
     }
+}
 
-    export class AuthAccountDisabledError extends AuthError {
-        constructor(message?: string) {
-            super(message ?? defaultMessages.accountDisabled, 'AUTH_ACCOUNT_DISABLED', 403)
-            this.name = 'AuthAccountDisabledError'
-        }
+export class AuthAccountDisabledError extends AuthError {
+    constructor(message?: string) {
+        super(message ?? defaultMessages.accountDisabled, 'AUTH_ACCOUNT_DISABLED', 403)
+        this.name = 'AuthAccountDisabledError'
     }
+}
 
-    export function handleAuthError(error: unknown): AuthError {
-        if (error instanceof AuthError) {
-            return error
-        }
-        if (error instanceof Error) {
-            return new AuthError('errors.server.serverError', 'AUTH_UNKNOWN_ERROR', 500, {
-                message: error.message,
-            })
-        }
-        return new AuthError('errors.server.serverError', 'AUTH_UNKNOWN_ERROR', 500)
+export function handleAuthError(error: unknown): AuthError {
+    if (error instanceof AuthError) {
+        return error
     }
+    if (error instanceof Error) {
+        return new AuthError('errors.server.serverError', 'AUTH_UNKNOWN_ERROR', 500, {
+            message: error.message,
+        })
+    }
+    return new AuthError('errors.server.serverError', 'AUTH_UNKNOWN_ERROR', 500)
+}
 
-    export function isAuthError(error: unknown): error is AuthError {
-        return error instanceof AuthError
-    }
+export function isAuthError(error: unknown): error is AuthError {
+    return error instanceof AuthError
+}
 `,
 
     module: () => `export { AuthService } from './AuthService.js'
 export { AuthRepository } from './AuthRepository.js'
 export { AuthMessages } from './AuthMessages.js'
-export { AuthSchemas, createAuthSchemas } from './AuthSchemas.js'
+export { AuthSchemas } from './AuthSchemas.js'
 export { AuthQueries } from './AuthQueries.js'
-export type * as Schemas from './AuthSchemas.js'
+export type * as Inputs from './AuthSchemas.js'
 export type * as Types from './AuthTypes.js'
 export * as Errors from './AuthErrors.js'
 export * as Queries from './AuthQueries.js'
+
+import { IContainer } from '../../src/types/core.js'
+import { AuthService } from './AuthService.js'
+import { AuthRepository } from './AuthRepository.js'
+
+export function registerAuth(container: IContainer) {
+    if (!container.has('AuthRepository')) {
+        container.registerFactory('AuthRepository', (c) => new AuthRepository(c.resolve('db')))
+    }
+    if (!container.has('AuthService')) {
+        container.registerFactory('AuthService', (c) => new AuthService(c))
+    }
+}
 `,
 }

@@ -7,22 +7,22 @@ import {
     templateRepository,
     templateService,
     parseMethodsFromBO,
-    templateLocales,
+    templateErrors,
+    templateMessages,
 } from '../scripts/bo/templates/bo.ts'
 import { templateTypes } from '../scripts/bo/templates/types.ts'
-import { templateErrors } from '../scripts/bo/templates/errors.ts'
 
 test('templateBO genera arquitectura 9 archivos con nomenclatura NameType.ts', () => {
     const out = templateBO('Order', ['getOrder'])
     assert.match(out, /extends BaseBO/)
     assert.match(
         out,
-        /import \{ OrderRepository, OrderService, OrderMessages, createOrderSchemas, Schemas \} from '\.\/OrderModule\.js'/
+        /import \{ OrderService, OrderMessages, OrderSchemas, Inputs, Types, registerOrder \} from '\.\/OrderModule\.js'/
     )
     assert.match(out, /OrderMessages/)
     assert.match(out, /this\.exec/)
     assert.match(out, /this\.orderMessages\.getOrder/)
-    assert.match(out, /this\.orderSchemas\.getOrder/)
+    assert.match(out, /OrderSchemas\.getOrder/)
 })
 
 test('templateSchemas genera schemas con mensajes (nuevos imports)', () => {
@@ -49,18 +49,18 @@ test('templateService genera service con errores (nuevos imports)', () => {
     assert.match(out, /throw new Errors\.ProductNotFoundError/)
 })
 
-test('templateTypes genera interfaces', () => {
-    const out = templateTypes('Product', ['get', 'create', 'delete'])
+test('templateTypes genera types', () => {
+    const out = templateTypes('Product')
     assert.match(out, /export namespace Product/)
-    assert.match(out, /export interface Entity \{/)
-    assert.match(out, /export interface Summary \{/)
-    assert.match(out, /export type GetProductInput/)
-    assert.match(out, /export type CreateProductInput/)
-    assert.match(out, /export type DeleteProductInput/)
+    assert.match(out, /export type Entity = \{/)
+    assert.match(out, /export type Summary = \{/)
+    assert.match(out, /export interface GetInput/)
+    assert.match(out, /export interface CreateInput/)
+    assert.match(out, /export interface DeleteInput/)
 })
 
-test('templateLocales genera TS object', () => {
-    const out = templateLocales('Product', ['get', 'create', 'delete'])
+test('templateMessages genera TS object', () => {
+    const out = templateMessages('Product')
     assert.match(out, /export const ProductMessages = \{/)
     assert.match(out, /es: \{/)
     assert.match(out, /en: \{/)
@@ -71,7 +71,7 @@ test('templateLocales genera TS object', () => {
 })
 
 test('templateErrors genera clases de error (nuevos imports)', () => {
-    const out = templateErrors('Product', ['get'])
+    const out = templateErrors('Product')
     assert.match(out, /ProductMessages/)
     assert.match(
         out,

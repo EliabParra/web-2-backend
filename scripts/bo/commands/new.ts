@@ -9,7 +9,7 @@ import {
 } from '../templates/bo.js'
 
 import { templateTypes } from '../templates/types.js'
-import { templateLocales } from '../templates/messages.js'
+import { templateMessages } from '../templates/messages.js'
 import { templateErrors } from '../templates/errors.js'
 import { Interactor } from '../interactor/ui.js'
 import fs from 'node:fs/promises'
@@ -107,9 +107,9 @@ export class NewCommand {
             const repoContent = templateRepository(cleanName)
             const serviceContent = templateService(cleanName)
             const schemasContent = templateSchemas(cleanName, methods)
-            const typesContent = templateTypes(cleanName, methods)
-            const localesContent = templateLocales(cleanName, methods)
-            const errorsContent = templateErrors(cleanName, methods)
+            const typesContent = templateTypes(cleanName)
+            const localesContent = templateMessages(cleanName)
+            const errorsContent = templateErrors(cleanName)
             const queriesContent = templateQueries(cleanName)
             const moduleContent = templateModule(cleanName)
 

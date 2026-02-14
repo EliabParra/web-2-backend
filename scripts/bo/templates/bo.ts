@@ -16,6 +16,7 @@
 export * from './types.js'
 export * from './messages.js'
 export * from './queries.js'
+export * from './errors.js'
 
 /**
  * Extrae métodos async públicos de un archivo BO
@@ -45,9 +46,12 @@ export function parseMethodsFromBO(fileContent: string): string[] {
 export function templateSchemas(objectName: string, methods: string[]) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
-    const lowerName = cleanName.toLowerCase()
 
-    const methodSchemas = methods
+    // Default methods if none provided (new BO)
+    const methodsToGen =
+        methods.length > 0 ? methods : ['get', 'getAll', 'create', 'update', 'delete']
+
+    const methodSchemas = methodsToGen
         .map((m) => {
             const lower = m.toLowerCase()
             const isStandardWithId =
@@ -93,7 +97,7 @@ ${methodSchemas}
 export const ${pascalName}Schemas = create${pascalName}Schemas(${pascalName}Messages.es)
 
 // Exporta schemas individuales para inferencia de tipos
-${methods.map((m) => `export type ${m.charAt(0).toUpperCase() + m.slice(1)}Input = z.infer<typeof ${pascalName}Schemas.${m}>`).join('\n')}
+${methodsToGen.map((m) => `export type ${m.charAt(0).toUpperCase() + m.slice(1)}Input = z.infer<typeof ${pascalName}Schemas.${m}>`).join('\n')}
 `
 }
 
@@ -138,7 +142,7 @@ export class ${pascalName}Repository implements Types.I${pascalName}Repository {
     /**
      * Crea nuevo ${pascalName.toLowerCase()}
      */
-    async create(data: Partial<Types.${pascalName}>): Promise<Types.${pascalName} | null> {
+    async create(data: Partial<Types.${pascalName}>): Promise<Types.${pascalName}> {
         const result = await this.db.query<Types.${pascalName}>(${pascalName}Queries.create, [
             // TODO: Mapear campos de data a parámetros del query
         ])
@@ -185,7 +189,7 @@ export function templateService(objectName: string) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
 
-    return `import { BOService, IConfig, IDatabase } from '../../src/core/business-objects/index.js'
+    return `import { BOService, IContainer, IConfig, IDatabase } from '../../src/core/business-objects/index.js'
 import type { ILogger } from '../../src/types/core.js'
 import { ${pascalName}Repository, Errors, Types } from './${pascalName}Module.js'
 
@@ -196,13 +200,11 @@ import { ${pascalName}Repository, Errors, Types } from './${pascalName}Module.js
  * Lanza errores específicos del dominio desde ./${pascalName}Errors.js
  */
 export class ${pascalName}Service extends BOService implements Types.I${pascalName}Service {
-    constructor(
-        private readonly repo: ${pascalName}Repository,
-        log: ILogger,
-        config: IConfig,
-        db: IDatabase
-    ) {
-        super(log, config, db)
+    private repo: ${pascalName}Repository
+
+    constructor(container: IContainer) {
+        super(container)
+        this.repo = container.resolve<${pascalName}Repository>('${pascalName}Repository')
     }
 
     /**
@@ -227,7 +229,7 @@ export class ${pascalName}Service extends BOService implements Types.I${pascalNa
     /**
      * Crea nuevo ${pascalName.toLowerCase()}
      */
-    async create(data: Partial<Types.${pascalName}>): Promise<Types.${pascalName} | null> {
+    async create(data: Partial<Types.${pascalName}>): Promise<Types.${pascalName}> {
         this.log.info('Creando ${pascalName.toLowerCase()}')
         return this.repo.create(data)
     }
@@ -269,12 +271,25 @@ export function templateModule(objectName: string) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
 
-    return `export { ${pascalName}Service } from './${pascalName}Service.js'
+    return `import { IContainer } from '../../src/types/index.js'
+import { ${pascalName}Service } from './${pascalName}Service.js'
+import { ${pascalName}Repository } from './${pascalName}Repository.js'
+
+export function register${pascalName}(container: IContainer) {
+    if (!container.has('${pascalName}Repository')) {
+        container.registerFactory('${pascalName}Repository', (c) => new ${pascalName}Repository(c.resolve('db')))
+    }
+    if (!container.has('${pascalName}Service')) {
+        container.registerFactory('${pascalName}Service', (c) => new ${pascalName}Service(c))
+    }
+}
+
+export { ${pascalName}Service } from './${pascalName}Service.js'
 export { ${pascalName}Repository } from './${pascalName}Repository.js'
 export { ${pascalName}Messages } from './${pascalName}Messages.js'
 export { ${pascalName}Schemas, create${pascalName}Schemas } from './${pascalName}Schemas.js'
 export { ${pascalName}Queries } from './${pascalName}Queries.js'
-export type * as Schemas from './${pascalName}Schemas.js'
+export type * as Inputs from './${pascalName}Schemas.js'
 export type * as Types from './${pascalName}Types.js'
 export * as Errors from './${pascalName}Errors.js'
 export * as Queries from './${pascalName}Queries.js'
@@ -294,7 +309,11 @@ export function templateBO(className: string, methods: string[]) {
     const lowerName = cleanName.toLowerCase()
     const boClassName = `${pascalName}BO`
 
-    const methodStubs = methods
+    // Default methods if none provided (new BO)
+    const methodsToGen =
+        methods.length > 0 ? methods : ['get', 'getAll', 'create', 'update', 'delete']
+
+    const methodStubs = methodsToGen
         .map((m) => {
             const isCreate =
                 m.toLowerCase().includes('create') || m.toLowerCase().includes('register')
@@ -303,7 +322,7 @@ export function templateBO(className: string, methods: string[]) {
             const isGet = m.toLowerCase().includes('get') || m.toLowerCase().includes('find')
 
             const methodPascal = m.charAt(0).toUpperCase() + m.slice(1)
-            const inputType = `Schemas.${methodPascal}Input`
+            const inputType = `Inputs.${methodPascal}Input`
 
             // Infer return type and service call
             let returnType = 'any'
@@ -337,11 +356,10 @@ export function templateBO(className: string, methods: string[]) {
     async ${m}(params: ${inputType}): Promise<ApiResponse> {
         return this.exec<${inputType}, ${returnType}>(
             params,
-            this.${lowerName}Schemas.${m},
-            async (data) => {
-                const result: ${returnType} = ${serviceCall}
-
-                return this.${isCreate ? 'created' : 'success'}(${isDelete ? 'null' : 'result'}, this.${lowerName}Messages.${m})
+            ${pascalName}Schemas.${m},
+            async (${m.toLowerCase() === 'getall' ? '' : 'data'}) => {
+                ${m.toLowerCase() === 'delete' ? '' : `const result: ${returnType} = `}${serviceCall}
+                ${m.toLowerCase() === 'delete' ? `return this.success(null, this.${lowerName}Messages.delete)` : `return this.${isCreate ? 'created' : 'success'}(result, this.${lowerName}Messages.${m})`}
             }
         )
     }`
@@ -349,8 +367,7 @@ export function templateBO(className: string, methods: string[]) {
         .join('\n\n')
 
     return `import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
-import { ${pascalName}Repository, ${pascalName}Service, ${pascalName}Messages, create${pascalName}Schemas, Schemas } from './${pascalName}Module.js'
-import type { Types } from './${pascalName}Module.js'
+import { ${pascalName}Service, ${pascalName}Messages, ${pascalName}Schemas, Inputs, Types, register${pascalName} } from './${pascalName}Module.js'
 
 /**
  * Business Object para el dominio ${pascalName}.
@@ -362,8 +379,8 @@ export class ${boClassName} extends BaseBO {
 
     constructor(container: IContainer) {
         super(container)
-        const repo = new ${pascalName}Repository(container.db)
-        this.service = new ${pascalName}Service(container)
+        register${pascalName}(container)
+        this.service = container.resolve<${pascalName}Service>('${pascalName}Service')
     }
 
     /**
@@ -371,10 +388,6 @@ export class ${boClassName} extends BaseBO {
      */
     private get ${lowerName}Messages() {
         return this.i18n.use(${pascalName}Messages)
-    }
-
-    private get ${lowerName}Schemas() {
-        return create${pascalName}Schemas(this.${lowerName}Messages)
     }
 
 ${methodStubs}
