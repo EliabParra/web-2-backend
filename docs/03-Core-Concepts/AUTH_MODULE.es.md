@@ -82,6 +82,14 @@ Sigue la arquitectura de 4 capas y hoy incluye **8 archivos** (el 9no archivo de
     3.  Actualiza `security.users`.
     4.  Marca el reset como "usado".
 
+### 7. Recuperar Usuario (`requestUsername`)
+
+- **Input**: `email`.
+- **Proceso**:
+    1.  Busca el usuario por email.
+    2.  Si existe, envía un email con el nombre de usuario.
+    3.  Si no existe, responde OK igualmente (Silent Success).
+
 ---
 
 ## Configuración (.env)

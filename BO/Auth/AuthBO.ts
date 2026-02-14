@@ -77,4 +77,17 @@ export class AuthBO extends BaseBO {
             }
         )
     }
+
+    async requestUsername(params: Inputs.RequestUsernameInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RequestUsernameInput, void>(
+            params,
+            AuthSchemas.requestUsername,
+            async (data) => {
+                await this.service.requestUsername(data.email)
+                return this.success(null, this.i18n.format(this.authMessages.usernameSent, {
+                    email: data.email,
+                }))
+            }
+        )
+    }
 }

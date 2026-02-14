@@ -47,6 +47,10 @@ export const createAuthSchemas = (messages: AuthMessagesSet = AuthMessages.es) =
             currentPassword: z.string().min(1, validation.passwordRequired),
             newPassword: z.string().min(8, validation.passwordTooShort),
         }),
+
+        requestUsername: z.object({
+            email: z.email(validation.emailInvalid),
+        }),
     }
 }
 
@@ -61,3 +65,4 @@ export type RequestPasswordResetInput = z.infer<typeof AuthSchemas.requestResetP
 export type VerifyPasswordResetInput = z.infer<typeof AuthSchemas.verifyPasswordReset>
 export type ResetPasswordConfirmInput = z.infer<typeof AuthSchemas.resetPasswordConfirm>
 export type ChangePasswordInput = z.infer<typeof AuthSchemas.changePassword>
+export type RequestUsernameInput = z.infer<typeof AuthSchemas.requestUsername>

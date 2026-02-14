@@ -25,6 +25,7 @@ export const AuthMessages = {
         },
         welcomeBack: 'Bienvenido de nuevo, {name}',
         verificationSentTo: 'Se envió verificación a {email}',
+        usernameSent: 'Se envió el usuario a {email}',
     },
     en: {
         loginSuccess: 'Login successful',
@@ -52,5 +53,6 @@ export const AuthMessages = {
         },
         welcomeBack: 'Welcome back, {name}',
         verificationSentTo: 'Verification sent to {email}',
+        usernameSent: 'Username sent to {email}',
     },
 }

@@ -140,6 +140,22 @@ export class AuthService extends BOService implements Types.IAuthService {
             throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
     }
 
+    async requestUsername(email: string): Promise<void> {
+        const user = await this.repo.getUserBaseByEmail(email)
+        if (!user || !user.user_email || !user.username) return
+
+        await this.email.sendTemplate({
+            to: user.user_email,
+            subject: `${this.config.app.name}: Username Recovery`,
+            templatePath: 'auth/username-recovery.html',
+            data: {
+                appName: this.config.app.name,
+                username: user.username,
+                year: new Date().getFullYear(),
+            },
+        })
+    }
+
     private async sendVerificationEmail(userId: number, emailAddr: string) {
         const purpose = String(this.config.auth.emailVerificationPurpose ?? 'email_verification')
         const expiresSeconds = 900

@@ -82,6 +82,14 @@ Follows the 4-layer architecture and ships **8 files** today (a 9th module file 
     3.  Updates `security.users`.
     4.  Marks the reset record as "used".
 
+### 7. Recover Username (`requestUsername`)
+
+- **Input**: `email`.
+- **Process**:
+    1.  Looks up user by email.
+    2.  If found, sends an email with the username.
+    3.  If not found, returns success anyway (Silent Success).
+
 ---
 
 ## Configuration (.env)

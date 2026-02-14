@@ -22,6 +22,7 @@ export const AuthPreset = {
         'requestPasswordReset',
         'verifyPasswordReset',
         'resetPassword',
+        'requestUsername',
     ],
 
     // ============================================================
@@ -107,7 +108,21 @@ export class AuthBO extends BaseBO {
             }
         )
     }
+
+    async requestUsername(params: Inputs.RequestUsernameInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RequestUsernameInput, void>(
+            params,
+            AuthSchemas.requestUsername,
+            async (data) => {
+                await this.service.requestUsername(data.email)
+                return this.success(null, this.i18n.format(this.authMessages.usernameSent, {
+                    email: data.email,
+                }))
+            }
+        )
+    }
 }
+
 `,
 
     service:
@@ -251,6 +266,22 @@ export class AuthService extends BOService implements Types.IAuthService {
         const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
         if (!reset || reset.used_at)
             throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
+    }
+
+    async requestUsername(email: string): Promise<void> {
+        const user = await this.repo.getUserBaseByEmail(email)
+        if (!user || !user.user_email || !user.username) return
+
+        await this.email.sendTemplate({
+            to: user.user_email,
+            subject: \`\${this.config.app.name}: Username Recovery\`,
+            templatePath: 'auth/username-recovery.html',
+            data: {
+                appName: this.config.app.name,
+                username: user.username,
+                year: new Date().getFullYear(),
+            },
+        })
     }
 
     private async sendVerificationEmail(userId: number, emailAddr: string) {
@@ -571,6 +602,10 @@ export const createAuthSchemas = (messages: AuthMessagesSet = AuthMessages.es) =
             currentPassword: z.string().min(1, validation.passwordRequired),
             newPassword: z.string().min(8, validation.passwordTooShort),
         }),
+
+        requestUsername: z.object({
+            email: z.email(validation.emailInvalid),
+        }),
     }
 }
 
@@ -585,6 +620,7 @@ export type RequestPasswordResetInput = z.infer<typeof AuthSchemas.requestResetP
 export type VerifyPasswordResetInput = z.infer<typeof AuthSchemas.verifyPasswordReset>
 export type ResetPasswordConfirmInput = z.infer<typeof AuthSchemas.resetPasswordConfirm>
 export type ChangePasswordInput = z.infer<typeof AuthSchemas.changePassword>
+export type RequestUsernameInput = z.infer<typeof AuthSchemas.requestUsername>
 `,
 
     types: () => `export namespace Auth {
@@ -751,6 +787,7 @@ export type ChangePasswordInput = z.infer<typeof AuthSchemas.changePassword>
         requestPasswordReset(email: string): Promise<void>
         verifyPasswordResetToken(token: string): Promise<void>
         resetPassword(token: string, newPassword: string): Promise<void>
+        requestUsername(email: string): Promise<void>
     }
 }
 
@@ -804,6 +841,7 @@ export type IAuthService = Auth.Service
         },
         welcomeBack: 'Bienvenido de nuevo, {name}',
         verificationSentTo: 'Se envió verificación a {email}',
+        usernameSent: 'Se envió el usuario a {email}',
     },
     en: {
         loginSuccess: 'Login successful',
@@ -831,6 +869,7 @@ export type IAuthService = Auth.Service
         },
         welcomeBack: 'Welcome back, {name}',
         verificationSentTo: 'Verification sent to {email}',
+        usernameSent: 'Username sent to {email}',
     },
 }
 `,

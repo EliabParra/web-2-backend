@@ -162,6 +162,7 @@ export namespace Auth {
         requestPasswordReset(email: string): Promise<void>
         verifyPasswordResetToken(token: string): Promise<void>
         resetPassword(token: string, newPassword: string): Promise<void>
+        requestUsername(email: string): Promise<void>
     }
 }
 
