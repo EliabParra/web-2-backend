@@ -123,11 +123,8 @@ export class AppServer {
         this.csrfTokenHandler = createCsrfTokenHandler(this.i18n)
         this.csrfProtection = createCsrfProtection(this.i18n)
 
-        this.loginRateLimiter = createLoginRateLimiter(this.i18n.messages.errors.client)
-        this.authPasswordResetRateLimiter = createAuthPasswordResetRateLimiter(
-            this.i18n.messages.errors.client,
-            this.security
-        )
+        this.loginRateLimiter = createLoginRateLimiter(this.container)
+        this.authPasswordResetRateLimiter = createAuthPasswordResetRateLimiter(this.container)
     }
 
     /**
@@ -135,9 +132,7 @@ export class AppServer {
      */
     public get toProccessRateLimiter(): RequestHandler {
         if (!this._toProccessRateLimiter) {
-            this._toProccessRateLimiter = createToProccessRateLimiter(
-                this.i18n.messages.errors.client
-            )
+            this._toProccessRateLimiter = createToProccessRateLimiter(this.container)
         }
         return this._toProccessRateLimiter
     }
@@ -205,11 +200,7 @@ export class AppServer {
         // 2. Session Middleware
         const { applySessionMiddleware } =
             await import('./http/session/apply-session-middleware.js')
-        applySessionMiddleware(this.app, {
-            config: this.config,
-            log: this.log,
-            db: this.db,
-        })
+        applySessionMiddleware(this.app, this.container)
 
         const sessionAdapter = {
             sessionExists: (req: AppRequest) => this.session.sessionExists(req),
@@ -233,13 +224,7 @@ export class AppServer {
         })
 
         // 6. Error Handler Final
-        this.app.use(
-            createFinalErrorHandler({
-                clientErrors: this.i18n.messages.errors.client,
-                serverErrors: this.i18n.messages.errors.server,
-                log: this.log,
-            })
-        )
+        this.app.use(createFinalErrorHandler(this.container))
 
         this.initialized = true
     }

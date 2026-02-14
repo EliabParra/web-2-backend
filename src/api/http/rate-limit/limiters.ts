@@ -1,5 +1,11 @@
 import rateLimit from 'express-rate-limit'
-import type { AppRequest, AppResponse, ISecurityService } from '../../../types/index.js'
+import type {
+    AppRequest,
+    AppResponse,
+    IContainer,
+    ISecurityService,
+    II18nService,
+} from '../../../types/index.js'
 
 /** Tipos para rate limiters */
 interface TxData {
@@ -7,7 +13,7 @@ interface TxData {
     methodName?: string
 }
 
-export interface ClientErrors {
+interface ClientErrors {
     tooManyRequests: { code: number; msg: string }
 }
 
@@ -46,11 +52,12 @@ function getTxDataFromReq(req: AppRequest, security: ISecurityService): TxData |
  *
  * Protege endpoint de login contra fuerza bruta.
  *
- * @function createLoginRateLimiter
- * @param clientErrors - Diccionario de errores
- * @returns {Function} Middleware rateLimit
+ * @param container - Contenedor IoC
+ * @returns Middleware rateLimit
  */
-export function createLoginRateLimiter(clientErrors: ClientErrors) {
+export function createLoginRateLimiter(container: IContainer) {
+    const i18n = container.resolve<II18nService>('i18n')
+    const clientErrors = i18n.messages.errors.client as ClientErrors
     return rateLimit({
         windowMs: 60 * 1000,
         limit: 10,
@@ -67,15 +74,13 @@ export function createLoginRateLimiter(clientErrors: ClientErrors) {
  * Aplica límites estrictos por IP y/u objetivo (email/token) para prevenir enumeración y brute-force.
  * Genera claves únicas basándose en payload del body (email, username, token).
  *
- * @function createAuthPasswordResetRateLimiter
- * @param clientErrors - Diccionario de errores
- * @param security - Servicio de seguridad para resolver TX
- * @returns {Function} Middleware rateLimit
+ * @param container - Contenedor IoC
+ * @returns Middleware rateLimit
  */
-export function createAuthPasswordResetRateLimiter(
-    clientErrors: ClientErrors,
-    security: ISecurityService
-) {
+export function createAuthPasswordResetRateLimiter(container: IContainer) {
+    const i18n = container.resolve<II18nService>('i18n')
+    const clientErrors = i18n.messages.errors.client as ClientErrors
+    const security = container.resolve<ISecurityService>('security')
     return rateLimit({
         windowMs: 60 * 1000,
         limit: (req: AppRequest) => {
@@ -153,11 +158,12 @@ export function createAuthPasswordResetRateLimiter(
  * Limita peticiones por usuario (si hay sesión) o por IP.
  * Previene abuso general del sistema.
  *
- * @function createToProccessRateLimiter
- * @param clientErrors - Diccionario de errores
- * @returns {Function} Middleware rateLimit
+ * @param container - Contenedor IoC
+ * @returns Middleware rateLimit
  */
-export function createToProccessRateLimiter(clientErrors: ClientErrors) {
+export function createToProccessRateLimiter(container: IContainer) {
+    const i18n = container.resolve<II18nService>('i18n')
+    const clientErrors = i18n.messages.errors.client as ClientErrors
     return rateLimit({
         windowMs: 60 * 1000,
         limit: 120,

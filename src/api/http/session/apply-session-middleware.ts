@@ -1,6 +1,6 @@
 import session, { SessionOptions, Store } from 'express-session'
 import connectPgSimple from 'connect-pg-simple'
-import { IConfig, ILogger, IDatabase } from '../../../types/core.js'
+import { IContainer, IConfig, ILogger, IDatabase } from '../../../types/core.js'
 import { Express } from 'express'
 import { Pool } from 'pg'
 
@@ -31,34 +31,16 @@ interface SessionConfig {
     proxy?: boolean
 }
 
-type Dependencies = {
-    config: IConfig
-    log: ILogger
-    db: IDatabase
-}
-
 /**
  * Configura el middleware de sesión (express-session) con almacenamiento persistente.
  *
- * Sigue principios de Clean Code:
- * - Tipado estricto para configuraciones.
- * - Separación de lógica de construcción del Store.
- * - Validación explicita de opciones de seguridad (Cookies).
- *
  * @param app - Instancia de Express
- * @param deps - Dependencias necesarias (config, log, db)
- *
- * @example
- * ```typescript
- * applySessionMiddleware(app, {
- *   config: appConfig,
- *   log: logger,
- *   db: database
- * })
- * ```
+ * @param container - Contenedor IoC con las dependencias registradas
  */
-export function applySessionMiddleware(app: Express, deps: Dependencies) {
-    const { config, log, db } = deps
+export function applySessionMiddleware(app: Express, container: IContainer) {
+    const config = container.resolve<IConfig>('config')
+    const log = container.resolve<ILogger>('log')
+    const db = container.resolve<IDatabase>('db')
 
     // 1. Normalizar configuración
     const rawSessionConfig = config.session as SessionConfig | undefined

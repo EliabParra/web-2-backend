@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { EmailService } from '../../src/services/EmailService.js'
+import { createMockContainer } from '../_helpers/mock-container.mjs'
 
 // Mock Logger
 const mockLog = {
@@ -20,7 +21,7 @@ const mockConfig = {
 }
 
 test('EmailService.send (log mode) returns ok', async () => {
-    const service = new EmailService({ log: mockLog, config: mockConfig })
+    const service = new EmailService(createMockContainer({ log: mockLog, config: mockConfig }))
     const result = await service.send({
         to: 'user@example.com',
         subject: 'Test Subject',
@@ -32,7 +33,7 @@ test('EmailService.send (log mode) returns ok', async () => {
 })
 
 test('EmailService.sendTemplate interpolates variables correctly', async () => {
-    const service = new EmailService({ log: mockLog, config: mockConfig })
+    const service = new EmailService(createMockContainer({ log: mockLog, config: mockConfig }))
 
     // We rely on the actual template file existing in src/templates/emails/auth/login-challenge.html
     // This is an integration test behavior but acceptable here.
@@ -59,10 +60,12 @@ test('EmailService.sendTemplate interpolates variables correctly', async () => {
         error: () => {},
     }
 
-    const verboseService = new EmailService({
-        log: spyLog,
-        config: { ...mockConfig, email: { ...mockConfig.email, logIncludeSecrets: true } },
-    })
+    const verboseService = new EmailService(
+        createMockContainer({
+            log: spyLog,
+            config: { ...mockConfig, email: { ...mockConfig.email, logIncludeSecrets: true } },
+        })
+    )
 
     await verboseService.sendTemplate({
         to: 'user@example.com',
@@ -80,7 +83,7 @@ test('EmailService.sendTemplate interpolates variables correctly', async () => {
 })
 
 test('EmailService.sendTemplate handles missing template gracefully', async () => {
-    const service = new EmailService({ log: mockLog, config: mockConfig })
+    const service = new EmailService(createMockContainer({ log: mockLog, config: mockConfig }))
 
     const result = await service.sendTemplate({
         to: 'user@example.com',
@@ -100,7 +103,7 @@ test('EmailService.sendTemplate handles missing template gracefully', async () =
             loggedError = msg
         },
     }
-    const errorService = new EmailService({ log: spyLog, config: mockConfig })
+    const errorService = new EmailService(createMockContainer({ log: spyLog, config: mockConfig }))
 
     await errorService.sendTemplate({
         to: 'u',

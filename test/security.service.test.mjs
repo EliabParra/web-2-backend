@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 import { SecurityService } from '../src/services/SecurityService.js'
 import { withGlobals } from './_helpers/global-state.mjs'
+import { createMockContainer } from './_helpers/mock-container.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -49,7 +50,7 @@ function createMockI18n() {
 
 test('Security.init loads permissions + tx map and sets isReady', async () => {
     await withGlobals(
-        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator'],
+        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator', 'email'],
         async () => {
             globalThis.config = {
                 app: { lang: 'en' },
@@ -108,8 +109,13 @@ test('Security.init loads permissions + tx map and sets isReady', async () => {
                 destroySession: () => {},
             }
             globalThis.validator = { validate: () => ({ valid: true, data: {} }) }
+            globalThis.email = {
+                send: async () => ({ ok: true }),
+                sendTemplate: async () => ({ ok: true }),
+                maskEmail: (e) => e,
+            }
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             assert.equal(security.isReady, true)
@@ -139,7 +145,7 @@ test('Security.init loads permissions + tx map and sets isReady', async () => {
 
 test('Security.init captures initError and rejects ready when DB fails', async () => {
     await withGlobals(
-        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator'],
+        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator', 'email'],
         async () => {
             globalThis.config = { app: { lang: 'en' }, bo: { path: '../../BO/' } }
             globalThis.i18n = createMockI18n()
@@ -178,8 +184,13 @@ test('Security.init captures initError and rejects ready when DB fails', async (
                 destroySession: () => {},
             }
             globalThis.validator = { validate: () => ({ valid: true, data: {} }) }
+            globalThis.email = {
+                send: async () => ({ ok: true }),
+                sendTemplate: async () => ({ ok: true }),
+                maskEmail: (e) => e,
+            }
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
 
             let err
             try {
@@ -217,7 +228,7 @@ test('Security.executeMethod dynamically imports BO and caches the instance', as
         )
 
         await withGlobals(
-            ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator'],
+            ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator', 'email'],
             async () => {
                 globalThis.__securityBoCtorCount = 0
 
@@ -255,8 +266,13 @@ test('Security.executeMethod dynamically imports BO and caches the instance', as
                     destroySession: () => {},
                 }
                 globalThis.validator = { validate: () => ({ valid: true, data: {} }) }
+                globalThis.email = {
+                    send: async () => ({ ok: true }),
+                    sendTemplate: async () => ({ ok: true }),
+                    maskEmail: (e) => e,
+                }
 
-                const security = new SecurityService(globalThis)
+                const security = new SecurityService(createMockContainer(globalThis))
                 await security.init()
 
                 const r1 = await security.executeMethod({
@@ -284,7 +300,7 @@ test('Security.executeMethod dynamically imports BO and caches the instance', as
 
 test('Security.executeMethod returns serverError and logs when BO import fails', async () => {
     await withGlobals(
-        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator'],
+        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator', 'email'],
         async () => {
             globalThis.config = { app: { lang: 'en' }, bo: { path: '../../BO/' } }
             globalThis.i18n = createMockI18n()
@@ -323,8 +339,13 @@ test('Security.executeMethod returns serverError and logs when BO import fails',
                 destroySession: () => {},
             }
             globalThis.validator = { validate: () => ({ valid: true, data: {} }) }
+            globalThis.email = {
+                send: async () => ({ ok: true }),
+                sendTemplate: async () => ({ ok: true }),
+                maskEmail: (e) => e,
+            }
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const r = await security.executeMethod({

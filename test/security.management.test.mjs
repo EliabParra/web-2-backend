@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { SecurityService } from '../src/services/SecurityService.js'
 import { withGlobals } from './_helpers/global-state.mjs'
+import { createMockContainer } from './_helpers/mock-container.mjs'
 
 /*
  * Mock DB that simulates security tables for MenuProvider
@@ -108,7 +109,7 @@ function createMockDB() {
 
 test('Security Management API: Full Lifecycle', async () => {
     await withGlobals(
-        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator'],
+        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator', 'email'],
         async () => {
             // Setup Global Mocks
             globalThis.config = { app: { lang: 'en' }, bo: { path: '../../BO/' } }
@@ -131,8 +132,13 @@ test('Security Management API: Full Lifecycle', async () => {
             globalThis.audit = { log: async () => {} }
             globalThis.session = { sessionExists: () => false, createSession: async () => {} }
             globalThis.validator = { validate: () => ({ valid: true }) }
+            globalThis.email = {
+                send: async () => ({ ok: true }),
+                sendTemplate: async () => ({ ok: true }),
+                maskEmail: (e) => e,
+            }
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init() // Loads empty structure
 
             // 1. Create Structure (Subsystem -> Menu -> Option)

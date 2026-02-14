@@ -8,6 +8,7 @@ import os from 'node:os'
 
 import { registerFrontendHosting } from '../src/frontend-adapters/index.js'
 import { routes } from '../src/api/http/router/routes.js'
+import { createMockContainer } from './_helpers/mock-container.mjs'
 
 // Mock i18n helper
 function createMockI18n() {
@@ -44,6 +45,14 @@ const mockLog = {
 const mockConfig = { app: { lang: 'en' } }
 const mockI18n = createMockI18n()
 
+function makeMockContainer(configOverride) {
+    return createMockContainer({
+        config: configOverride || mockConfig,
+        log: mockLog,
+        i18n: mockI18n,
+    })
+}
+
 test('buildPagesRouter redirects when validateIsAuth=true and session missing', async () => {
     const { buildPagesRouter } = await import('../src/api/http/router/pages.js')
 
@@ -53,10 +62,8 @@ test('buildPagesRouter redirects when validateIsAuth=true and session missing', 
     const session = { sessionExists: () => false }
     app.use(
         buildPagesRouter({
+            container: makeMockContainer(),
             session,
-            config: mockConfig,
-            i18n: mockI18n,
-            log: mockLog,
             routes: [added],
         })
     )
@@ -75,10 +82,8 @@ test('buildPagesRouter serves page when authenticated', async () => {
     const session = { sessionExists: () => true }
     app.use(
         buildPagesRouter({
+            container: makeMockContainer(),
             session,
-            config: mockConfig,
-            i18n: mockI18n,
-            log: mockLog,
             routes: [added],
         })
     )
@@ -96,9 +101,7 @@ test('registerFrontendHosting does nothing when stage does not match', async () 
     await registerFrontendHosting(app, {
         stage: 'postApi',
         session: {},
-        config,
-        i18n: mockI18n,
-        log: mockLog,
+        container: makeMockContainer(config),
     })
 
     // No throw = OK. This covers mode fallback + stage mismatch.
@@ -110,7 +113,7 @@ test('registerPagesHosting mounts static + pages router', async () => {
 
     const app = express()
     const session = { sessionExists: () => true }
-    await registerPagesHosting(app, { session, config: mockConfig, i18n: mockI18n, log: mockLog })
+    await registerPagesHosting(app, { container: makeMockContainer(), session })
 
     const res = await request(app).get('/').set('Accept', 'text/html')
     assert.equal(res.status, 200)
@@ -135,9 +138,7 @@ test('registerFrontendHosting spa mode serves index.html fallback for html reque
         await registerFrontendHosting(app, {
             stage: 'postApi',
             session: {},
-            config,
-            i18n: mockI18n,
-            log: mockLog,
+            container: makeMockContainer(config),
         })
 
         const res = await request(app).get('/anything').set('Accept', 'text/html')
@@ -165,9 +166,7 @@ test('registerFrontendHosting spa mode throws when SPA_DIST_PATH is missing (non
             await registerFrontendHosting(app, {
                 stage: 'postApi',
                 session: {},
-                config,
-                i18n: mockI18n,
-                log: mockLog,
+                container: makeMockContainer(config),
             })
         }, /SPA_DIST_PATH/i)
     } finally {

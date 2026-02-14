@@ -2,6 +2,7 @@ import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert'
 import { container } from '../../src/core/Container.js'
 import { SecurityService } from '../../src/services/SecurityService.js'
+import { createMockContainer } from '../_helpers/mock-container.mjs'
 
 // Mock dependencies
 const mockDb = {
@@ -48,19 +49,26 @@ describe('SecurityService Integration', async () => {
     let security
 
     before(async () => {
-        security = new SecurityService({
-            db: mockDb,
-            log: mockLog,
-            config: mockConfig,
-            i18n: mockI18n,
-            audit: { log: async () => {} },
-            session: {
-                sessionExists: () => false,
-                createSession: async () => {},
-                destroySession: () => {},
-            },
-            validator: { validate: () => ({ valid: true, data: {} }) },
-        })
+        security = new SecurityService(
+            createMockContainer({
+                db: mockDb,
+                log: mockLog,
+                config: mockConfig,
+                i18n: mockI18n,
+                audit: { log: async () => {} },
+                session: {
+                    sessionExists: () => false,
+                    createSession: async () => {},
+                    destroySession: () => {},
+                },
+                validator: { validate: () => ({ valid: true, data: {} }) },
+                email: {
+                    send: async () => ({ ok: true }),
+                    sendTemplate: async () => ({ ok: true }),
+                    maskEmail: (e) => e,
+                },
+            })
+        )
         await security.init()
     })
 

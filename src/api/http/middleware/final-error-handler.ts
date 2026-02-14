@@ -1,18 +1,14 @@
 import { redactSecretsInString } from '../../../utils/sanitize.js'
 import {
+    IContainer,
     ILogger,
+    II18nService,
     LocalizedMessage,
     AppRequest,
     AppResponse,
     LocalizedMessages,
 } from '../../../types/index.js'
 import { NextFunction } from 'express'
-
-export type FinalErrorHandlerArgs = {
-    clientErrors: LocalizedMessages
-    serverErrors: LocalizedMessages
-    log: ILogger
-}
 
 /**
  * Middleware para manejo final de errores.
@@ -25,11 +21,11 @@ export type FinalErrorHandlerArgs = {
  * - Traducción a códigos HTTP estándar
  * - Evita doble respuesta si headers ya fueron enviados
  */
-export function createFinalErrorHandler({
-    clientErrors,
-    serverErrors,
-    log,
-}: FinalErrorHandlerArgs) {
+export function createFinalErrorHandler(container: IContainer) {
+    const log = container.resolve<ILogger>('log')
+    const i18n = container.resolve<II18nService>('i18n')
+    const clientErrors = i18n.messages.errors.client
+    const serverErrors = i18n.messages.errors.server
     return function finalErrorHandler(
         err: unknown,
         req: AppRequest,

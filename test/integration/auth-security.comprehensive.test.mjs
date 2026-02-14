@@ -5,6 +5,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { withGlobals } from '../_helpers/global-state.mjs'
+import { createMockContainer } from '../_helpers/mock-container.mjs'
 import { SecurityService } from '../../src/services/SecurityService.js'
 
 // ============================================================================
@@ -140,7 +141,7 @@ test('SecurityService: getPermissions returns true for authorized profile', asyn
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const result = security.getPermissions({
@@ -160,7 +161,7 @@ test('SecurityService: getPermissions returns false for unauthorized profile', a
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const result = security.getPermissions({
@@ -180,7 +181,7 @@ test('SecurityService: getPermissions returns false for unauthorized method', as
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const result = security.getPermissions({
@@ -204,7 +205,7 @@ test('SecurityService: getDataTx resolves valid transaction code', async () => {
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const route = security.getDataTx(1)
@@ -220,7 +221,7 @@ test('SecurityService: getDataTx returns false for invalid transaction code', as
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const route = security.getDataTx(9999) // Non-existent TX
@@ -258,7 +259,7 @@ test('SecurityService: grantPermission adds permission to profile', async () => 
             }
             Object.assign(globalThis, deps)
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             // Initially profile 3 has no permissions
@@ -298,7 +299,7 @@ test('SecurityService: revokePermission removes permission from profile', async 
             }
             Object.assign(globalThis, deps)
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             // Profile 1 has permission for Auth.register initially
@@ -338,7 +339,7 @@ test('SecurityService: multiple profiles can have same permission', async () => 
             }
             Object.assign(globalThis, deps)
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             // Both profile 1 and 2 have Auth.register permission
@@ -386,7 +387,7 @@ test('SecurityService: executeMethod returns result for valid BO method', async 
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             // Execute Auth.register (should work since AuthBO exists)
@@ -410,7 +411,7 @@ test('SecurityService: executeMethod returns serverError for non-existent BO', a
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const result = await security.executeMethod({
@@ -434,7 +435,7 @@ test('SecurityService: isReady is false before init', async () => {
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
 
             assert.equal(security.isReady, false, 'isReady should be false before init')
         }
@@ -447,7 +448,7 @@ test('SecurityService: isReady is true after successful init', async () => {
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             assert.equal(security.isReady, true, 'isReady should be true after init')
@@ -467,7 +468,7 @@ test('SecurityService: init throws and logs on DB failure', async () => {
             }
             Object.assign(globalThis, deps)
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
 
             let error
             try {
@@ -495,7 +496,7 @@ test('SecurityService: handles empty permissions gracefully', async () => {
             })
             Object.assign(globalThis, deps)
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const result = security.getPermissions({
@@ -518,7 +519,7 @@ test('SecurityService: handles empty transactions gracefully', async () => {
             })
             Object.assign(globalThis, deps)
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const route = security.getDataTx(1)
@@ -542,7 +543,7 @@ test('SecurityService: grant permission for non-existent method returns false', 
             }
             Object.assign(globalThis, deps)
 
-            const security = new SecurityService(globalThis)
+            const security = new SecurityService(createMockContainer(globalThis))
             await security.init()
 
             const result = await security.grantPermission(1, 'NonExistent', 'method')

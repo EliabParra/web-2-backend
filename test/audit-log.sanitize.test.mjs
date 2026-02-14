@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import { AuditService } from '../src/services/AuditService.js'
+import { createMockContainer } from './_helpers/mock-container.mjs'
 
 test('AuditService.log redacts secrets in details before insert', async () => {
     const calls = []
@@ -18,7 +19,7 @@ test('AuditService.log redacts secrets in details before insert', async () => {
         error: () => {},
         debug: () => {},
     }
-    const audit = new AuditService({ db: dbStub, log: mockLog })
+    const audit = new AuditService(createMockContainer({ db: dbStub, log: mockLog }))
 
     const req = {
         requestId: 'req-1',

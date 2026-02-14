@@ -210,10 +210,17 @@ function createDeps() {
         validate: (d) => ({ valid: true, data: d }),
     }
 
-    return { config, log, i18n, audit, session: sessionService, db, logs, validator }
+    const email = {
+        send: async () => ({ ok: true, mode: 'log' }),
+        sendTemplate: async () => ({ ok: true, mode: 'log' }),
+        maskEmail: (e) => e,
+    }
+
+    return { config, log, i18n, audit, session: sessionService, db, logs, validator, email }
 }
 
 import { SecurityService } from '../../src/services/SecurityService.js'
+import { createMockContainer } from '../_helpers/mock-container.mjs'
 
 describe('Auth Module Integration (HTTP)', async () => {
     let app
@@ -226,21 +233,30 @@ describe('Auth Module Integration (HTTP)', async () => {
         testDeps = deps
 
         // Use Real SecurityService
-        const security = new SecurityService({
-            db: deps.db,
-            log: deps.log,
-            config: deps.config,
-            i18n: deps.i18n,
-            audit: deps.audit,
-            session: deps.session,
-            validator: { validate: (d, s) => ({ valid: true, data: d }) }, // Bypass validation, pass data (arg1)
-        })
+        const security = new SecurityService(
+            createMockContainer({
+                db: deps.db,
+                log: deps.log,
+                config: deps.config,
+                i18n: deps.i18n,
+                audit: deps.audit,
+                session: deps.session,
+                validator: { validate: (d, s) => ({ valid: true, data: d }) }, // Bypass validation, pass data (arg1)
+                email: {
+                    send: async () => ({ ok: true }),
+                    sendTemplate: async () => ({ ok: true }),
+                    maskEmail: (e) => e,
+                },
+            })
+        )
         await security.init()
 
-        appServer = new AppServer({
-            ...deps,
-            security,
-        })
+        appServer = new AppServer(
+            createMockContainer({
+                ...deps,
+                security,
+            })
+        )
         await appServer.init()
         app = appServer.app
     })

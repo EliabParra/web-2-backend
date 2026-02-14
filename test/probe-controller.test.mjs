@@ -1,9 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { ProbeController } from '../src/api/http/controllers/ProbeController.js'
+import { createMockContainer } from './_helpers/mock-container.mjs'
 
 test('ProbeController.health returns 200 with uptime', () => {
-    const controller = new ProbeController({}, 'test-app')
+    const container = createMockContainer({
+        security: {},
+        config: { app: { name: 'test-app' } },
+    })
+    const controller = new ProbeController(container)
 
     // Mock Request/Response
     const req = { requestId: 'req-1' }
@@ -31,7 +36,11 @@ test('ProbeController.health returns 200 with uptime', () => {
 
 test('ProbeController.ready returns 200 when security is ready', async () => {
     const mockSecurity = { isReady: true }
-    const controller = new ProbeController(mockSecurity, 'test-app')
+    const container = createMockContainer({
+        security: mockSecurity,
+        config: { app: { name: 'test-app' } },
+    })
+    const controller = new ProbeController(container)
 
     let statusCode = null
     let sentData = null
@@ -54,7 +63,11 @@ test('ProbeController.ready returns 200 when security is ready', async () => {
 
 test('ProbeController.ready returns 503 when security is NOT ready', async () => {
     const mockSecurity = { isReady: false }
-    const controller = new ProbeController(mockSecurity, 'test-app')
+    const container = createMockContainer({
+        security: mockSecurity,
+        config: { app: { name: 'test-app' } },
+    })
+    const controller = new ProbeController(container)
 
     let statusCode = null
     let sentData = null

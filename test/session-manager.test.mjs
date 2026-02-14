@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { SessionManager } from '../src/services/SessionService.js'
 // Assuming this path is correct or will be fixed if broken, keeping original
 import { ValidatorService } from '../src/services/ValidatorService.js'
+import { createMockContainer } from './_helpers/mock-container.mjs'
 
 // Mock i18n data
 const mockLocaleData = {
@@ -59,12 +60,12 @@ function createMockI18n() {
     }
 }
 
-// Helper to create mock dependencies
+// Helper to create mock dependencies wrapped as IContainer
 function createMockDeps(overrides = {}) {
     const i18n = createMockI18n()
     const validator = new ValidatorService(i18n)
 
-    return {
+    const deps = {
         db: { query: async () => ({ rows: [] }), exe: async () => ({ rows: [] }) },
         log: {
             trace: () => {},
@@ -98,6 +99,7 @@ function createMockDeps(overrides = {}) {
         validator, // Inject real AppValidator with mock i18n
         ...overrides,
     }
+    return createMockContainer(deps)
 }
 
 // --- Constructor tests ---
