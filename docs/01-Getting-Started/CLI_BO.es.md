@@ -83,7 +83,7 @@ BO/Product/
 ├── 📘 ProductTypes.ts          # Interfaces TypeScript
 ├── 💬 ProductMessages.ts       # Strings i18n (ES/EN)
 ├── ❌ ProductErrors.ts         # Clases de error personalizadas
-└── 📦 ProductModule.ts         # Barril de exportaciones
+├── 📦 ProductModule.ts         # REGISTRO de Módulo y exportaciones
 ```
 
 > [!NOTE]
@@ -208,19 +208,19 @@ El proyecto incluye snippets para acelerar el desarrollo. Escribe el prefijo y p
 
 ### Snippets Disponibles
 
-| Prefijo          | Descripción                            |
-| ---------------- | -------------------------------------- |
-| `tp-bo`          | Business Object completo con método    |
-| `tp-bo-method`   | Agregar método transaccional a un BO   |
-| `tp-service`     | Clase Service con repository y errors  |
-| `tp-repo-method` | Método de acceso a base de datos       |
-| `tp-schema`      | Schemas Zod con claves i18n            |
-| `tp-types`       | Interfaces con secciones Entidad/Input |
-| `tp-queries`     | Archivo de SQL colocalizado            |
-| `tp-messages`    | Mensajes de éxito/error/validación     |
-| `tp-errors`      | Clases de error personalizadas         |
-| `tp-test`        | Suite de test con Node Test Runner     |
-| `tp-log`         | Logging con el sistema de logger       |
+| Prefijo          | Descripción                              |
+| ---------------- | ---------------------------------------- |
+| `tp-bo`          | Business Object completo con Registro DI |
+| `tp-bo-method`   | Agregar método transaccional a un BO     |
+| `tp-service`     | Clase Service con inyección IContainer   |
+| `tp-repo-method` | Método de acceso a base de datos         |
+| `tp-schema`      | Schemas Zod con claves i18n              |
+| `tp-types`       | Interfaces con secciones Entidad/Input   |
+| `tp-queries`     | Archivo de SQL colocalizado              |
+| `tp-messages`    | Mensajes de éxito/error/validación       |
+| `tp-errors`      | Clases de error personalizadas           |
+| `tp-test`        | Suite de test con Node Test Runner       |
+| `tp-log`         | Logging con el sistema de logger         |
 
 ### Uso
 

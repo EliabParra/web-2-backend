@@ -71,7 +71,7 @@ Consults the in-memory permission matrix (RAM). If it says NO, everything stops 
 If everything is legal:
 
 1.  **Path Security**: Verifies that the Business Object file is physically located within the allowed `BO/` folder. Blocks any attempt to escape the directory (`../`).
-2.  **Instantiation**: Loads the BO and injects dependencies (`db`, `logger`, `validator`).
+2.  **Instantiation**: Loads the BO and injects the container (`IContainer`).
 3.  **Execution**: Calls the requested method.
 
 ### 5. Audit

@@ -71,7 +71,7 @@ Consulta la matriz de permisos en memoria (RAM). Si dice NO, se detiene todo y s
 Si todo es legal:
 
 1.  **Path Security**: Verifica que el archivo del Business Object esté físicamente dentro de la carpeta `BO/` permitida. Bloquea cualquier intento de salir del directorio (`../`).
-2.  **Instanciación**: Carga el BO e inyecta dependencias (`db`, `logger`, `validator`).
+2.  **Instanciación**: Carga el BO e inyecta el contenedor (`IContainer`).
 3.  **Ejecución**: Llama al método solicitado.
 
 ### 5. Auditoría

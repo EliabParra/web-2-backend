@@ -4,27 +4,23 @@ Explicación técnica de cómo el framework gestiona las dependencias de los Bus
 
 ## Arquitectura de Dependencias
 
-### Interfaz `BODependencies`
+### Núcleo `IContainer`
 
-Todos los Business Objects reciben sus dependencias a través de una interfaz tipada:
+El framework utiliza un contenedor centralizado de **Inversión de Control (IoC)** para gestionar las dependencias. En lugar de inyección estricta de propiedades, todos los Business Objects y Servicios reciben el `IContainer`.
 
 ```typescript
 // src/types/core.ts
-export interface BODependencies {
-    db: IDatabase
-    log: ILogger
-    config: IConfig
-    audit: IAuditService
-    security: ISecurityService
-    session: ISessionService
-    v: IValidator
-    i18n: II18nService
+export interface IContainer {
+    resolve<T>(key: string): T
+    register<T>(key: string, instance: T): void
+    registerFactory<T>(key: string, factory: (c: IContainer) => T): void
+    has(key: string): boolean
 }
 ```
 
 ### Clase Base `BaseBO`
 
-Los Business Objects extienden `BaseBO`, que provee acceso tipado a todas las dependencias:
+Los Business Objects extienden `BaseBO`, el cual recibe el contenedor y resuelve estrictamente las dependencias core:
 
 ```typescript
 // src/core/business-objects/BaseBO.ts
@@ -32,44 +28,47 @@ export class BaseBO {
     protected readonly db: IDatabase
     protected readonly log: ILogger
     protected readonly config: IConfig
-    protected readonly v: IValidator
-    protected readonly i18n: II18nService
-    // ... otras dependencias
+    protected readonly container: IContainer
+    // ... otras dependencias (i18n, validator) se resuelven bajo demanda
 
-    constructor(deps: BODependencies) {
-        this.db = deps.db
-        this.log = deps.log
-        // ... asignación de dependencias
+    constructor(container: IContainer) {
+        this.container = container
+        this.db = container.resolve<IDatabase>('db')
+        this.log = container.resolve<ILogger>('log')
+        this.config = container.resolve<IConfig>('config')
+        // ...
     }
 }
 ```
 
-## Flujo de Inyección
+## Flujo de Inyección y Registro de Módulos
+
+El framework soporta un **Patrón de Auto-Registro** donde cada módulo funcional es responsable de registrar sus propios servicios en el contenedor.
 
 ```
 ┌──────────────┐     ┌───────────┐     ┌───────────────────────┐
 │  foundation  │────▶│ AppServer │────▶│ TransactionController │
-│   (crear)    │     │  (setup)  │     │       (HTTP)          │
+│ (Auth/Cont.) │     │  (setup)  │     │       (HTTP)          │
 └──────────────┘     └───────────┘     └───────────────────────┘
-                                                   │
-                                                   ▼
+                                                    │
+                                                    ▼
 ┌───────────────────────┐     ┌────────────────────┐
 │  TransactionExecutor  │◀────│   SecurityService  │
 │   (import dinámico)   │     │    (orquestar)     │
 └───────────────────────┘     └────────────────────┘
             │
             ▼
-  ┌─────────────────────┐
-  │   Business Object   │
-  │  (BODependencies)   │
-  └─────────────────────┘
+  ┌─────────────────────┐       ┌────────────────────┐
+  │   Business Object   │──────▶│   Module Factory   │
+  │    (IContainer)     │       │ (registerService)  │
+  └─────────────────────┘       └────────────────────┘
 ```
 
-1. **foundation.ts**: Crea dependencias core (`db`, `log`) y `SecurityService`.
-2. **AppServer**: Recibe `SecurityService` y lo inyecta en `TransactionController`.
-3. **TransactionController**: Maneja la petición e invoca `SecurityService.executeMethod()`.
-4. **TransactionExecutor**: Importa dinámicamente el BO y lo instancia.
-5. **Business Object**: Recibe dependencias tipadas en su constructor.
+1. **foundation.ts**: Crea el `IContainer` raíz con servicios core (`db`, `log`, `security`).
+2. **TransactionExecutor**: Importa dinámicamente la clase del BO.
+3. **Business Object**: Se instancia con `new BO(container)`.
+4. **Auto-Registro**: El constructor del BO llama a la función de registro de su módulo (ej., `registerProducts(container)`).
+5. **Resolución de Servicio**: El BO resuelve su servicio específico (ej., `container.resolve('ProductService')`).
 
 ## Lazy Loading (Carga Perezosa)
 
@@ -86,27 +85,12 @@ async execute(objectName: string, methodName: string, params: unknown) {
     const module = await import(modulePath)
     const BOClass = module[`${objectName}BO`]
 
-    // 3. Instanciar con dependencias completas
-    const instance = new BOClass(this.deps)
+    // 3. Instanciar con contenedor
+    // El contenedor es inyectado en el Executor durante el setup del AppServer
+    const instance = new BOClass(this.container)
 
     // 4. Ejecutar método
     return instance[methodName](params)
-}
-```
-
-### Caché de Instancias
-
-El `TransactionExecutor` cachea instancias de BOs por sesión para evitar reimportaciones:
-
-```typescript
-private boCache = new Map<string, BaseBO>()
-
-async getBO(objectName: string): Promise<BaseBO> {
-    if (!this.boCache.has(objectName)) {
-        const instance = await this.importBO(objectName)
-        this.boCache.set(objectName, instance)
-    }
-    return this.boCache.get(objectName)!
 }
 ```
 
@@ -114,11 +98,10 @@ async getBO(objectName: string): Promise<BaseBO> {
 
 | Característica      | Beneficio                                             |
 | ------------------- | ----------------------------------------------------- |
-| **Tipado Estricto** | Sin contenedores `any`. Dependencias explícitas.      |
-| **Testabilidad**    | Fácil mockeo de `db`, `log`, etc. en tests unitarios. |
-| **Inicio Rápido**   | Servidor arranca en milisegundos.                     |
+| **Desacoplamiento** | BOs no necesitan saber cómo crear sus dependencias.   |
+| **Testabilidad**    | Fácil mockeo de todo el `IContainer`.                 |
+| **Modularidad**     | Módulos se registran solos; cero config en AppServer. |
 | **Aislamiento**     | Error en un BO no afecta otros hasta ser invocado.    |
-| **Eficiencia**      | Memoria asignada solo para contextos activos.         |
 
 ## Ver También
 

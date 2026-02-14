@@ -53,7 +53,7 @@ security.profile_method (
 3.  **TransactionExecutor** (The Executor):
     - Dynamically loads the Business Object (BO).
     - **Critical Security**: Implements **Path Containment**. Verifies the file to load is strictly within `/BO`.
-    - Injects dependencies (DB, Log, Validator, I18n).
+    - Injects the IoC container (`IContainer`).
 
 4.  **TransactionMapper** (The Map):
     - Translates `tx: 1001` -> `{ objectName: "Auth", methodName: "register" }`.

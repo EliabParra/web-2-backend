@@ -83,7 +83,7 @@ BO/Product/
 ├── 📘 ProductTypes.ts          # TypeScript interfaces
 ├── 💬 ProductMessages.ts       # i18n strings (ES/EN)
 ├── ❌ ProductErrors.ts         # Custom error classes
-└── 📦 ProductModule.ts         # Module barrel exports
+├── 📦 ProductModule.ts         # Module REGISTRATION & exports
 ```
 
 > [!NOTE]
@@ -208,19 +208,19 @@ The project includes snippets to speed up development. Type the prefix and press
 
 ### Available Snippets
 
-| Prefix           | Description                              |
-| ---------------- | ---------------------------------------- |
-| `tp-bo`          | Complete Business Object with method     |
-| `tp-bo-method`   | Add transactional method to a BO         |
-| `tp-service`     | Service class with repository and errors |
-| `tp-repo-method` | Database access method                   |
-| `tp-schema`      | Zod schemas with i18n keys               |
-| `tp-types`       | Interfaces with Entity/Input sections    |
-| `tp-queries`     | Colocated SQL file                       |
-| `tp-messages`    | Success/error/validation messages        |
-| `tp-errors`      | Custom error classes                     |
-| `tp-test`        | Test suite with Node Test Runner         |
-| `tp-log`         | Logging with the logger system           |
+| Prefix           | Description                                   |
+| ---------------- | --------------------------------------------- |
+| `tp-bo`          | Complete Business Object with DI Registration |
+| `tp-bo-method`   | Add transactional method to a BO              |
+| `tp-service`     | Service class with IContainer injection       |
+| `tp-repo-method` | Database access method                        |
+| `tp-schema`      | Zod schemas with i18n keys                    |
+| `tp-types`       | Interfaces with Entity/Input sections         |
+| `tp-queries`     | Colocated SQL file                            |
+| `tp-messages`    | Success/error/validation messages             |
+| `tp-errors`      | Custom error classes                          |
+| `tp-test`        | Test suite with Node Test Runner              |
+| `tp-log`         | Logging with the logger system                |
 
 ### Usage
 
