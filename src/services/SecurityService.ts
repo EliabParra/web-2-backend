@@ -183,11 +183,7 @@ export class SecurityService implements ISecurityService {
      * Otorga un permiso dinámicamente (Dual Write).
      * Delegado al PermissionGuard para consistencia DB-Memoria.
      */
-    async grantPermission(
-        profileId: number,
-        objectName: string,
-        methodName: string
-    ): Promise<boolean> {
+    async grantPermission(profileId: number, objectName: string, methodName: string): Promise<boolean> {
         return this.guard.grant(profileId, objectName, methodName)
     }
 
@@ -195,11 +191,7 @@ export class SecurityService implements ISecurityService {
      * Revoca un permiso dinámicamente (Dual Write).
      * Delegado al PermissionGuard para consistencia DB-Memoria.
      */
-    async revokePermission(
-        profileId: number,
-        objectName: string,
-        methodName: string
-    ): Promise<boolean> {
+    async revokePermission(profileId: number, objectName: string, methodName: string): Promise<boolean> {
         return this.guard.revoke(profileId, objectName, methodName)
     }
 
@@ -213,46 +205,79 @@ export class SecurityService implements ISecurityService {
 
     // --- Security Structure Management API ---
 
+    /**
+     * Crea un subsistema.
+     */
     async createSubsystem(name: string) {
         return this.menuProvider.createSubsystem(name)
     }
 
+    /**
+     * Elimina un subsistema.
+     */
     async deleteSubsystem(id: number) {
         return this.menuProvider.deleteSubsystem(id)
     }
 
+    /**
+     * Asigna un subsistema a un perfil.
+     */
     async assignSubsystem(profileId: number, subsystemId: number) {
         return this.menuProvider.assignSubsystem(profileId, subsystemId)
     }
 
+    /**
+     * Revoca un subsistema a un perfil.
+     */
     async revokeSubsystem(profileId: number, subsystemId: number) {
         return this.menuProvider.revokeSubsystem(profileId, subsystemId)
     }
 
+    /**
+     * Crea un menú.
+     */
     async createMenu(name: string, subsystemId: number) {
         return this.menuProvider.createMenu(name, subsystemId)
     }
 
+    /**
+     * Asigna un menú a un perfil.
+     */
     async assignMenu(profileId: number, menuId: number) {
         return this.menuProvider.assignMenu(profileId, menuId)
     }
 
+    /**
+     * Revoca un menú a un perfil.
+     */
     async revokeMenu(profileId: number, menuId: number) {
         return this.menuProvider.revokeMenu(profileId, menuId)
     }
 
+    /**
+     * Crea una opción.
+     */
     async createOption(name: string, methodId?: number) {
         return this.menuProvider.createOption(name, methodId)
     }
 
+    /**
+     * Asigna una opción a un menú.
+     */
     async assignOptionToMenu(menuId: number, optionId: number) {
         return this.menuProvider.assignOptionToMenu(menuId, optionId)
     }
 
+    /**
+     * Asigna una opción a un perfil.
+     */
     async assignOptionToProfile(profileId: number, optionId: number) {
         return this.menuProvider.assignOptionToProfile(profileId, optionId)
     }
 
+    /**
+     * Revoca una opción a un perfil.
+     */
     async revokeOptionFromProfile(profileId: number, optionId: number) {
         return this.menuProvider.revokeOptionFromProfile(profileId, optionId)
     }

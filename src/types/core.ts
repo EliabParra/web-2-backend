@@ -4,12 +4,14 @@ import type { AppRequest, AppResponse } from './http.js'
 
 export type { AppMessages }
 
-/**
- * Interfaz para servicios de logging.
- * Estandariza la salida de logs en toda la aplicación.
- */
+// ═══════════════════════════════════════════════════════════════════════════════
+// 1. Primitivos y Types Utilitarios
+// ═══════════════════════════════════════════════════════════════════════════════
+
 /**
  * Niveles de Log estándar (RFC 5424 simplificado).
+ *
+ * Utilizados por `ILogger` para categorizar la severidad de los mensajes.
  */
 export enum LogLevel {
     TRACE = 10,
@@ -21,44 +23,9 @@ export enum LogLevel {
 }
 
 /**
- * Interfaz para servicios de logging.
- * Estandariza la salida de logs en toda la aplicación.
+ * Helper para obtener claves anidadas de `AppMessages`.
+ * Genera un union type de strings con notación punto (e.g. `'errors.server.dbError'`).
  */
-export interface ILogger {
-    // Niveles estándar
-    trace(msg: string, ctx?: object): void
-    debug(msg: string, ctx?: object): void
-    info(msg: string, ctx?: object): void
-    warn(msg: string, ctx?: object): void
-    error(msg: string, ctx?: object | Error): void
-    critical(msg: string, ctx?: object | Error): void
-
-    // Soporte para loggers hijos con contexto pinned
-    child(ctx: object): ILogger
-}
-
-/**
- * Interfaz para el validador de la aplicación.
- */
-export interface IValidator {
-    /**
-     * Valida datos contra un esquema.
-     * @template T Tipo de datos esperado
-     * @param data Datos a validar
-     * @param schema Esquema de validación
-     */
-    validate<T>(
-        data: unknown,
-        schema: unknown
-    ):
-        | { valid: true; data: T; errors?: never }
-        | { valid: false; data?: never; errors: { path: string; message: string; code?: string }[] }
-}
-
-/**
- * Servicio de internacionalización.
- */
-// Helper para obtener claves anidadas de AppMessages
 type HelperKeys<T> = T extends object
     ? {
           [K in keyof T]: K extends string
@@ -69,50 +36,172 @@ type HelperKeys<T> = T extends object
       }[keyof T]
     : never
 
+/**
+ * Clave de traducción tipada.
+ * Permite autocompletado para las claves de `AppMessages`.
+ */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type TxKey = HelperKeys<AppMessages>
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 2. Servicios Core
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Interfaz para servicios de logging.
+ * Estandariza la salida de logs en toda la aplicación.
+ */
+export interface ILogger {
+    /** Registra un mensaje de nivel TRACE (detalle extremo). */
+    trace(msg: string, ctx?: object): void
+    /** Registra un mensaje de nivel DEBUG. */
+    debug(msg: string, ctx?: object): void
+    /** Registra un mensaje informativo. */
+    info(msg: string, ctx?: object): void
+    /** Registra una advertencia. */
+    warn(msg: string, ctx?: object): void
+    /** Registra un error. */
+    error(msg: string, ctx?: object | Error): void
+    /** Registra un error crítico (requiere intervención inmediata). */
+    critical(msg: string, ctx?: object | Error): void
+
+    /**
+     * Crea un logger hijo con contexto fijo (pinned).
+     * Útil para agregar categoría o request ID a todos los logs.
+     *
+     * @param ctx - Contexto que se anexará a cada mensaje del hijo
+     */
+    child(ctx: object): ILogger
+}
+
+/**
+ * Interfaz para el validador de la aplicación.
+ * Abstrae el motor de validación (Zod, Joi, etc.).
+ */
+export interface IValidator {
+    /**
+     * Valida datos contra un esquema.
+     *
+     * @template T - Tipo de datos esperado tras validación exitosa
+     * @param data - Datos crudos a validar
+     * @param schema - Esquema de validación
+     * @returns Resultado discriminado: `{ valid: true, data }` o `{ valid: false, errors }`
+     */
+    validate<T>(
+        data: unknown,
+        schema: unknown
+    ):
+        | { valid: true; data: T; errors?: never }
+        | { valid: false; data?: never; errors: { path: string; message: string; code?: string }[] }
+}
+
+/**
+ * Interfaz para acceso a base de datos (PostgreSQL).
+ * Abstrae la ejecución de queries SQL y la gestión del pool.
+ */
+export interface IDatabase {
+    /** Pool de conexiones subyacente de `pg`. */
+    pool: Pool
+
+    /**
+     * Ejecuta una consulta SQL cruda.
+     *
+     * @param sql - Sentencia SQL
+     * @param params - Parámetros opcionales
+     * @returns Resultado con filas y conteo
+     */
+    exeRaw(
+        sql: string,
+        params?: unknown
+    ): Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>
+
+    /**
+     * Ejecuta una consulta tipada o definición de query.
+     *
+     * @template T - Tipo de las filas retornadas
+     * @param queryDef - String SQL directo u objeto `{ sql: string }`
+     * @param params - Parámetros para consulta parametrizada ($1, $2...)
+     */
+    query<T extends Record<string, unknown> = Record<string, unknown>>(
+        queryDef: string | { sql: string },
+        params?: unknown[]
+    ): Promise<{ rows: T[]; rowCount: number | null }>
+
+    /** Cierra todas las conexiones del pool. */
+    shutdown(): Promise<void>
+}
+
+/**
+ * Configuración global de la aplicación.
+ * Re-exportado desde `config.ts` para compatibilidad.
+ */
+export type { IAppConfig as IConfig } from './config.js'
+
+// Import para uso en interfaces locales
+import type { IAppConfig } from './config.js'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 3. Servicios de Infraestructura
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Servicio de internacionalización (i18n).
+ * Gestiona traducciones, formateo de fechas/monedas e interpolación de templates.
+ */
 export interface II18nService {
+    /** Código del idioma activo (e.g. `'es'`, `'en'`). */
     currentLocale: string
+    /** Objeto completo de mensajes del idioma activo. */
     messages: AppMessages
 
     /**
-     * Traduce una clave a texto.
-     * Soporta claves anidadas (e.g. 'auth.login.success') e interpolación.
+     * Traduce una clave a texto localizado.
+     * Soporta claves anidadas (e.g. `'auth.login.success'`) e interpolación.
      *
-     * @param key Clave del mensaje.
-     * @param params Variables para interpolar.
-     * @param locale Idioma opcional.
+     * @param key - Clave del mensaje
+     * @param params - Variables para interpolar
+     * @param locale - Idioma opcional (override del actual)
      */
     translate(key: TxKey | (string & {}), params?: Record<string, unknown>, locale?: string): string
 
     /**
      * Formatea una fecha según el locale actual.
-     * @param date Fecha a formatear
-     * @param options Opciones de Intl.DateTimeFormat
+     *
+     * @param date - Fecha a formatear
+     * @param options - Opciones de `Intl.DateTimeFormat`
      */
     formatDate(date: Date | number, options?: Intl.DateTimeFormatOptions): string
 
     /**
-     * Formatea una moneda según el locale actual.
-     * @param amount Cantidad monetaria
-     * @param currency Código de moneda (e.g. 'USD', 'EUR')
+     * Formatea una cantidad monetaria según el locale actual.
+     *
+     * @param amount - Cantidad monetaria
+     * @param currency - Código ISO de moneda (e.g. `'USD'`, `'EUR'`)
      */
     formatCurrency(amount: number, currency: string): string
 
     /**
      * Interpola parámetros en un template string.
+     *
+     * @param template - String con placeholders `{{key}}`
+     * @param params - Variables a interpolar
      */
     format(template: string, params?: Record<string, unknown>): string
 
     /**
      * Selecciona el objeto de mensajes para el idioma actual.
+     *
+     * @template T - Tipo de los mensajes
+     * @param messageSet - Objeto con mensajes por idioma
      */
     use<T>(messageSet: Record<string, T>): NonNullable<T>
 
     /**
      * Obtiene un objeto de error HTTP con código y mensaje.
      * Soporta selector function (Typed) o key string (Legacy).
+     *
+     * @param selectorOrKey - Función selectora o clave string
+     * @param params - Variables opcionales para interpolar
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     error(
@@ -122,79 +211,263 @@ export interface II18nService {
 
     /**
      * Obtiene el valor raw de una clave (para estructuras anidadas).
-     * @param key Clave de acceso
-     * @param locale Idioma opcional
+     *
+     * @param key - Clave de acceso con notación punto
+     * @param locale - Idioma opcional
      */
     get(key: string, locale?: string): unknown
 }
 
 /**
- * Interfaz para acceso a base de datos.
- * Abstrae la ejecución de queries SQL.
+ * Servicio de envío de correos electrónicos.
+ * Soporta modo 'smtp' (producción) y modo 'log' (desarrollo).
  */
-export interface IDatabase {
-    pool: Pool
+export interface IEmailService {
     /**
-     * Ejecuta una query predefinida.
-     * @param schema Esquema/Namespace de la query
-     * @param query Nombre de la query
-     * @param params Parámetros (array u objeto)
+     * Envía un correo electrónico simple (texto plano o HTML raw).
+     *
+     * @param params - Opciones de envío
      */
-    /**
-     * Executes a raw query or query definition.
-     */
-    exeRaw(
-        sql: string,
-        params?: unknown
-    ): Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>
+    send(params: {
+        to: string
+        subject: string
+        text?: string
+        html?: string
+    }): Promise<{ ok: boolean; mode: string }>
 
     /**
-     * Executes a raw query or query definition.
+     * Envía un correo usando una plantilla HTML con interpolación.
+     *
+     * @param params - Opciones con ruta de plantilla y datos
      */
-    query<T extends Record<string, unknown> = Record<string, unknown>>(
-        queryDef: string | { sql: string },
-        params?: unknown[]
-    ): Promise<{ rows: T[]; rowCount: number | null }>
+    sendTemplate(params: {
+        to: string
+        subject: string
+        templatePath: string
+        data: Record<string, unknown>
+    }): Promise<{ ok: boolean; mode: string }>
 
     /**
-     * Cierra el pool de conexiones.
+     * Enmascara un email para logs (e.g. `"el***@example.com"`).
+     *
+     * @param email - Email a enmascarar
      */
-    shutdown(): Promise<void>
+    maskEmail(email: string): string
 }
 
 /**
- * Configuración global de la aplicación.
- * Re-exportado desde config.ts para compatibilidad.
+ * Servicio de auditoría.
+ * Registra eventos de seguridad y negocio de manera asíncrona (Best Effort).
  */
-export type { IAppConfig as IConfig } from './config.js'
+export interface IAuditService {
+    /**
+     * Registra un evento de auditoría.
+     *
+     * @param req - Request HTTP que originó el evento
+     * @param args - Detalles del evento a registrar
+     */
+    log(
+        req: AppRequest,
+        args: {
+            action: string
+            objectName?: string | null
+            methodName?: string | null
+            tx?: unknown
+            user_id?: number | null
+            profile_id?: number | null
+            details?: Record<string, unknown>
+        }
+    ): Promise<void>
+}
 
-// Import para uso en interfaces locales
-import type { IAppConfig } from './config.js'
+// ═══════════════════════════════════════════════════════════════════════════════
+// 4. Seguridad
+// ═══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Servicio de seguridad y orquestación de transacciones.
+ * Gestiona permisos, resolución de transacciones y ejecución de BOs.
  */
 export interface ISecurityService {
+    /** Indica si el sistema de seguridad ha cargado correctamente. */
     isReady: boolean
+    /** Promesa que resuelve cuando la inicialización completa. */
     ready: Promise<boolean>
-    /** Resuelve una transacción a BO/Método */
+
+    /**
+     * Resuelve un código de transacción a su ruta de ejecución (BO/Método).
+     *
+     * @param tx - Código de transacción
+     * @returns Ruta `{ objectName, methodName }` o `false` si no existe
+     */
     getDataTx(tx: unknown): { objectName: string; methodName: string } | false
-    /** Verifica permisos de acceso */
+
+    /**
+     * Verifica si un perfil tiene permisos para ejecutar un método.
+     *
+     * @param data - Datos de verificación
+     */
     getPermissions(data: { profileId: number; methodName: string; objectName: string }): boolean
+
+    /**
+     * Ejecuta un método de negocio.
+     *
+     * @param data - Datos de ejecución
+     */
     executeMethod(data: {
         objectName: string
         methodName: string
         params: Record<string, unknown>
     }): Promise<{ code: number; msg: string; [key: string]: unknown }>
 
-    /** Otorga un permiso dinámicamente */
+    /**
+     * Otorga un permiso dinámicamente (Dual Write: DB + memoria).
+     *
+     * @param profileId - ID del perfil
+     * @param objectName - Nombre del objeto
+     * @param methodName - Nombre del método
+     */
     grantPermission(profileId: number, objectName: string, methodName: string): Promise<boolean>
-    /** Revoca un permiso dinámicamente */
+
+    /**
+     * Revoca un permiso dinámicamente (Dual Write: DB + memoria).
+     *
+     * @param profileId - ID del perfil
+     * @param objectName - Nombre del objeto
+     * @param methodName - Nombre del método
+     */
     revokePermission(profileId: number, objectName: string, methodName: string): Promise<boolean>
 }
 
 /**
+ * Contexto de Seguridad Inmutable.
+ * Transporta la identidad del usuario a través del ciclo de una transacción.
+ */
+export interface ISecurityContext {
+    readonly userId: number
+    readonly profileId: number
+    readonly username: string
+}
+
+/**
+ * Proveedor de verificación de permisos.
+ * Implementado por `PermissionGuard` para verificaciones O(1) en memoria.
+ */
+export interface IPermissionProvider {
+    /**
+     * Carga la matriz de permisos desde la fuente de datos.
+     */
+    load(): Promise<void>
+
+    /**
+     * Verifica si un perfil tiene acceso a un método de un objeto.
+     *
+     * @param profileId - ID del perfil
+     * @param objectName - Nombre del objeto
+     * @param methodName - Nombre del método
+     */
+    check(profileId: number, objectName: string, methodName: string): boolean
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 5. Container + Transaction
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Contenedor de Inyección de Dependencias (IoC Container).
+ *
+ * Contrato para el contenedor que gestiona el ciclo de vida de las dependencias.
+ * Todos los componentes que requieran dependencias reciben `IContainer`.
+ */
+export interface IContainer {
+    /**
+     * Registra una instancia ya construida.
+     *
+     * @template T - Tipo del servicio
+     * @param key - Clave única de identificación
+     * @param instance - Instancia del servicio
+     */
+    register<T>(key: string, instance: T): void
+
+    /**
+     * Registra una factory para inicialización lazy.
+     * La factory se ejecuta en el primer `resolve()` y el resultado se cachea.
+     *
+     * @template T - Tipo del servicio que produce la factory
+     * @param key - Clave única de identificación
+     * @param factory - Función que recibe el contenedor y retorna la instancia
+     */
+    registerFactory<T>(key: string, factory: (container: IContainer) => T): void
+
+    /**
+     * Resuelve una dependencia por su clave.
+     *
+     * @template T - Tipo esperado del servicio
+     * @param key - Clave de la dependencia a resolver
+     * @returns Instancia del servicio
+     * @throws {Error} Si la clave no está registrada
+     */
+    resolve<T>(key: string): T
+
+    /**
+     * Verifica si una clave está registrada (como instancia o factory).
+     *
+     * @param key - Clave a verificar
+     */
+    has(key: string): boolean
+}
+
+/**
+ * Ruta de ejecución de una transacción.
+ * Mapea un código TX a un par `objectName` / `methodName`.
+ */
+export type TransactionRoute = {
+    objectName: string
+    methodName: string
+}
+
+/**
+ * Mapeador de transacciones.
+ * Traduce códigos de transacción numéricos a rutas de ejecución.
+ */
+export interface ITransactionMapper {
+    /** Carga el mapa de transacciones desde la base de datos. */
+    load(): Promise<void>
+    /**
+     * Resuelve un código de transacción a su ruta.
+     *
+     * @param tx - Código de transacción
+     * @returns Ruta o `null` si no existe
+     */
+    resolve(tx: unknown): TransactionRoute | null
+}
+
+/**
+ * Ejecutor de transacciones.
+ * Carga e invoca dinámicamente Business Objects basado en rutas resueltas.
+ */
+export interface ITransactionExecutor {
+    /**
+     * Ejecuta un método de un Business Object.
+     *
+     * @param objectName - Nombre del BO (e.g. `'Auth'`)
+     * @param methodName - Nombre del método (e.g. `'login'`)
+     * @param params - Parámetros de entrada
+     */
+    execute(
+        objectName: string,
+        methodName: string,
+        params: Record<string, unknown> | null | undefined
+    ): Promise<unknown>
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 6. Resultados y Sesión
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
  * Resultado de inicio de sesión.
+ * Tipo discriminado por `status`: `'success'`, `'error'`, o `'validation_error'`.
  */
 export type SessionResult =
     | {
@@ -211,69 +484,41 @@ export type SessionResult =
       }
 
 /**
- * Servicio de gestión de sesiones.
+ * Servicio de gestión de sesiones de usuario.
  */
 export interface ISessionService {
+    /**
+     * Verifica si una sesión de usuario está actualmente activa.
+     *
+     * @param req - Request de Express
+     */
     sessionExists(req: AppRequest): boolean
+
+    /**
+     * Autentica a un usuario y establece una nueva sesión.
+     *
+     * @param req - Request con credenciales en el body
+     */
     createSession(req: AppRequest): Promise<SessionResult>
+
+    /**
+     * Destruye la sesión actual del usuario (Logout).
+     *
+     * @param req - Request con la sesión a destruir
+     */
     destroySession(req: AppRequest): void
 }
 
-/**
- * Servicio de envío de correos electrónicos.
- */
-export interface IEmailService {
-    /**
-     * Envía un correo electrónico simple (texto plano o HTML raw).
-     */
-    send(params: {
-        to: string
-        subject: string
-        text?: string
-        html?: string
-    }): Promise<{ ok: boolean; mode: string }>
+// ═══════════════════════════════════════════════════════════════════════════════
+// 7. Legacy (Deprecated — se eliminará en fases posteriores)
+// ═══════════════════════════════════════════════════════════════════════════════
 
-    /**
-     * Envía un correo usando una plantilla HTML.
-     */
-    sendTemplate(params: {
-        to: string
-        subject: string
-        templatePath: string
-        data: Record<string, unknown>
-    }): Promise<{ ok: boolean; mode: string }>
-
-    /** Enmascara un email para logs */
-    maskEmail(email: string): string
-}
-
-/**
- * Contenedor de inyección de dependencias.
- */
-export interface IContainer {
-    resolve<T>(key: string): T
-}
-
-/**
- * Servicio de auditoría.
- */
-export interface IAuditService {
-    log(
-        req: AppRequest,
-        args: {
-            action: string
-            objectName?: string | null
-            methodName?: string | null
-            tx?: unknown
-            user_id?: number | null
-            profile_id?: number | null
-            details?: Record<string, unknown>
-        }
-    ): Promise<void>
-}
 /**
  * Dependencias inyectables para Business Objects (BO).
- * Este objeto agrupa todos los servicios necesarios para la lógica de negocio.
+ *
+ * @deprecated Usar `IContainer` en su lugar. Los BOs deben recibir `IContainer`
+ * y resolver sus dependencias directamente. Se eliminará cuando todos los BOs,
+ * `TransactionExecutor` y `SecurityService` migren al container.
  */
 export interface BODependencies {
     db: IDatabase
@@ -285,60 +530,4 @@ export interface BODependencies {
     validator: IValidator
     i18n: II18nService
     email: IEmailService
-}
-
-/**
- * Proveedor de verificación de permisos.
- */
-export interface IPermissionProvider {
-    /**
-     * Carga los permisos desde la fuente de datos.
-     */
-    load(): Promise<void>
-    /**
-     * Verifica si un perfil tiene acceso a un método de un objeto.
-     * @param profileId - ID del perfil
-     * @param objectName - Nombre del objeto
-     * @param methodName - Nombre del método
-     */
-    check(profileId: number, objectName: string, methodName: string): boolean
-}
-
-/**
- * Ruta de ejecución de una transacción.
- */
-export type TransactionRoute = {
-    objectName: string
-    methodName: string
-}
-
-/**
- * Mapeador de transacciones.
- * Traduce códigos de transacción a rutas de ejecución.
- */
-export interface ITransactionMapper {
-    load(): Promise<void>
-    resolve(tx: unknown): TransactionRoute | null
-}
-
-/**
- * Ejecutor de transacciones.
- * Carga e invoca dinámicamente lógica de negocio.
- */
-export interface ITransactionExecutor {
-    execute(
-        objectName: string,
-        methodName: string,
-        params: Record<string, unknown> | null | undefined
-    ): Promise<unknown>
-}
-
-/**
- * Contexto de Seguridad Inmutable.
- * Transporta la identidad del usuario a través de la transacción.
- */
-export interface ISecurityContext {
-    readonly userId: number
-    readonly profileId: number
-    readonly username: string
 }
