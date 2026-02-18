@@ -139,6 +139,7 @@ export type { IAppConfig as IConfig } from './config.js'
 
 // Import para uso en interfaces locales
 import type { IAppConfig } from './config.js'
+import { SessionUserRow } from '../services/schemas/session.js'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 3. Servicios de Infraestructura
@@ -503,11 +504,11 @@ export interface ISessionService {
     sessionExists(req: AppRequest): boolean
 
     /**
-     * Autentica a un usuario y establece una nueva sesión.
+     * Establece una nueva sesión.
      *
      * @param req - Request con credenciales en el body
      */
-    createSession(req: AppRequest): Promise<SessionResult>
+    createSession(req: AppRequest, user: SessionUserRow): Promise<SessionResult>
 
     /**
      * Destruye la sesión actual del usuario (Logout).
@@ -515,7 +516,31 @@ export interface ISessionService {
      * @param req - Request con la sesión a destruir
      */
     destroySession(req: AppRequest): void
-}
+
+    /**
+     * Establece datos en la sesión actual.
+     *
+     * @param req - Request con la sesión
+     * @param data - Datos a establecer
+     */
+    setDataSession(req: AppRequest, data: any): void
+
+    /**
+     * Obtiene los datos de la sesión actual.
+     *
+     * @param req - Request con la sesión
+     */
+    getDataSession(req: AppRequest): any
+
+    /**
+     * Autentica a un usuario.
+     *
+     * @param req - Request con credenciales en el body
+     */
+    authenticate(req: AppRequest): Promise<SessionResult>
+    }
+
+    
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 7. Legacy (Deprecated — se eliminará en fases posteriores)
