@@ -130,7 +130,7 @@ function createDeps() {
 
     const sessionService = {
         sessionExists: (req) => !!req.session?.userId,
-        createSession: async (req) => {
+        authenticate: async (req) => {
             const body = req.body
             if (body.loginId === 'test@example.com' && body.password === 'password') {
                 req.session.userId = 1
