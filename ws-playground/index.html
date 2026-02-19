@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>WebSocket Playground</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <header>
+            <h1><span>⚡</span> WebSocket Playground</h1>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div id="auth-badge" class="status-badge disconnected">
+                    <div class="dot"></div>
+                    <span id="auth-text">Sin sesión</span>
+                </div>
+                <div id="status-badge" class="status-badge disconnected">
+                    <div class="dot"></div>
+                    <span id="status-text">Desconectado</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- ═══════════ Autenticación ═══════════ -->
+            <div class="card full-width">
+                <h2><span class="icon">🔐</span> Autenticación</h2>
+                <div class="explanation">
+                    Primero obtiene un token CSRF via <code>GET /csrf</code>, luego autentica con
+                    <code>POST /login</code> enviando <code>{ identifier, password }</code> y el header
+                    <code>X-CSRF-Token</code>. La sesión se mantiene via cookies (<code>withCredentials</code>).
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Email o Username</label>
+                        <input type="text" id="login-identifier" placeholder="admin@app.com">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Contraseña</label>
+                        <input type="password" id="login-password" placeholder="********">
+                    </div>
+                    <div class="actions" style="margin-top: 0;">
+                        <button class="btn btn-success" onclick="app.login()">🔑 Login</button>
+                        <button class="btn btn-danger btn-sm" onclick="app.logout()">🚪 Logout</button>
+                    </div>
+                </div>
+                <div id="auth-info" style="margin-top: 12px; font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;"></div>
+            </div>
+
+            <!-- ═══════════ Métricas ═══════════ -->
+            <div class="card full-width">
+                <h2><span class="icon">📊</span> Métricas en Tiempo Real</h2>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="value" id="metric-events">0</div>
+                        <div class="label">Eventos Recibidos</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value" id="metric-sent">0</div>
+                        <div class="label">Enviados</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value" id="metric-rooms">0</div>
+                        <div class="label">Salas Activas</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value" id="metric-socketid">—</div>
+                        <div class="label">Socket ID</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════ Emitir a Usuario ═══════════ -->
+            <div class="card">
+                <h2><span class="icon">👤</span> Emitir a Usuario</h2>
+                <div class="explanation">
+                    Llama a <code>ws.emitToUser(userId, event, payload)</code> a través del BO
+                    NotificationBO.send(). El backend emite el evento a la sala
+                    <code>user_{userId}</code>.
+                </div>
+                <div class="form-group">
+                    <label>User ID</label>
+                    <input type="text" id="emit-user-id" placeholder="ej: 42" />
+                </div>
+                <div class="form-group">
+                    <label>Evento</label>
+                    <input
+                        type="text"
+                        id="emit-user-event"
+                        value="notification:send"
+                        placeholder="ej: notification:send"
+                    />
+                </div>
+                <div class="form-group">
+                    <label>Mensaje</label>
+                    <input
+                        type="text"
+                        id="emit-user-message"
+                        value="Hola desde el playground!"
+                        placeholder="Contenido del mensaje"
+                    />
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="app.sendToUser()">
+                        🚀 Enviar a Usuario
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══════════ Broadcast ═══════════ -->
+            <div class="card">
+                <h2><span class="icon">📢</span> Broadcast Global</h2>
+                <div class="explanation">
+                    Llama a <code>ws.broadcast(event, payload)</code> a través del BO
+                    NotificationBO.broadcast(). Emite a <strong>todos</strong> los clientes
+                    conectados.
+                </div>
+                <div class="form-group">
+                    <label>Evento</label>
+                    <input
+                        type="text"
+                        id="broadcast-event"
+                        value="notification:broadcast"
+                        placeholder="ej: notification:broadcast"
+                    />
+                </div>
+                <div class="form-group">
+                    <label>Mensaje</label>
+                    <input
+                        type="text"
+                        id="broadcast-message"
+                        value="Mensaje global para todos!"
+                        placeholder="Contenido del broadcast"
+                    />
+                </div>
+                <div class="actions">
+                    <button class="btn btn-success" onclick="app.sendBroadcast()">
+                        📢 Broadcast
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══════════ Simulación Status Bar ═══════════ -->
+            <div class="card full-width">
+                <h2><span class="icon">⏳</span> Simulación de Progreso (Status Bar)</h2>
+                <div class="explanation">
+                    Llama a <code>Notification.simulate</code> via API. El BO retorna HTTP 200 inmediatamente
+                    y lanza un ciclo asíncrono que envía chunks de progreso via <code>emitToUser('progress:update')</code>.
+                    Cada chunk contiene <code>step</code>, <code>totalSteps</code>, <code>percent</code> y <code>label</code>.
+                    Observa los logs del backend con <code>LOG_FORMAT=text</code> para ver cada <code>log.debug</code>.
+                </div>
+                <!-- Progress Bar -->
+                <div id="progress-container" style="margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span id="progress-label" style="font-size: 0.8rem; color: var(--text-secondary);">Esperando simulación…</span>
+                        <span id="progress-percent" style="font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--accent-light);">0%</span>
+                    </div>
+                    <div style="width: 100%; height: 12px; background: var(--bg-secondary); border-radius: 999px; overflow: hidden; border: 1px solid var(--border);">
+                        <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--info)); border-radius: 999px; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div id="progress-step" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace;">—</div>
+                </div>
+                <!-- Controls -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>User ID</label>
+                        <input type="text" id="sim-user-id" placeholder="ej: 42">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Pasos (3-20)</label>
+                        <input type="number" id="sim-steps" value="8" min="3" max="20">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Delay ms (200-5000)</label>
+                        <input type="number" id="sim-delay" value="600" min="200" max="5000">
+                    </div>
+                    <div class="actions" style="margin-top: 0;">
+                        <button class="btn btn-primary" onclick="app.startSimulation()">▶️ Iniciar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2><span class="icon">🏠</span> Gestión de Salas</h2>
+                <div class="explanation">
+                    Usa <code>addUserToRoom()</code> y <code>removeUserFromRoom()</code> para
+                    gestionar suscripciones. Luego <code>emitToRoom()</code> emite solo a los
+                    miembros de esa sala.
+                </div>
+                <div class="form-group">
+                    <label>Salas Activas</label>
+                    <div class="room-tags" id="room-tags">
+                        <span class="empty-state" style="padding: 8px; font-size: 0.75rem"
+                            >Sin salas</span
+                        >
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nombre de Sala</label>
+                    <input type="text" id="room-name" placeholder="ej: dashboard, admin, ventas" />
+                </div>
+                <div class="actions">
+                    <button class="btn btn-info btn-sm" onclick="app.joinRoom()">➕ Unirse</button>
+                    <button class="btn btn-danger btn-sm" onclick="app.leaveRoom()">
+                        ➖ Salir
+                    </button>
+                </div>
+                <hr style="border-color: var(--border); margin: 16px 0" />
+                <div class="form-group">
+                    <label>Emitir a Sala</label>
+                    <input type="text" id="room-emit-name" placeholder="Nombre de sala" />
+                </div>
+                <div class="form-group">
+                    <label>Evento</label>
+                    <input
+                        type="text"
+                        id="room-emit-event"
+                        value="room:message"
+                        placeholder="Evento"
+                    />
+                </div>
+                <div class="form-group">
+                    <label>Mensaje</label>
+                    <input
+                        type="text"
+                        id="room-emit-message"
+                        value="Hola sala!"
+                        placeholder="Mensaje"
+                    />
+                </div>
+                <div class="actions">
+                    <button class="btn btn-info btn-sm" onclick="app.emitToRoom()">
+                        📤 Emitir a Sala
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══════════ Conexión ═══════════ -->
+            <div class="card">
+                <h2><span class="icon">🔌</span> Control de Conexión</h2>
+                <div class="explanation">
+                    Conecta al servidor WebSocket en <code>http://localhost:3000</code>. Socket.io
+                    maneja automáticamente la reconexión y upgrades de transporte.
+                </div>
+                <div class="form-group">
+                    <label>URL del Backend</label>
+                    <input type="text" id="backend-url" value="http://localhost:3000" />
+                </div>
+                <div class="actions">
+                    <button class="btn btn-success" onclick="app.connect()">🔌 Conectar</button>
+                    <button class="btn btn-danger" onclick="app.disconnect()">
+                        ⛔ Desconectar
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="app.clearLog()">
+                        🗑️ Limpiar Log
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══════════ Event Log ═══════════ -->
+            <div class="card full-width">
+                <h2><span class="icon">📜</span> Log de Eventos en Tiempo Real</h2>
+                <div class="event-log" id="event-log">
+                    <div class="empty-state">
+                        Conecta al servidor para ver los eventos en tiempo real
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+        <script src="app.js"></script>
+    </body>
+</html>

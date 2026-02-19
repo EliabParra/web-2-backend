@@ -46,8 +46,13 @@ export class WebSocketService implements IWebSocketService {
      * @param httpServer - Instancia del servidor HTTP de Node.js
      */
     async initialize(httpServer: any): Promise<void> {
+        const corsOrigins = this.config.cors?.origins ?? ['*']
+
         this.io = new SocketServer(httpServer, {
-            cors: { origin: '*' },
+            cors: {
+                origin: corsOrigins,
+                credentials: true,
+            },
         })
 
         await this.configureAdapter()
@@ -219,7 +224,8 @@ export class WebSocketService implements IWebSocketService {
 
     /**
      * Registra handlers para eventos `connection` y `disconnect`.
-     * Actualiza el mapa local y asigna la sala de usuario.
+     * Actualiza el mapa local, asigna la sala de usuario,
+     * y registra handlers para gestión de salas desde el cliente.
      */
     private registerConnectionHandlers(): void {
         this.requireIO().on('connection', (socket) => {
@@ -232,6 +238,32 @@ export class WebSocketService implements IWebSocketService {
             this.trackConnection(userId, socket.id)
             socket.join(`user_${userId}`)
             this.log.debug(`Socket conectado: ${socket.id} → user_${userId}`)
+
+            // Handlers de salas (para playground y uso general)
+            socket.on('room:join', (data: { roomName: string }) => {
+                if (data?.roomName) {
+                    socket.join(data.roomName)
+                    this.log.debug(`Socket ${socket.id} unido a sala: ${data.roomName}`)
+                }
+            })
+
+            socket.on('room:leave', (data: { roomName: string }) => {
+                if (data?.roomName) {
+                    socket.leave(data.roomName)
+                    this.log.debug(`Socket ${socket.id} salió de sala: ${data.roomName}`)
+                }
+            })
+
+            socket.on('room:emit', (data: { roomName: string; event: string; message: string }) => {
+                if (data?.roomName && data?.event) {
+                    this.requireIO().to(data.roomName).emit(data.event, {
+                        message: data.message,
+                        from: userId,
+                        timestamp: new Date().toISOString(),
+                    })
+                    this.log.debug(`Emisión a sala "${data.roomName}": ${data.event}`)
+                }
+            })
 
             socket.on('disconnect', () => {
                 this.untrackConnection(userId, socket.id)
