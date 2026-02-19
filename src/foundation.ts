@@ -15,6 +15,7 @@ import { EmailService } from './services/EmailService.js'
 import { AppServer } from './api/AppServer.js'
 import { AuditService } from './services/AuditService.js'
 import { DatabaseService } from './services/DatabaseService.js'
+import { WebSocketService } from './services/WebSocketService.js'
 import { es } from './locales/es.js'
 import { en } from './locales/en.js'
 
@@ -59,6 +60,7 @@ container.registerFactory('audit', (c) => new AuditService(c))
 container.registerFactory('email', (c) => new EmailService(c))
 container.registerFactory('session', (c) => new SessionManager(c))
 container.registerFactory('security', (c) => new SecurityService(c))
+container.registerFactory('websocket', (c) => new WebSocketService(c))
 container.registerFactory('appServer', (c) => new AppServer(c))
 
 // Exportar solo el container — fuente única de verdad

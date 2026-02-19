@@ -118,6 +118,7 @@ export class AppServer {
 
         // Configurar Express base
         this.setupExpress()
+        this.container.register('expressApp', this.app)
 
         // Inicializar Middlewares de Seguridad (Factories)
         this.csrfTokenHandler = createCsrfTokenHandler(this.i18n)

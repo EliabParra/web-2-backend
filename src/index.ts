@@ -7,7 +7,7 @@
  * @module index
  */
 import { container } from './foundation.js'
-import type { ILogger, ISecurityService } from './types/index.js'
+import type { ILogger, ISecurityService, IWebSocketService } from './types/index.js'
 import type { AppServer } from './api/AppServer.js'
 
 const log = container.resolve<ILogger>('log').child({ category: 'Main' })
@@ -24,7 +24,12 @@ try {
     await appServer.init()
     log.info('AppServer Iniciado.')
 
-    appServer.serverOn()
+    const server = appServer.serverOn()
+
+    log.trace('Iniciando WebSocketService...')
+    const websocket = container.resolve<IWebSocketService>('websocket')
+    await websocket.initialize(server)
+    log.info('WebSocketService Iniciado.')
 } catch (error) {
     console.error('FATAL STARTUP ERROR:', error)
     if (error instanceof Error) {
@@ -46,6 +51,8 @@ async function shutdown(signal: string): Promise<void> {
     shuttingDown = true
     try {
         log.info(`Cerrando aplicación (${signal})...`)
+        const websocket = container.resolve<IWebSocketService>('websocket')
+        await websocket.shutdown()
         const appServer = container.resolve<AppServer>('appServer')
         await appServer.shutdown()
         process.exit(0)

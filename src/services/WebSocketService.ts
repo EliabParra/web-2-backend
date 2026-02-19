@@ -2,6 +2,7 @@ import { Server as SocketServer } from 'socket.io'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { Redis } from 'ioredis'
 import type { IWebSocketService, IContainer, ILogger, IConfig } from '../types/index.js'
+import type { Express } from 'express'
 
 /**
  * Servicio WebSocket con Arquitectura Híbrida.
@@ -20,6 +21,7 @@ import type { IWebSocketService, IContainer, ILogger, IConfig } from '../types/i
 export class WebSocketService implements IWebSocketService {
     private readonly log: ILogger
     private readonly config: IConfig
+    private readonly container: IContainer
 
     private io: SocketServer | null = null
     private pubClient: Redis | null = null
@@ -32,6 +34,7 @@ export class WebSocketService implements IWebSocketService {
     private readonly localConnections = new Map<string, Set<string>>()
 
     constructor(container: IContainer) {
+        this.container = container
         this.config = container.resolve<IConfig>('config')
         this.log = container.resolve<ILogger>('log').child({ category: 'WebSocket' })
     }
@@ -48,6 +51,7 @@ export class WebSocketService implements IWebSocketService {
         })
 
         await this.configureAdapter()
+        this.applySessionMiddleware()
         this.registerConnectionHandlers()
 
         this.log.info(`WebSocket inicializado con adaptador: ${this.config.websocket.adapter}`)
@@ -138,6 +142,47 @@ export class WebSocketService implements IWebSocketService {
     // ═══════════════════════════════════════════════════════════════════════════
     // Métodos Privados
     // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Aplica el middleware de `express-session` al handshake de Socket.io.
+     * Rechaza conexiones sin sesión autenticada (userId ausente).
+     */
+    private applySessionMiddleware(): void {
+        const app = this.container.resolve<Express>('expressApp')
+        const sessionMiddleware = this.findSessionMiddleware(app)
+
+        if (!sessionMiddleware) {
+            this.log.warn('No se encontró middleware de sesión en Express. WebSocket operará sin autenticación.')
+            return
+        }
+
+        this.requireIO().engine.use(sessionMiddleware)
+
+        this.requireIO().use((socket, next) => {
+            const session = (socket.request as any)?.session
+            const userId = session?.userId ?? session?.user_id
+            if (!userId) {
+                next(new Error('Conexión WebSocket rechazada: sesión no autenticada'))
+                return
+            }
+            next()
+        })
+    }
+
+    /**
+     * Busca el middleware de sesión registrado en la pila de Express.
+     * Identifica express-session por el nombre interno `session`.
+     *
+     * @param app - Instancia de Express
+     * @returns Middleware de sesión o `null` si no se encontró
+     */
+    private findSessionMiddleware(app: Express): any {
+        const stack: any[] = (app as any)._router?.stack ?? []
+        const sessionLayer = stack.find(
+            (layer: any) => layer.name === 'session' && typeof layer.handle === 'function'
+        )
+        return sessionLayer?.handle ?? null
+    }
 
     /**
      * Configura el adaptador de transporte según la configuración activa.
