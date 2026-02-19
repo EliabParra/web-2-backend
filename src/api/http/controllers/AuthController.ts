@@ -37,7 +37,7 @@ export class AuthController {
      */
     async login(req: AppRequest, res: AppResponse, next: Function): Promise<void> {
         try {
-            const result = await this.session.createSession(req)
+            const result = await this.session.authenticate(req)
 
             if (result.status === 'success') {
                 res.status(result.msg.code).send(result.msg)
