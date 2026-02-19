@@ -63,7 +63,9 @@ export function applySessionMiddleware(app: Express, container: IContainer) {
         app.set('trust proxy', 1)
     }
 
-    app.use(session(sessionOptions))
+    const sessionMw = session(sessionOptions)
+    container.register('sessionMiddleware', sessionMw)
+    app.use(sessionMw)
 }
 
 /**

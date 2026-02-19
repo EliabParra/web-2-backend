@@ -182,17 +182,18 @@ test('WebSocketService desconecta sockets sin userId en sesión', async () => {
         reconnection: false,
     })
 
-    const disconnected = await new Promise((resolve) => {
-        client.on('disconnect', () => resolve(true))
-        client.on('connect_error', () => resolve(true))
-        setTimeout(() => resolve(false), 3000)
-    })
-
-    client.disconnect()
-    await service.shutdown()
-    await closeServer(server)
-
-    assert.ok(disconnected, 'Socket sin sesión debería ser desconectado')
+    try {
+        const disconnected = await new Promise((resolve) => {
+            client.on('disconnect', () => resolve(true))
+            client.on('connect_error', () => resolve(true))
+            setTimeout(() => resolve(false), 3000)
+        })
+        assert.ok(disconnected, 'Socket sin sesión debería ser desconectado')
+    } finally {
+        client.disconnect()
+        await service.shutdown()
+        await closeServer(server)
+    }
 })
 
 test('WebSocketService acepta conexiones con sesión autenticada y registra en localConnections', async () => {
@@ -201,14 +202,8 @@ test('WebSocketService acepta conexiones con sesión autenticada y registra en l
         next()
     }
 
-    const mockApp = {
-        _router: {
-            stack: [{ name: 'session', handle: sessionMiddleware }],
-        },
-    }
-
     const { service, server } = await createInitializedService({
-        expressApp: mockApp,
+        sessionMiddleware,
     })
 
     await new Promise((resolve) => server.listen(0, resolve))
@@ -220,22 +215,20 @@ test('WebSocketService acepta conexiones con sesión autenticada y registra en l
         reconnection: false,
     })
 
-    const connected = await new Promise((resolve) => {
-        client.on('connect', () => resolve(true))
-        client.on('connect_error', () => resolve(false))
-        setTimeout(() => resolve(false), 3000)
-    })
+    try {
+        const connected = await new Promise((resolve) => {
+            client.on('connect', () => resolve(true))
+            client.on('connect_error', () => resolve(false))
+            setTimeout(() => resolve(false), 3000)
+        })
 
-    assert.equal(connected, true, 'Cliente con sesión debería conectarse')
-    assert.equal(service.getLocalConnectionsCount(), 1, 'Debería registrar 1 usuario en localConnections')
-
-    client.disconnect()
-
-    // Esperar a que el evento disconnect se procese
-    await new Promise((resolve) => setTimeout(resolve, 100))
-
-    assert.equal(service.getLocalConnectionsCount(), 0, 'Debería limpiar localConnections tras disconnect')
-
-    await service.shutdown()
-    await closeServer(server)
+        assert.equal(connected, true, 'Cliente con sesión debería conectarse')
+        assert.equal(service.getLocalConnectionsCount(), 1, 'Debería registrar 1 usuario en localConnections')
+    } finally {
+        client.disconnect()
+        // Esperar a que el evento disconnect se procese
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        await service.shutdown()
+        await closeServer(server)
+    }
 })

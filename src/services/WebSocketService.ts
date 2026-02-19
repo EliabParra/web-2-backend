@@ -153,11 +153,15 @@ export class WebSocketService implements IWebSocketService {
      * Rechaza conexiones sin sesión autenticada (userId ausente).
      */
     private applySessionMiddleware(): void {
-        const app = this.container.resolve<Express>('expressApp')
-        const sessionMiddleware = this.findSessionMiddleware(app)
+        let sessionMiddleware: any = null
+        try {
+            sessionMiddleware = this.container.resolve('sessionMiddleware')
+        } catch (err) {
+            // No resuelto
+        }
 
         if (!sessionMiddleware) {
-            this.log.warn('No se encontró middleware de sesión en Express. WebSocket operará sin autenticación.')
+            this.log.warn('No se encontró middleware de sesión en el contenedor. WebSocket operará sin autenticación.')
             return
         }
 
@@ -172,21 +176,6 @@ export class WebSocketService implements IWebSocketService {
             }
             next()
         })
-    }
-
-    /**
-     * Busca el middleware de sesión registrado en la pila de Express.
-     * Identifica express-session por el nombre interno `session`.
-     *
-     * @param app - Instancia de Express
-     * @returns Middleware de sesión o `null` si no se encontró
-     */
-    private findSessionMiddleware(app: Express): any {
-        const stack: any[] = (app as any)._router?.stack ?? []
-        const sessionLayer = stack.find(
-            (layer: any) => layer.name === 'session' && typeof layer.handle === 'function'
-        )
-        return sessionLayer?.handle ?? null
     }
 
     /**
