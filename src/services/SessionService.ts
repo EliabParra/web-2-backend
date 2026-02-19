@@ -62,37 +62,8 @@ export class SessionManager implements ISessionService {
      * @param req - Objeto Request que contiene las credenciales (body) y la sesión
      * @returns Promesa con el resultado de la operación (éxito, error o fallo de validación)
      */
-    async createSession(req: AppRequest): Promise<SessionResult> {
+    async createSession(req: AppRequest, user: SessionUserRow): Promise<SessionResult> {
         try {
-            const validation = this.validateLoginRequest(req)
-            if (!validation.success) {
-                return {
-                    status: 'validation_error',
-                    error: this.i18n.messages.errors.client.invalidParameters,
-                    errors: validation.errors,
-                    alerts: this.validator.getAlerts(validation.errors),
-                }
-            }
-
-            if (this.sessionExists(req)) {
-                return { status: 'error', error: this.i18n.messages.errors.client.sessionExists }
-            }
-
-            const { identifier, password } = validation.data
-            const user = await this.findUserByIdentifier(identifier)
-
-            // Updated to check user_password instead of password_hash
-            if (!user || !(await this.passwordsMatch(password, user.user_password))) {
-                return {
-                    status: 'error',
-                    error: this.i18n.messages.errors.client.usernameOrPasswordIncorrect,
-                }
-            }
-
-            if (this.isEmailVerificationPending(user)) {
-                return { status: 'error', error: this.i18n.messages.errors.client.emailNotVerified }
-            }
-
             this.initializeUserSession(req, user)
 
             // Updated to use user_id
@@ -128,6 +99,77 @@ export class SessionManager implements ISessionService {
         try {
             req.session?.destroy?.(() => {})
         } catch {}
+    }
+
+    /**
+     * Establece o fusiona datos en la sesión actual.
+     * @param req - Request con la sesión
+     * @param data - Datos a fusionar en la sesión
+     */
+    setDataSession(req: AppRequest, data: any): void {
+        if (req.session) {
+            // Fusiona las nuevas propiedades sin eliminar las existentes
+            Object.assign(req.session, data)
+        } else {
+            // Si no hay sesión (caso borde), se asigna directamente
+            req.session = data
+        }
+    }
+
+    /**
+     * Obtiene una copia de los datos de la sesión actual.
+     * @param req - Request con la sesión
+     * @returns Copia del objeto de sesión
+     */
+    getDataSession(req: AppRequest): any {
+        return req.session ? { ...req.session } : {}
+    }
+
+    /**
+     * Autentica a un usuario.
+     * @param req - Request con credenciales en el body
+     */
+    async authenticate(req: AppRequest): Promise<SessionResult> {
+        try {
+            const validation = this.validateLoginRequest(req)
+            if (!validation.success) {
+                return {
+                    status: 'validation_error',
+                    error: this.i18n.messages.errors.client.invalidParameters,
+                    errors: validation.errors,
+                    alerts: this.validator.getAlerts(validation.errors),
+                }
+            }
+
+            if (this.sessionExists(req)) {
+                return { status: 'error', error: this.i18n.messages.errors.client.sessionExists }
+            }
+
+            const { identifier, password } = validation.data
+            const user = await this.findUserByIdentifier(identifier)
+
+            // Updated to check user_password instead of password_hash
+            if (!user || !(await this.passwordsMatch(password, user.user_password))) {
+                return {
+                    status: 'error',
+                    error: this.i18n.messages.errors.client.usernameOrPasswordIncorrect,
+                }
+            }
+
+            if (this.isEmailVerificationPending(user)) {
+                return { status: 'error', error: this.i18n.messages.errors.client.emailNotVerified }
+            }
+            return this.createSession(req, user)
+        } catch (error) {
+            this.logSystemError(req, error)
+            return {
+                status: 'error',
+                error: this.i18n.messages.errors.client.unknown || {
+                    code: 500,
+                    msg: 'Unknown Error',
+                },
+            }
+        }
     }
 
     // =========================================================================
