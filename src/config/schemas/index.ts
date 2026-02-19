@@ -5,6 +5,7 @@ import { AuthConfigSchema } from './auth.schema.js'
 import { SessionConfigSchema } from './session.schema.js'
 import { LogConfigSchema, EmailConfigSchema } from './misc.schema.js'
 import { CorsConfigSchema, BoConfigSchema } from './extra.schema.js'
+import { WebsocketConfigSchema } from './websocket.schema.js'
 
 export const ConfigSchema = z
     .object({
@@ -16,6 +17,7 @@ export const ConfigSchema = z
         email: EmailConfigSchema,
         cors: CorsConfigSchema,
         bo: BoConfigSchema,
+        websocket: WebsocketConfigSchema,
     })
     .refine((config) => {
         // Cross-validation

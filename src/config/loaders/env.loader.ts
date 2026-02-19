@@ -86,6 +86,9 @@ export class EnvLoader {
                 credentials: envBool(env.CORS_CREDENTIALS),
                 origins: envList(env.CORS_ORIGINS),
             },
+            websocket: {
+                adapter: env.WS_ADAPTER as any,
+            },
         }
     }
 }

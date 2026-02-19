@@ -145,6 +145,14 @@ export interface EmailConfig {
 }
 
 /**
+ * Configuración del adaptador WebSocket.
+ */
+export interface WebsocketConfig {
+    /** Adaptador de transporte: 'memory' (dev) o 'redis' (producción multi-nodo) */
+    adapter: 'memory' | 'redis'
+}
+
+/**
  * Configuración de Business Objects.
  */
 export interface BoConfig {
@@ -164,4 +172,5 @@ export interface IAppConfig {
     auth: AuthConfig
     email: EmailConfig
     bo: BoConfig
+    websocket: WebsocketConfig
 }

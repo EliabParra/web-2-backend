@@ -39,8 +39,12 @@ export type {
     AuthConfig,
     EmailConfig,
     BoConfig,
+    WebsocketConfig,
     IAppConfig,
 } from './config.js'
+
+// Contrato WebSocket
+export type { IWebSocketService } from './websocket.js'
 
 // Interfaces de servicios core
 export type {
