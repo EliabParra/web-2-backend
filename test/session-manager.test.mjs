@@ -153,7 +153,7 @@ test('createSession returns error if session already exists', async () => {
         session: { userId: 1 },
     }
 
-    const result = await sm.createSession(req)
+    const result = await sm.authenticate(req)
 
     assert.equal(result.status, 'error')
     assert.equal(result.error.code, 400)
@@ -171,7 +171,7 @@ test('createSession returns error for non-existent user', async () => {
         session: {},
     }
 
-    const result = await sm.createSession(req)
+    const result = await sm.authenticate(req)
 
     assert.equal(result.status, 'error')
     assert.equal(result.error.code, 401) // Incorrect credentials
@@ -194,7 +194,7 @@ test('createSession uses getUserByUsername for non-email identifier', async () =
         session: {},
     }
 
-    const result = await sm.createSession(req)
+    const result = await sm.authenticate(req)
 
     // Check for new schema column name or query logic
     assert.ok(sqlCalled.includes('u.username = $1'), 'Should use username lookup query')
@@ -217,7 +217,7 @@ test('createSession uses getUserByEmail for email identifier', async () => {
         session: {},
     }
 
-    await sm.createSession(req)
+    await sm.authenticate(req)
 
     // Check for new schema column name
     assert.ok(sqlCalled.includes('u.user_email = $1'), 'Should use email lookup query')
@@ -257,7 +257,7 @@ test('createSession handles error gracefully and logs', async () => {
         originalUrl: '/login',
     }
 
-    const result = await sm.createSession(req)
+    const result = await sm.authenticate(req)
 
     assert.equal(result.status, 'error')
     assert.equal(result.error.code, 500)
