@@ -43,9 +43,6 @@ export type {
     IAppConfig,
 } from './config.js'
 
-// Contrato WebSocket
-export type { IWebSocketService } from './websocket.js'
-
 // Interfaces de servicios core
 export type {
     ILogger,
@@ -58,6 +55,7 @@ export type {
     IEmailService,
     IContainer,
     IAuditService,
+    IWebSocketService,
     SessionResult,
     TxKey,
     AppMessages,
