@@ -71,9 +71,9 @@ export class PermissionGuard implements IPermissionProvider {
      * @param methodName - Nombre del método (ej. 'login')
      * @returns {boolean} true si el permiso existe, false en caso contrario
      */
-    check(profileId: number, objectName: string, methodName: string): boolean {
+    check(profileId: number | null, objectName: string, methodName: string): boolean {
         // Validación básica de inputs
-        if (!objectName || !methodName || !Number.isInteger(profileId)) {
+        if (!objectName || !methodName || profileId === null || !Number.isInteger(profileId)) {
             return false
         }
 

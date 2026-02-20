@@ -101,7 +101,8 @@ export class TransactionController {
             // 3. Preparar Contexto de Seguridad
             // cast to any for legacy user object access until proper Session type update
             const session = req.session as any
-            const userId = session?.userId ?? session?.user_id ?? 0 // 0 = Anon/System
+            const rawUserId = session?.userId ?? session?.user_id
+            const userId = rawUserId != null ? Number(rawUserId) : null // null = Anon/System
             const username = session?.username ?? session?.user?.username ?? 'anonymous'
 
             // Inyectar metadatos legacy para Auth

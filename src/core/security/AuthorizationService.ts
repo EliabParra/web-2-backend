@@ -41,7 +41,7 @@ export class AuthorizationService {
      * @param methodName - Acción/Método a ejecutar
      * @returns {boolean} true si está autorizado, false si no
      */
-    isAuthorized(profileId: number, objectName: string, methodName: string): boolean {
+    isAuthorized(profileId: number | null, objectName: string, methodName: string): boolean {
         const authorized = this.guard.check(profileId, objectName, methodName)
 
         if (!authorized) {

@@ -439,8 +439,8 @@ export interface ISecurityService {
  * Transporta la identidad del usuario a través del ciclo de una transacción.
  */
 export interface ISecurityContext {
-    readonly userId: number
-    readonly profileId: number
+    readonly userId: number | null
+    readonly profileId: number | null
     readonly username: string
 }
 
@@ -461,7 +461,7 @@ export interface IPermissionProvider {
      * @param objectName - Nombre del objeto
      * @param methodName - Nombre del método
      */
-    check(profileId: number, objectName: string, methodName: string): boolean
+    check(profileId: number | null, objectName: string, methodName: string): boolean
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
