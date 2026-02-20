@@ -167,23 +167,20 @@ export class BORegistrar {
         tx: number
     ): Promise<{ methodId: number; tx: number }> {
         // 1. Upsert method (methods table only has method_id, method_name)
-        const methodResult = await this.db.exeRaw(
-            `INSERT INTO security.methods (method_name) 
-             VALUES ($1) 
-             ON CONFLICT DO NOTHING 
-             RETURNING method_id`,
+        // 1. Check if method already exists
+        let existingMethod = await this.db.exeRaw(
+            'SELECT method_id FROM security.methods WHERE method_name = $1',
             [methodName]
         )
+        let methodId = existingMethod.rows[0]?.method_id
 
-        let methodId = methodResult.rows[0]?.method_id
-
-        // If no insert happened, get existing method_id
+        // If no method exists, insert it
         if (!methodId) {
-            const existingMethod = await this.db.exeRaw(
-                'SELECT method_id FROM security.methods WHERE method_name = $1',
+            const methodResult = await this.db.exeRaw(
+                `INSERT INTO security.methods (method_name) VALUES ($1) RETURNING method_id`,
                 [methodName]
             )
-            methodId = existingMethod.rows[0]?.method_id
+            methodId = methodResult.rows[0]?.method_id
         }
 
         // 2. Link object to method (object_method table)

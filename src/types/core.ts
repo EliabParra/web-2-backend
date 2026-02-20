@@ -199,14 +199,26 @@ export interface II18nService {
 
     /**
      * Obtiene un objeto de error HTTP con código y mensaje.
-     * Soporta selector function (Typed) o key string (Legacy).
+     * Soporta selector function (Typed).
      *
-     * @param selectorOrKey - Función selectora o clave string
+     * @param selector - Función selectora
      * @param params - Variables opcionales para interpolar
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     error(
-        selectorOrKey: string | ((msgs: AppMessages['errors']) => { msg: string; code: number }),
+        selector: (msgs: AppMessages['errors']) => { msg: string; code: number },
+        params?: Record<string, unknown>
+    ): { msg: string; code: number }
+
+    /**
+     * Método Legacy para obtener errores por string key.
+     * Mantenido para compatibilidad con código antiguo.
+     * 
+     * @param key - Clave string
+     * @param params - Variables opcionales para interpolar
+     */
+    errorKey(
+        key: string,
         params?: Record<string, unknown>
     ): { msg: string; code: number }
 

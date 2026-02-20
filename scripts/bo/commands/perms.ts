@@ -12,7 +12,6 @@ interface Profile {
 interface MethodInfo {
     methodId: number
     methodName: string
-    tx: number
 }
 
 // In-memory state for deferred saving
@@ -226,13 +225,18 @@ export class PermsCommand {
 
     private async getMethods(db: any, objectId: number): Promise<MethodInfo[]> {
         const res = await db.exeRaw(
-            `SELECT method_id, method_name, tx FROM security.methods WHERE object_id = $1 ORDER BY method_name`,
+            `
+            SELECT m.method_id, m.method_name 
+            FROM security.methods m
+            INNER JOIN security.object_method om ON m.method_id = om.method_id
+            WHERE om.object_id = $1 
+            ORDER BY m.method_name
+            `,
             [objectId]
         )
         return res.rows.map((r: any) => ({
             methodId: r.method_id,
             methodName: r.method_name,
-            tx: r.tx,
         }))
     }
 
@@ -242,8 +246,9 @@ export class PermsCommand {
             SELECT m.method_id, 
                    COALESCE(array_agg(pm.profile_id) FILTER (WHERE pm.profile_id IS NOT NULL), '{}') as profile_ids
             FROM security.methods m
-            LEFT JOIN security.permission_methods pm ON pm.method_id = m.method_id
-            WHERE m.object_id = $1
+            INNER JOIN security.object_method om ON m.method_id = om.method_id
+            LEFT JOIN security.profile_method pm ON pm.method_id = m.method_id
+            WHERE om.object_id = $1
             GROUP BY m.method_id
         `,
             [objectId]
@@ -263,7 +268,7 @@ export class PermsCommand {
             if (methodIds.length > 0) {
                 const params = methodIds.map((_, i) => `$${i + 1}`).join(',')
                 await db.exeRaw(
-                    `DELETE FROM security.permission_methods WHERE method_id IN (${params})`,
+                    `DELETE FROM security.profile_method WHERE method_id IN (${params})`,
                     methodIds
                 )
             }
@@ -271,7 +276,7 @@ export class PermsCommand {
             for (const [methodId, profileSet] of state.entries()) {
                 for (const profileId of profileSet) {
                     await db.exeRaw(
-                        `INSERT INTO security.permission_methods (profile_id, method_id) VALUES ($1, $2)`,
+                        `INSERT INTO security.profile_method (profile_id, method_id) VALUES ($1, $2)`,
                         [profileId, methodId]
                     )
                 }

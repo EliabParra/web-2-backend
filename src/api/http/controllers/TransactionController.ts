@@ -46,8 +46,9 @@ export class TransactionController {
             const hasSession = this.session.sessionExists(req)
             const publicProfileId = Number(this.config.auth?.publicProfileId)
 
-            effectiveProfileId = hasSession
-                ? (req.session?.profileId ?? null)
+            const rawSessionProfileId = req.session?.profileId
+            effectiveProfileId = hasSession && rawSessionProfileId != null
+                ? Number(rawSessionProfileId)
                 : Number.isInteger(publicProfileId) && publicProfileId > 0
                   ? publicProfileId
                   : null
@@ -100,8 +101,8 @@ export class TransactionController {
             // 3. Preparar Contexto de Seguridad
             // cast to any for legacy user object access until proper Session type update
             const session = req.session as any
-            const userId = session?.user?.id ?? 0 // 0 = Anon/System
-            const username = session?.user?.username ?? 'anonymous'
+            const userId = session?.userId ?? session?.user_id ?? 0 // 0 = Anon/System
+            const username = session?.username ?? session?.user?.username ?? 'anonymous'
 
             // Inyectar metadatos legacy para Auth
             // (Esto idealmente debería hacerse dentro de AuthBO, pero lo mantenemos por compatibilidad)

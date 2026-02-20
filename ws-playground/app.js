@@ -74,6 +74,9 @@ const app = (() => {
             const json = await res.json()
 
             if (res.ok) {
+                // Guardar identificador para restaurar sesión al recargar la página
+                localStorage.setItem('ws_user_id', identifier)
+                
                 setAuthStatus('connected', `Sesión: ${identifier}`)
                 const authInfo = document.getElementById('auth-info')
                 authInfo.textContent = `✅ Login exitoso — userId: ${json.user?.user_id ?? '?'} | profileId: ${json.user?.profile_id ?? '?'}`
@@ -114,6 +117,8 @@ const app = (() => {
 
             const json = await res.json()
             csrfToken = null
+            localStorage.removeItem('ws_user_id')
+            
             setAuthStatus('disconnected', 'Sin sesión')
             document.getElementById('auth-info').textContent = '🚪 Sesión cerrada'
             logEvent('system', `🚪 Logout: ${JSON.stringify(json)}`)
@@ -180,6 +185,27 @@ const app = (() => {
             eventCount++
             updateMetric('metric-events', eventCount)
             logEvent('event', eventName, args[0])
+
+            // Skip showing toast for connect/disconnect as they have their own badges
+            if (['connect', 'disconnect', 'connect_error'].includes(eventName)) return
+
+            // Show beautiful toast notification
+            const payload = args[0] || {}
+            let title = `Evento: ${eventName}`
+            let message = payload.message || JSON.stringify(payload)
+            let type = 'info'
+
+            if (eventName.includes('success')) type = 'success'
+            if (eventName.includes('error')) type = 'error'
+            if (eventName === 'progress:update') type = 'progress'
+
+            if (eventName === 'progress:update') {
+               title = `Progreso: ${payload.label || 'Procesando...'}`
+               message = `${payload.percent}% completado (${payload.step}/${payload.totalSteps})`
+               showToast(title, message, type, payload.percent)
+            } else {
+               showToast(title, message, type)
+            }
         })
     }
 
@@ -211,6 +237,11 @@ const app = (() => {
         try {
             logEvent('system', `📤 Enviando via API: emitToUser("${userId}", "${event}", ...)`)
 
+            const payload = {
+                tx: 8, // Notification.send
+                params: { userId, event, message },
+            }
+
             const res = await fetch(`${url}/toProccess`, {
                 method: 'POST',
                 headers: {
@@ -218,10 +249,7 @@ const app = (() => {
                     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
                 },
                 credentials: 'include',
-                body: JSON.stringify({
-                    tx: 'Notification.send',
-                    data: { userId, event, message },
-                }),
+                body: JSON.stringify(payload),
             })
 
             const json = await res.json()
@@ -251,6 +279,11 @@ const app = (() => {
         try {
             logEvent('system', `📤 Enviando via API: broadcast("${event}", ...)`)
 
+            const payload = {
+                tx: 9, // Notification.broadcast
+                params: { event, message },
+            }
+
             const res = await fetch(`${url}/toProccess`, {
                 method: 'POST',
                 headers: {
@@ -258,10 +291,7 @@ const app = (() => {
                     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
                 },
                 credentials: 'include',
-                body: JSON.stringify({
-                    tx: 'Notification.broadcast',
-                    data: { event, message },
-                }),
+                body: JSON.stringify(payload),
             })
 
             const json = await res.json()
@@ -300,6 +330,11 @@ const app = (() => {
         try {
             logEvent('system', `⏳ Iniciando simulación: ${steps} pasos, ${delayMs}ms delay`)
 
+            const payload = {
+                tx: 10, // Notification.simulate
+                params: { userId, steps, delayMs },
+            }
+
             const res = await fetch(`${url}/toProccess`, {
                 method: 'POST',
                 headers: {
@@ -307,10 +342,7 @@ const app = (() => {
                     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
                 },
                 credentials: 'include',
-                body: JSON.stringify({
-                    tx: 'Notification.simulate',
-                    data: { userId, steps, delayMs },
-                }),
+                body: JSON.stringify(payload),
             })
 
             const json = await res.json()
@@ -482,9 +514,85 @@ const app = (() => {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // API Pública
+    // Inicialización (Restaurar sesión al recargar)
     // ═══════════════════════════════════════════════════════════════════════
 
+    async function init() {
+        const savedUser = localStorage.getItem('ws_user_id')
+        if (savedUser) {
+            setAuthStatus('connecting', 'Restaurando...')
+            logEvent('system', `Intentando restaurar sesión para: ${savedUser}`)
+            
+            const token = await fetchCsrfToken()
+            if (token) {
+                setAuthStatus('connected', `Sesión: ${savedUser}`)
+                // Solo restauramos la info visual, pero el CSRF ya permite emitir.
+                // Conectar el socket validará automáticamente si la sesión backend sigue viva.
+                connect()
+            } else {
+                localStorage.removeItem('ws_user_id')
+                setAuthStatus('disconnected', 'Sin sesión')
+            }
+        }
+    }
+
+    // Ejecutar inicialización asíncrona pero sin bloquear
+    setTimeout(init, 100)
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // API Pública
+    // ═══════════════════════════════════════════════════════════════════════
+    // Utilidades UI (Toasts y Status)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    function showToast(title, message, type = 'info', progress = null) {
+        const container = document.getElementById('toast-container')
+        if (!container) return
+
+        const toast = document.createElement('div')
+        toast.className = `toast ${type}`
+
+        let icon = '🔔'
+        if (type === 'success') icon = '✅'
+        if (type === 'progress') icon = '⏳'
+        if (type === 'error') icon = '❌'
+
+        let progressHtml = ''
+        if (progress !== null && type === 'progress') {
+            progressHtml = `
+                <div class="toast-progress-bar">
+                    <div class="toast-progress-fill" style="width: ${progress}%"></div>
+                </div>
+            `
+        }
+
+        toast.innerHTML = `
+            <div class="toast-header">
+                <span class="toast-icon">${icon}</span>
+                <span>${title}</span>
+            </div>
+            <div class="toast-body">${message}</div>
+            ${progressHtml}
+        `
+
+        container.appendChild(toast)
+
+        // Trigger reflow for animation
+        void toast.offsetWidth
+
+        toast.classList.add('show')
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.classList.remove('show')
+            toast.classList.add('hide')
+            setTimeout(() => {
+                toast.remove()
+            }, 400) // wait for animation
+        }, 5000)
+    }
+
+    // Exportar al objeto global (window.app)
     return {
         login,
         logout,
@@ -498,5 +606,6 @@ const app = (() => {
         emitToRoom,
         removeRoom,
         clearLog,
+        showToast,
     }
 })()

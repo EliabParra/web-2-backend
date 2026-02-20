@@ -5,8 +5,13 @@ function usage() {
     console.log('Example: pnpm run hashpw -- "MyPassword123" 10')
 }
 
-const plainPassword = process.argv[2]
-const saltRoundsRaw = process.argv[3]
+let args = process.argv.slice(2)
+if (args[0] === '--') {
+    args = args.slice(1)
+}
+
+const plainPassword = args[0]
+const saltRoundsRaw = args[1]
 
 if (!plainPassword) {
     usage()

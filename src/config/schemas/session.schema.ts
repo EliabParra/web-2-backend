@@ -4,6 +4,7 @@ export const SessionConfigSchema = z.object({
     secret: z.union([z.string(), z.array(z.string())]).default('secret'),
     store: z
         .object({
+            type: z.string().optional(),
             schemaName: z.string().optional(),
             tableName: z.string().optional(),
         })

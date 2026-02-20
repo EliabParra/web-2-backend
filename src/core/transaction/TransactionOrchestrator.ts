@@ -111,8 +111,7 @@ export class TransactionOrchestrator {
         if (logMsg) this.log.error(logMsg)
 
         // Uso simplificado de i18n error para mantener compatibilidad con respuesta API
-        // Asumimos que i18n.error puede resolver keys
-        const err = this.i18n.error(key as any)
+        const err = this.i18n.errorKey(key as string)
         return { ...err, code }
     }
 

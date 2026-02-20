@@ -480,3 +480,120 @@ main {
         grid-template-columns: 1fr;
     }
 }
+
+/* ═══════════════ Toasts (Notifications) ═══════════════ */
+.toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.toast {
+    width: 350px;
+    background: var(--bg-card);
+    backdrop-filter: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: scale(0.9) translateY(-10px);
+    opacity: 0;
+}
+
+.toast-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.toast-icon {
+    font-size: 1.2rem;
+}
+
+.toast-body {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* Decoración lateral brillante según el tipo */
+.toast::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: transparent;
+}
+
+.toast.info::before {
+    background: var(--info);
+    box-shadow: 0 0 10px var(--info);
+}
+
+.toast.info .toast-icon {
+    color: var(--info);
+}
+
+.toast.success::before {
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+}
+
+.toast.success .toast-icon {
+    color: var(--success);
+}
+
+.toast.progress::before {
+    background: var(--warning);
+    box-shadow: 0 0 10px var(--warning);
+}
+
+.toast.progress .toast-icon {
+    color: var(--warning);
+}
+
+/* Progress bar interna de la notificación */
+.toast-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 999px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.toast-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--warning), var(--accent));
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 999px;
+    box-shadow: 0 0 8px var(--warning);
+}

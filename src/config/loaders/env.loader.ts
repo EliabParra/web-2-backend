@@ -41,6 +41,7 @@ export class EnvLoader {
             session: {
                 secret: env.SESSION_SECRETS ? envList(env.SESSION_SECRETS) : env.SESSION_SECRET,
                 store: {
+                    type: env.SESSION_STORE_TYPE || 'pg',
                     schemaName: env.SESSION_SCHEMA,
                     tableName: env.SESSION_TABLE,
                 },
