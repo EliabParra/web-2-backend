@@ -1,5 +1,4 @@
-import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
-import type { IWebSocketService } from '../../src/types/index.js'
+import { BaseBO, ApiResponse, IContainer, IWebSocketService } from '../../src/core/business-objects/index.js'
 import { NotificationMessages, NotificationSchemas, Inputs, registerNotification } from './NotificationModule.js'
 
 /**
