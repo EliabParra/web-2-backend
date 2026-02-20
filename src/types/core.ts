@@ -318,7 +318,7 @@ export interface IWebSocketService {
      * @param event - Nombre del evento a emitir
      * @param payload - Datos del evento
      */
-    emitToUser(userId: string, event: string, payload: any): void
+    emitToUser(userId: string, event: string, payload: any, namespace?: string): void
 
     /**
      * Emite un evento a todos los clientes conectados (broadcast global).
@@ -326,7 +326,7 @@ export interface IWebSocketService {
      * @param event - Nombre del evento a emitir
      * @param payload - Datos del evento
      */
-    broadcast(event: string, payload: any): void
+    broadcast(event: string, payload: any, namespace?: string): void
 
     /**
      * Emite un evento a todos los miembros de una sala específica.
@@ -335,7 +335,7 @@ export interface IWebSocketService {
      * @param event - Nombre del evento a emitir
      * @param payload - Datos del evento
      */
-    emitToRoom(roomName: string, event: string, payload: any): void
+    emitToRoom(roomName: string, event: string, payload: any, namespace?: string): void
 
     /**
      * Agrega todas las conexiones de un usuario a una sala.
@@ -343,7 +343,7 @@ export interface IWebSocketService {
      * @param userId - Identificador del usuario
      * @param roomName - Nombre de la sala a unir
      */
-    addUserToRoom(userId: string, roomName: string): void
+    addUserToRoom(userId: string, roomName: string, namespace?: string): void
 
     /**
      * Remueve todas las conexiones de un usuario de una sala.
@@ -351,7 +351,7 @@ export interface IWebSocketService {
      * @param userId - Identificador del usuario
      * @param roomName - Nombre de la sala a abandonar
      */
-    removeUserFromRoom(userId: string, roomName: string): void
+    removeUserFromRoom(userId: string, roomName: string, namespace?: string): void
 
     /**
      * Retorna el conteo de conexiones activas rastreadas localmente en este nodo.

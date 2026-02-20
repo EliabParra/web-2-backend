@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { SecurityService } from '../src/services/SecurityService.js'
+import { MenuProvider } from '../src/core/security/MenuProvider.js'
 import { withGlobals } from './_helpers/global-state.mjs'
 import { createMockContainer } from './_helpers/mock-container.mjs'
 
@@ -137,8 +138,14 @@ test('Security Management API: Full Lifecycle', async () => {
                 sendTemplate: async () => ({ ok: true }),
                 maskEmail: (e) => e,
             }
+            
+            const mockContainer = createMockContainer(globalThis)
+            
+            // This is an integration test, we must use the real MenuProvider 
+            // tied to the mock container (which holds the Mock DB)
+            mockContainer.register('menuProvider', new MenuProvider(mockContainer))
 
-            const security = new SecurityService(createMockContainer(globalThis))
+            const security = new SecurityService(mockContainer)
             await security.init() // Loads empty structure
 
             // 1. Create Structure (Subsystem -> Menu -> Option)

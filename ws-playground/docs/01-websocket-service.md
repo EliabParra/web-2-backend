@@ -174,36 +174,36 @@ Estos son los métodos que los BOs y controladores usan. Siguen el patrón **Fir
 ### emitToUser()
 
 ```typescript
-emitToUser(userId: string, event: string, payload: any): void {
-    this.requireIO().to(`user_${userId}`).emit(event, payload)
+emitToUser(userId: string, event: string, payload: any, namespace?: string): void {
+    this.requireIO().of(namespace || '/').to(`user_${userId}`).emit(event, payload)
 }
 ```
 
-- **`requireIO()`** — Guard que lanza error si `initialize()` no se llamó.
+- **`requireIO().of(namespace || '/')`** — Resuelve el namespace destino. Si no se especifica, usa el root `/`.
 - **`.to('user_42')`** — Selecciona la **sala** del usuario (cada socket hace `join('user_42')` al conectarse).
-- **`.emit(event, payload)`** — Envía el evento a **todos los sockets** en esa sala.
+- **`.emit(event, payload)`** — Envía el evento a **todos los sockets** en esa sala y namespace.
 
-**Con Redis:** Si el usuario está conectado en otro nodo, Redis Pub/Sub propaga el mensaje automáticamente.
+**Con Redis:** Si el usuario está conectado en otro nodo, Redis Pub/Sub propaga el mensaje automáticamente al namespace correcto.
 
 ### broadcast()
 
 ```typescript
-broadcast(event: string, payload: any): void {
-    this.requireIO().emit(event, payload)
+broadcast(event: string, payload: any, namespace?: string): void {
+    this.requireIO().of(namespace || '/').emit(event, payload)
 }
 ```
 
-- **`io.emit()`** sin `.to()` = envía a **TODOS** los clientes conectados en **todos los nodos**.
+- **`requireIO().of(namespace || '/').emit()`** sin `.to()` envía a **TODOS** los clientes conectados en el namespace.
 
 ### emitToRoom()
 
 ```typescript
-emitToRoom(roomName: string, event: string, payload: any): void {
-    this.requireIO().to(roomName).emit(event, payload)
+emitToRoom(roomName: string, event: string, payload: any, namespace?: string): void {
+    this.requireIO().of(namespace || '/').to(roomName).emit(event, payload)
 }
 ```
 
-- Igual que `emitToUser`, pero con un nombre de sala arbitrario (ej: `"dashboard"`, `"ventas"`).
+- Igual que `emitToUser`, pero enviando a todos los miembros que hicieron join a esa sala en ese namespace.
 
 ---
 
@@ -212,12 +212,13 @@ emitToRoom(roomName: string, event: string, payload: any): void {
 ### addUserToRoom()
 
 ```typescript
-addUserToRoom(userId: string, roomName: string): void {
+addUserToRoom(userId: string, roomName: string, namespace?: string): void {
     const sockets = this.localConnections.get(userId)
     if (!sockets) return
 
+    const _namespace = this.requireIO().of(namespace || '/')
     for (const socketId of sockets) {
-        const socket = this.requireIO().sockets.sockets.get(socketId)
+        const socket = _namespace.sockets.get(socketId)
         socket?.join(roomName)
     }
 }
@@ -227,18 +228,20 @@ addUserToRoom(userId: string, roomName: string): void {
 
 1. **Busca los sockets** del usuario en el mapa local.
 2. **Si no tiene conexiones**, no hace nada (no hay error, es un no-op seguro).
-3. **Itera sobre todos sus sockets** y los hace `join` a la sala.
-4. **`socket?.join()`** — El `?.` protege contra race conditions donde el socket se desconecta entre la lectura del mapa y el `join`.
+3. **Resuelve el namespace**.
+4. **Itera sobre todos sus sockets**, obtiene la referencia dentro de ese namespace, y los hace `join` a la sala.
+5. **`socket?.join()`** — El `?.` protege contra race conditions donde el socket se desconecta entre la lectura del mapa y el `join`.
 
 ### removeUserFromRoom()
 
 ```typescript
-removeUserFromRoom(userId: string, roomName: string): void {
+removeUserFromRoom(userId: string, roomName: string, namespace?: string): void {
     const sockets = this.localConnections.get(userId)
     if (!sockets) return
 
+    const _namespace = this.requireIO().of(namespace || '/')
     for (const socketId of sockets) {
-        const socket = this.requireIO().sockets.sockets.get(socketId)
+        const socket = _namespace.sockets.get(socketId)
         socket?.leave(roomName)
     }
 }
@@ -246,7 +249,7 @@ removeUserFromRoom(userId: string, roomName: string): void {
 
 Idéntico al anterior pero con `leave()` en vez de `join()`.
 
-> **¿Por qué iterar todos los sockets?** Si un usuario tiene 3 pestañas abiertas, las 3 deben unirse/salir de la sala.
+> **¿Por qué iterar todos los sockets?** Si un usuario tiene 3 pestañas abiertas, las 3 deben unirse/salir de la sala en su correspondiente namespace.
 
 ---
 
@@ -289,85 +292,39 @@ async shutdown(): Promise<void> {
 
 ```typescript
 private applySessionMiddleware(): void {
-    const app = this.container.resolve<Express>('expressApp')
-    const sessionMiddleware = this.findSessionMiddleware(app)
+    let sessionMiddleware = this.container.resolve<RequestHandler>('sessionMiddleware')
 
-    if (!sessionMiddleware) {
-        this.log.warn('No se encontró middleware de sesión en Express...')
-        return
-    }
+    // 1. Integración de la Sesión en el protocolo TCP Handshake
+    this.requireIO().engine.use((req, res, next) => {
+        sessionMiddleware!(req, res, next)
+    })
 
-    this.requireIO().engine.use(sessionMiddleware)
-
-    this.requireIO().use((socket, next) => {
-        const session = (socket.request as any)?.session
+    // 2. Extractor estricto reutilizable (Candado de Seguridad)
+    const requireAuth = (socket: Socket, next: (err?: Error) => void) => {
+        const session = (socket.request as any).session
         const userId = session?.userId ?? session?.user_id
         if (!userId) {
             next(new Error('Conexión WebSocket rechazada: sesión no autenticada'))
             return
         }
         next()
+    }
+
+    // 3. Proteger Namespace raíz (/)
+    this.requireIO().use(requireAuth)
+
+    // 4. Proteger Namespaces dinámicos (cuando un router crea un of('/ws'))
+    this.requireIO().on('new_namespace', (namespace) => {
+        namespace.use(requireAuth)
     })
 }
 ```
 
-**Este es uno de los métodos más importantes. Hace dos cosas:**
+**Este método es el candado de seguridad clave:**
 
-#### Paso 1: Reusar express-session
-
-```typescript
-this.requireIO().engine.use(sessionMiddleware)
-```
-
-- **`engine.use()`** inyecta un middleware en el **Engine.IO** (la capa de transporte de Socket.io).
-- Esto hace que cada **handshake** pase por `express-session`, que lee la cookie de sesión y popula `req.session`.
-- **Resultado:** `socket.request.session` ya tiene los datos de la sesión del usuario.
-
-> **¿Por qué `engine.use()` y no `io.use()`?** Porque `engine.use()` corre ANTES del handshake de Socket.io. Si lo ponemos en `io.use()`, el middleware de sesión ya no puede leer las cookies del upgrade HTTP.
-
-#### Paso 2: Validar autenticación
-
-```typescript
-this.requireIO().use((socket, next) => {
-    const session = (socket.request as any)?.session
-    const userId = session?.userId ?? session?.user_id
-    if (!userId) {
-        next(new Error('...'))
-        return
-    }
-    next()
-})
-```
-
-- **`io.use()`** es un middleware de Socket.io que corre en cada **conexión**.
-- Lee `session.userId` o `session.user_id` (soporta ambas convenciones).
-- Si no hay userId → **rechaza la conexión** con un error que el cliente recibe como `connect_error`.
-- Si hay userId → **permite la conexión** con `next()`.
-
-### findSessionMiddleware()
-
-```typescript
-private findSessionMiddleware(app: Express): any {
-    const stack: any[] = (app as any)._router?.stack ?? []
-    const sessionLayer = stack.find(
-        (layer: any) => layer.name === 'session' && typeof layer.handle === 'function'
-    )
-    return sessionLayer?.handle ?? null
-}
-```
-
-**¿Cómo encuentra el middleware de sesión?**
-
-Express mantiene internamente un array `_router.stack` con todos los middleware registrados. Cada entrada tiene:
-
-- `name` — Nombre de la función middleware
-- `handle` — La función en sí
-
-`express-session` registra una función llamada `'session'`. Este método la busca por nombre y retorna la función para que Socket.io la pueda reusar.
-
-> **Es una técnica avanzada** — No está documentada oficialmente en Express, pero es la forma estándar de compartir el middleware de sesión con Socket.io.
-
----
+1. **`engine.use`** — Pasa la petición inicial HTTP/TCP por el middleware de sesión de Express para parsear la cookie `connect.sid` antes del upgrade de Socket.io.
+2. **`requireAuth`** — Es una función que verifica si la sesión recuperada tiene un `userId`.
+3. **Protección Multi-Namespace** — En Socket.io los middlewares actúan a nivel de Namespace. El método protege explícitamente el namespace por defecto `/` (`this.requireIO().use(...)`) y usa el evento lógico `new_namespace` para proteger inmediatamente cualquier otro namespace custom (como `/ws` u otros) que la API o los controladores creen dinámicamente, impidiendo que clientes no autorizados entren por otros channels.
 
 ## 10. Handlers de Conexión
 
@@ -385,6 +342,8 @@ private registerConnectionHandlers(): void {
         this.trackConnection(userId, socket.id)
         socket.join(`user_${userId}`)
         this.log.debug(`Socket conectado: ${socket.id} → user_${userId}`)
+    })
+}
 ```
 
 **Cuando un cliente se conecta:**

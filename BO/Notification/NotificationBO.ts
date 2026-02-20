@@ -159,4 +159,66 @@ export class NotificationBO extends BaseBO {
             }
         }, delayMs)
     }
+
+    /**
+     * Agrega al usuario actual a una sala específica de WebSocket.
+     */
+    async joinRoom(params: Inputs.JoinRoomInput): Promise<ApiResponse> {
+        return this.exec<Inputs.JoinRoomInput, any>(
+            params,
+            NotificationSchemas.joinRoom,
+            async (data) => {
+                this.log.debug('joinRoom', { userId: data.userId, roomName: data.roomName })
+                this.ws.addUserToRoom(data.userId.toString(), data.roomName, data.namespace)
+
+                return this.success(
+                    { joined: true, userId: data.userId, roomName: data.roomName },
+                    this.notificationMessages.joinRoom
+                )
+            }
+        )
+    }
+
+    /**
+     * Elimina al usuario actual de una sala específica de WebSocket.
+     */
+    async leaveRoom(params: Inputs.LeaveRoomInput): Promise<ApiResponse> {
+        return this.exec<Inputs.LeaveRoomInput, any>(
+            params,
+            NotificationSchemas.leaveRoom,
+            async (data) => {
+                this.log.debug('leaveRoom', { userId: data.userId, roomName: data.roomName })
+                this.ws.removeUserFromRoom(data.userId.toString(), data.roomName, data.namespace)
+
+                return this.success(
+                    { left: true, userId: data.userId, roomName: data.roomName },
+                    this.notificationMessages.leaveRoom
+                )
+            }
+        )
+    }
+
+    /**
+     * Emite un evento directamente a todos los miembros de una sala.
+     */
+    async emitRoom(params: Inputs.EmitRoomInput): Promise<ApiResponse> {
+        return this.exec<Inputs.EmitRoomInput, any>(
+            params,
+            NotificationSchemas.emitRoom,
+            async (data) => {
+                this.log.debug('emitRoom', { roomName: data.roomName, event: data.event })
+
+                this.ws.emitToRoom(data.roomName, data.event, {
+                    message: data.message,
+                    from: data.userId,
+                    timestamp: new Date().toISOString(),
+                }, data.namespace)
+
+                return this.success(
+                    { emitted: true, roomName: data.roomName, event: data.event },
+                    this.notificationMessages.emitRoom
+                )
+            }
+        )
+    }
 }

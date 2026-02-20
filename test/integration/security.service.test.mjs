@@ -67,6 +67,15 @@ describe('SecurityService Integration', async () => {
                     sendTemplate: async () => ({ ok: true }),
                     maskEmail: (e) => e,
                 },
+                permissionGuard: { 
+                    load: async () => {}, check: (profileId, objectName, methodName) => profileId === 1
+                },
+                transactionMapper: { 
+                    load: async () => {}, resolve: (tx) => tx === 100 ? { objectName: 'TestObject', methodName: 'testMethod' } : false 
+                },
+                transactionExecutor: { 
+                    execute: async () => ({ code: 200, msg: 'ok' })
+                }
             })
         )
         await security.init()

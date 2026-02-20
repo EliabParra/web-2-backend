@@ -3,7 +3,22 @@ import assert from 'node:assert/strict'
 import request from 'supertest'
 import { AppServer } from '../../src/api/AppServer.js'
 import { SecurityService } from '../../src/services/SecurityService.js'
+import { AuthController } from '../../src/api/http/controllers/AuthController.js'
+import { TransactionController } from '../../src/api/http/controllers/TransactionController.js'
 import { createMockContainer } from '../_helpers/mock-container.mjs'
+import { PermissionGuard } from '../../src/core/security/PermissionGuard.js'
+import { TransactionMapper } from '../../src/core/transaction/TransactionMapper.js'
+import { TransactionExecutor } from '../../src/core/transaction/TransactionExecutor.js'
+import { TransactionOrchestrator } from '../../src/core/transaction/TransactionOrchestrator.js'
+
+function buildSecurityContainer(deps) {
+    const container = createMockContainer(deps)
+    container.register('permissionGuard', new PermissionGuard(container))
+    container.register('transactionMapper', new TransactionMapper(container))
+    container.register('transactionExecutor', new TransactionExecutor(container))
+    container.register('orchestrator', new TransactionOrchestrator(container))
+    return container
+}
 
 const MOCK_USER = {
     user_id: 1,
@@ -67,6 +82,7 @@ function createDeps() {
         db: {
             query: async (q, p) => {
                 const sql = typeof q === 'string' ? q : q.sql
+                console.log('SQL Executed:', sql)
 
                 // Permission mocking
                 if (sql.includes('profile_method')) {
@@ -85,9 +101,7 @@ function createDeps() {
                 }
 
                 if (
-                    sql.includes(
-                        'SELECT user_id, username, user_email, user_password, user_email_verified_at'
-                    ) &&
+                    sql.includes('SELECT user_id, username, user_email') &&
                     sql.includes('FROM security.users') &&
                     sql.includes('user_email = $1')
                 ) {
@@ -96,6 +110,10 @@ function createDeps() {
                 }
                 return { rows: [] }
             },
+            queryRow: async function (q, p) {
+                const res = await this.query(q, p)
+                return res.rows.length ? res.rows[0] : null
+            }
         },
         email: {
             sendTemplate: async (opts) => {
@@ -118,10 +136,15 @@ describe('Auth Username Recovery', async () => {
             const deps = createDeps()
             testDeps = deps
 
-            const security = new SecurityService(createMockContainer(deps))
+            const mockAppContainer = buildSecurityContainer(deps)
+            const security = new SecurityService(mockAppContainer)
+            mockAppContainer.register('security', security)
             await security.init()
 
-            const appServer = new AppServer(createMockContainer({ ...deps, security }))
+            mockAppContainer.register('authController', new AuthController(mockAppContainer))
+            mockAppContainer.register('txController', new TransactionController(mockAppContainer))
+
+            const appServer = new AppServer(mockAppContainer)
             await appServer.init()
             app = appServer.app
         } catch (e) {

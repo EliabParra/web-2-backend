@@ -23,7 +23,7 @@ describe('Security & Orchestration Core', () => {
             }
             const mockGuard = { check: (p, o, m) => p === 1 }
 
-            const container = createMockContainer({ guard: mockGuard, log: mockLog })
+            const container = createMockContainer({ permissionGuard: mockGuard, log: mockLog })
             const service = new AuthorizationService(container)
 
             assert.equal(service.isAuthorized(1, 'Obj', 'Method'), true)
@@ -50,9 +50,9 @@ describe('Security & Orchestration Core', () => {
             const mockMapper = { resolve: () => ({ objectName: '../Etc', methodName: 'exec' }) }
 
             const container = createMockContainer({
-                mapper: mockMapper,
+                transactionMapper: mockMapper,
                 authorization: null,
-                executor: null,
+                transactionExecutor: null,
                 log: mockLog,
                 audit: mockAudit,
                 i18n: mockI18n,
@@ -70,9 +70,9 @@ describe('Security & Orchestration Core', () => {
             const mockAuth = { isAuthorized: () => false }
 
             const container = createMockContainer({
-                mapper: mockMapper,
+                transactionMapper: mockMapper,
                 authorization: mockAuth,
-                executor: null,
+                transactionExecutor: null,
                 log: mockLog,
                 audit: mockAudit,
                 i18n: mockI18n,
@@ -90,9 +90,9 @@ describe('Security & Orchestration Core', () => {
             const mockExecutor = { execute: async () => ({ success: true }) }
 
             const container = createMockContainer({
-                mapper: mockMapper,
+                transactionMapper: mockMapper,
                 authorization: mockAuth,
-                executor: mockExecutor,
+                transactionExecutor: mockExecutor,
                 log: mockLog,
                 audit: mockAudit,
                 i18n: mockI18n,

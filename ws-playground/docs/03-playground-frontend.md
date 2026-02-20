@@ -9,17 +9,14 @@
 
 1. [Arquitectura del Playground](#1-arquitectura-del-playground)
 2. [Servidor Estático — serve.js](#2-servidor-estático--servejs)
-3. [HTML — Estructura y Secciones](#3-html--estructura-y-secciones)
-4. [CSS — Sistema de Diseño](#4-css--sistema-de-diseño)
-5. [App.js — Lógica Completa](#5-appjs--lógica-completa)
-6. [Flujo de Autenticación (CSRF + Login)](#6-flujo-de-autenticación-csrf--login)
-7. [Conexión WebSocket](#7-conexión-websocket)
-8. [Emisión via API REST → BO → WebSocket](#8-emisión-via-api-rest--bo--websocket)
-9. [Simulación de Progreso (Status Bar)](#9-simulación-de-progreso-status-bar)
-10. [Gestión de Salas (Rooms)](#10-gestión-de-salas-rooms)
-11. [Event Log en Tiempo Real](#11-event-log-en-tiempo-real)
-12. [¿Por qué CORS y Puerto Separado?](#12-por-qué-cors-y-puerto-separado)
-13. [Cómo Ejecutar](#13-cómo-ejecutar)
+3. [App.js — Lógica de Estado y Modularización](#3-appjs--lógica-de-estado-y-modularización)
+4. [Flujo de Autenticación (CSRF + Login)](#4-flujo-de-autenticación-csrf--login)
+5. [Conexión WebSocket y Notificaciones Toast UI](#5-conexión-websocket-y-notificaciones-toast-ui)
+6. [Emisión via API REST → BO → WebSocket](#6-emisión-via-api-rest--bo--websocket)
+7. [Simulación de Progreso Async](#7-simulación-de-progreso-async)
+8. [Gestión de Salas (Rooms)](#8-gestión-de-salas-rooms)
+9. [Restauración Automática de Sesión](#9-restauración-automática-de-sesión)
+10. [Cómo Ejecutar](#10-cómo-ejecutar)
 
 ---
 
@@ -116,116 +113,7 @@ const server = http.createServer((req, res) => {
 
 ---
 
-## 3. HTML — Estructura y Secciones
-
-El `index.html` tiene 7 secciones principales, cada una en una **card** con glassmorphism:
-
-| #   | Sección             | Ubicación          | Propósito                 |
-| --- | ------------------- | ------------------ | ------------------------- |
-| 1   | 🔐 Autenticación    | `card full-width`  | Login/logout con CSRF     |
-| 2   | 📊 Métricas         | `card full-width`  | Contadores en tiempo real |
-| 3   | 👤 Emitir a Usuario | `card` (izquierda) | Probar `emitToUser()`     |
-| 4   | 📢 Broadcast        | `card` (derecha)   | Probar `broadcast()`      |
-| 5   | ⏳ Status Bar       | `card full-width`  | Barra de progreso animada |
-| 6   | 🏠 Salas            | `card` (izquierda) | Join/leave/emit a rooms   |
-| 7   | 🔌 Conexión         | `card` (derecha)   | Connect/disconnect manual |
-| 8   | 📜 Event Log        | `card full-width`  | Log en tiempo real        |
-
-### Header con doble badge:
-
-```html
-<header>
-    <h1><span>⚡</span> WebSocket Playground</h1>
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <div id="auth-badge" class="status-badge disconnected">
-            <div class="dot"></div>
-            <span id="auth-text">Sin sesión</span>
-        </div>
-        <div id="status-badge" class="status-badge disconnected">
-            <div class="dot"></div>
-            <span id="status-text">Desconectado</span>
-        </div>
-    </div>
-</header>
-```
-
-**Dos badges independientes:**
-
-- **Auth badge** — Estado de la sesión HTTP (login/logout).
-- **Status badge** — Estado de la conexión WebSocket.
-
-Cada badge tiene tres estados CSS: `connected` (verde), `disconnected` (rojo), `connecting` (amarillo con pulso).
-
-### Socket.io Client CDN:
-
-```html
-<script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
-<script src="app.js"></script>
-```
-
-Se carga `socket.io-client` desde CDN. Esto expone la función global `io()` que `app.js` usa para crear conexiones.
-
----
-
-## 4. CSS — Sistema de Diseño
-
-### Variables CSS (Design Tokens):
-
-```css
-:root {
-    --bg-primary: #0a0a0f; /* Fondo más oscuro */
-    --bg-secondary: #12121a; /* Cards internas */
-    --bg-card: rgba(22, 22, 35, 0.85); /* Cards con transparencia */
-    --border: rgba(255, 255, 255, 0.06);
-    --accent: #7c3aed; /* Violeta principal */
-    --accent-light: #a78bfa; /* Violeta claro */
-    --success: #22c55e; /* Verde */
-    --error: #ef4444; /* Rojo */
-    --warning: #f59e0b; /* Amarillo */
-    --info: #3b82f6; /* Azul */
-}
-```
-
-### Glassmorphism:
-
-```css
-.card {
-    background: var(--bg-card); /* Fondo semi-transparente */
-    backdrop-filter: saturate(1.8) blur(20px); /* Efecto glass */
-    border: 1px solid var(--border); /* Borde sutil */
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-}
-```
-
-El efecto glassmorphism se logra con:
-
-1. **Background semi-transparente** (`rgba` con alpha 0.85).
-2. **`backdrop-filter: blur()`** — Difumina lo que está detrás.
-3. **`saturate(1.8)`** — Aumenta la saturación del blur.
-
-### Animación de fondo:
-
-```css
-body::before {
-    content: '';
-    position: fixed;
-    background: radial-gradient(circle at 30% 20%, rgba(124, 58, 237, 0.08)...);
-    animation: bgShift 20s ease-in-out infinite alternate;
-}
-```
-
-Un pseudo-elemento con gradientes radiales que se mueve lentamente, creando un efecto de aurora sutil detrás de todo.
-
-### Tipografía:
-
-| Fuente           | Uso                                 |
-| ---------------- | ----------------------------------- |
-| `Inter`          | UI general (labels, botones, texto) |
-| `JetBrains Mono` | Código, métricas, log de eventos    |
-
----
-
-## 5. App.js — Lógica Completa
+## 3. App.js — Lógica de Estado y Modularización
 
 ### Patrón IIFE (Immediately Invoked Function Expression):
 
@@ -259,8 +147,8 @@ const app = (() => {
 
 **¿Por qué IIFE?**
 
-1. **Encapsulación** — Las variables internas (`socket`, `csrfToken`, etc.) son inaccesibles desde fuera.
-2. **API pública limpia** — Solo se exponen las funciones que el HTML necesita.
+1. **Encapsulación** — Las variables internas (`socket`, `csrfToken`, etc.) son inaccesibles desde fuera limitando su mutabilidad incontrolada.
+2. **API pública limpia** — Solo se exponen las funciones que el HTML necesita en llamadas `onclick="app.startSimulation()"`.
 3. **Sin globals contaminantes** — Solo `app` es global.
 
 ### Estado interno:
@@ -275,7 +163,7 @@ const app = (() => {
 
 ---
 
-## 6. Flujo de Autenticación (CSRF + Login)
+## 4. Flujo de Autenticación (CSRF + Login)
 
 ### Paso 1: Obtener token CSRF
 
@@ -351,105 +239,82 @@ async function logout() {
 
 ---
 
-## 7. Conexión WebSocket
+## 5. Conexión WebSocket y Notificaciones Toast UI
 
 ```javascript
 function connect() {
     socket = io(url, {
-        transports: ['websocket'],     // Solo WebSocket (sin polling)
-        withCredentials: true,          // Envía cookies de sesión
-        reconnection: true,             // Auto-reconexión
-        reconnectionAttempts: 5,        // Máximo 5 intentos
-        reconnectionDelay: 2000,        // 2 segundos entre intentos
+        transports: ['websocket'],      // Solo WebSocket directo
+        withCredentials: true,          // Impulsa cookie `connect.sid`
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
     })
 ```
 
-### Opciones explicadas:
+Aparte de la configuración, el gran logro visual del **Frontend App** recae en su sistema de alertas (Toasts) acoplado uniformemente a `socket.onAny(..)` para que toda entrada despierte a Toastify.
 
-| Opción                      | Valor          | Por qué                                           |
-| --------------------------- | -------------- | ------------------------------------------------- |
-| `transports: ['websocket']` | Solo WS        | Evita el fallback a HTTP long-polling (más lento) |
-| `withCredentials: true`     | Envía cookies  | Necesario para que el backend lea la sesión       |
-| `reconnection: true`        | Auto-reconecta | Si se pierde la conexión, intenta reconectar      |
-| `reconnectionAttempts: 5`   | 5 intentos     | No intenta infinitamente                          |
-| `reconnectionDelay: 2000`   | 2 segundos     | Espera entre intentos                             |
-
-### Listeners registrados:
+### Integración de Alertas Toastify `socket.onAny`:
 
 ```javascript
-socket.on('connect', () => { ... })         // Conexión exitosa
-socket.on('disconnect', (reason) => { ... }) // Desconexión
-socket.on('connect_error', (err) => { ... }) // Error al conectar
-
-// Listener específico para la barra de progreso
-socket.on('progress:update', (data) => {
-    updateProgressBar(data)
-})
-
-// Listener universal — captura TODOS los eventos
 socket.onAny((eventName, ...args) => {
     eventCount++
+    updateMetric('metric-events', eventCount)
     logEvent('event', eventName, args[0])
+
+    const payload = args[0] || {}
+    let type = 'info'
+    if (eventName.includes('success')) type = 'success'
+    if (eventName.includes('error')) type = 'error'
+
+    // Formatear Mensajes Animados
+    if (eventName === 'progress:update') {
+        const title = `Progreso: ${payload.label || 'Procesando...'}`
+        const message = `${payload.percent}% completado (${payload.step}/${payload.totalSteps})`
+
+        showToast(title, message, 'progress', payload.percent)
+        updateProgressBar(payload) // Extra actualización dedicada
+    } else {
+        showToast(`Evento: ${eventName}`, payload.message || JSON.stringify(payload), type)
+    }
 })
 ```
 
-### ¿Por qué `on('progress:update')` Y `onAny()`?
+La lógica utiliza `Toastify`:
 
-- **`on('progress:update')`** — Handler específico que actualiza la barra de progreso.
-- **`onAny()`** — Handler universal que loguea TODOS los eventos en el log.
-
-Ambos se ejecutan para `progress:update`. `onAny` no interfiere con handlers específicos.
+1. **Ataja todo** — Mapea metadato como progreso, éxito (success) y falla (error).
+2. **Maneja barras insertadas** — Para `progress`, genera un Toast híbrido que exhibe internamente su propia barra de porcentaje cargándose en la propia alerta usando la misma constante matemática (`payload.percent`).
 
 ---
 
-## 8. Emisión via API REST → BO → WebSocket
+## 6. Emisión via API REST → BO → WebSocket
 
-### sendToUser()
+### sendToUser() y sendBroadcast()
 
 ```javascript
-async function sendToUser() {
-    const res = await fetch(`${url}/toProccess`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-            tx: 'Notification.send', // ← BO.método
-            data: { userId, event, message }, // ← Parámetros
-        }),
-    })
+// La forma en la que la App emite un request
+const payload = {
+    tx: 8, // ID numérico atado a "Notification.send" en la DB de roles
+    params: { userId, event, message },
 }
+
+const res = await fetch(`${url}/toProccess`, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+    },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+})
 ```
 
-### Flujo completo:
-
-```
-Frontend                Backend
-   │                       │
-   ├── POST /toProccess ──►│
-   │   tx: "Notification.send"
-   │   data: { userId, event, message }
-   │                       │
-   │                       ├── TxController.handle()
-   │                       ├── Resuelve "Notification" → NotificationBO
-   │                       ├── Llama NotificationBO.send()
-   │                       ├── Valida con Zod ✅
-   │                       ├── ws.emitToUser(userId, event, payload)
-   │                       │     └── io.to("user_42").emit(...)
-   │                       │
-   │◄── HTTP 200 ──────────┤
-   │                       │
-   │◄══ WS: event ════════╡ (llega via WebSocket, no HTTP)
-   │                       │
-```
-
-> **El CSRF token se envía como `X-CSRF-Token`** usando un spread condicional: `...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})`. Si no hay token, simplemente no agrega el header.
+**Flujo en TransactionOrchestrator:**
+Frontend emite `tx: 8`. En el Backend, la base de datos convierte `8` en el `object_name: Notification` y `method_name: send`. La validación cruza por `TransactionMapper` y asegura que ese ID numérico exista, activando dinámicamente el controlador subyacente de la lógica sin revelar los nombres internos de funciones a nivel client-side HTTP!
 
 ---
 
-## 9. Simulación de Progreso (Status Bar)
+## 7. Simulación de Progreso Async
 
 ### startSimulation()
 
@@ -463,8 +328,8 @@ async function startSimulation() {
 
     await fetch(`${url}/toProccess`, {
         body: JSON.stringify({
-            tx: 'Notification.simulate',
-            data: { userId, steps, delayMs },
+            tx: 10, // Notification.simulate Numérico
+            params: { userId, steps, delayMs },
         }),
     })
 }
@@ -521,162 +386,50 @@ Se llama antes de cada nueva simulación para limpiar el estado anterior.
 
 ---
 
-## 10. Gestión de Salas (Rooms)
+## 8. Gestión de Salas (Rooms)
 
-### joinRoom() — Comunicación directa via Socket.io
+### Unirse a Salas (`tx: 24`) y Enviar a Salas (`tx: 23`)
 
 ```javascript
 function joinRoom() {
-    const roomName = document.getElementById('room-name').value.trim()
-    if (!roomName) return
-    if (!socket?.connected) {
-        logEvent('error', 'Primero debes conectarte al servidor')
-        return
+    // Para simplificar la base, las rutas HTTP manejan los uniones a salas:
+    const payload = {
+        tx: 24, // Notification.joinRoom
+        params: { userId: currentId, roomName },
     }
-
-    socket.emit('room:join', { roomName }) // ← Evento directo al servidor
-    rooms.add(roomName) // ← Tracking local
-    renderRooms() // ← Actualiza UI
+    // ... Envío mediante fetch POST /toProccess
 }
 ```
 
-**Diferencia clave:** Las salas se gestionan via **WebSocket directo** (sin pasar por API REST). El cliente emite `room:join` y el servidor lo procesa en `registerConnectionHandlers()`.
+**Seguridad Backend vs WebSocket:**
+Si bien `socket.emit('room:join')` existiría de modo natural, el playground utiliza la API HTTP Rest y el core del `TransactionOrchestrator` para gestionar los cambios de sala. De ese modo, las comprobaciones de perfiles se aplican antes de que el Websocket Server asigne a un `userId` en concreto a una sala.
 
-### renderRooms() — Tags visuales
+---
+
+## 9. Restauración Automática de Sesión
+
+Para sobrevivir `F5` o reloads de página sin perder el token de sesión web activa, la autenticación es cacheada indirectamente localmente:
 
 ```javascript
-function renderRooms() {
-    const container = document.getElementById('room-tags')
-    updateMetric('metric-rooms', rooms.size)
+/* Durante un login exitoso: */
+localStorage.setItem('ws_user_id', json.user.username)
+localStorage.setItem('ws_user_numeric', json.user.user_id)
 
-    if (rooms.size === 0) {
-        container.innerHTML = '<span class="empty-state">Sin salas</span>'
-        return
-    }
-
-    container.innerHTML = ''
-    for (const room of rooms) {
-        const tag = document.createElement('span')
-        tag.className = 'room-tag'
-        tag.innerHTML = `${room} <span class="remove" onclick="app.removeRoom('${room}')">×</span>`
-        container.appendChild(tag)
+/* Al inicializar app.js tras F5: */
+async function init() {
+    const savedUser = localStorage.getItem('ws_user_id')
+    if (savedUser) {
+        const token = await fetchCsrfToken()
+        if (token) {
+            connect() // Reautentica WebSocket transparentemente!
+        }
     }
 }
 ```
-
-Cada sala se muestra como un **tag** con botón de cierre (`×`).
 
 ---
 
-## 11. Event Log en Tiempo Real
-
-### logEvent()
-
-```javascript
-function logEvent(type, eventName, data) {
-    const log = document.getElementById('event-log')
-
-    // Elimina el placeholder si existe
-    const empty = log.querySelector('.empty-state')
-    if (empty) empty.remove()
-
-    const entry = document.createElement('div')
-    entry.className = `event-entry ${type}`
-
-    const now = new Date().toLocaleTimeString('es-ES', { hour12: false })
-
-    if (type === 'system' || type === 'error') {
-        entry.innerHTML = `
-            <span class="time">${now}</span>
-            <span class="event-name">[sistema]</span>
-            <span class="event-data">${eventName}</span>
-        `
-    } else {
-        entry.innerHTML = `
-            <span class="time">${now}</span>
-            <span class="event-name">${eventName}</span>
-            <span class="event-data">${JSON.stringify(data)}</span>
-        `
-    }
-
-    // Inserta al inicio (más reciente arriba)
-    log.insertBefore(entry, log.firstChild)
-
-    // Limita a 200 entradas para evitar memory leaks
-    while (log.children.length > 200) {
-        log.removeChild(log.lastChild)
-    }
-}
-```
-
-### Tipos de entrada:
-
-| Tipo     | Color   | Ejemplo                                      |
-| -------- | ------- | -------------------------------------------- |
-| `system` | Gris    | `[sistema] ✅ Conectado — Socket ID: abc123` |
-| `error`  | Rojo    | `[sistema] ❌ Error de conexión: ...`        |
-| `event`  | Violeta | `notification:send { "message": "Hola" }`    |
-
-### Animación de entrada:
-
-```css
-.event-entry {
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-```
-
-Cada nueva entrada se desliza suavemente desde arriba.
-
----
-
-## 12. ¿Por qué CORS y Puerto Separado?
-
-### El problema
-
-Cuando el frontend (`:5173`) hace `fetch()` al backend (`:3000`), el navegador bloquea la request por **Same-Origin Policy**. Son orígenes diferentes porque el **puerto** difiere.
-
-### La solución
-
-El backend configura CORS para permitir requests desde el playground:
-
-```typescript
-// WebSocketService.ts
-this.io = new SocketServer(httpServer, {
-    cors: {
-        origin: corsOrigins, // ['http://localhost:5173']
-        credentials: true, // Permite cookies cross-origin
-    },
-})
-```
-
-### Configuración necesaria (`.env`):
-
-```env
-CORS_ORIGINS=http://localhost:5173,http://localhost:3000
-```
-
-### ¿Qué pasa con `credentials: 'include'`?
-
-Cuando usas `credentials: 'include'` en `fetch()`, el navegador:
-
-1. **Envía** las cookies del dominio destino (`:3000`) aunque el request venga de otro origen (`:5173`).
-2. **Requiere** que el servidor responda con `Access-Control-Allow-Credentials: true`.
-3. **Requiere** que `Access-Control-Allow-Origin` NO sea `*` (debe ser el origen exacto).
-
----
-
-## 13. Cómo Ejecutar
+## 10. Cómo Ejecutar
 
 ### Requisitos:
 

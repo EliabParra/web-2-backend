@@ -21,7 +21,7 @@ export class AuthorizationService {
      * @param container - Contenedor de dependencias
      */
     constructor(container: IContainer) {
-        this.guard = container.resolve<IPermissionProvider>('guard')
+        this.guard = container.resolve<IPermissionProvider>('permissionGuard')
         this.log = container.resolve<ILogger>('log').child({ category: 'Authorization' })
     }
 

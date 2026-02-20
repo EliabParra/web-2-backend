@@ -26,12 +26,12 @@ WS_ADAPTER=redis
 
 > Socket.io uses `ioredis` with `@socket.io/redis-adapter` to create `pubClient` and `subClient` with automatic error handling.
 
-## Room-Based Routing Architecture
+## Room and Namespace Routing Architecture
 
-Routing **does not iterate over dictionaries**. It uses Socket.io's native Rooms:
+Routing **does not iterate over dictionaries**. It uses Socket.io's native Rooms and Namespaces:
 
-1. On connection, each socket runs `join('user_{userId}')`.
-2. Emitting to a user is always `io.to('user_{userId}').emit(...)`.
+1. On connection, each socket runs `join('user_{userId}')` within its specific namespace.
+2. Emitting to a user is always `io.of(namespace || '/').to('user_{userId}').emit(...)`.
 3. The adapter (Memory or Redis) automatically handles multi-node routing.
 
 ## Usage in Business Objects (Fire & Forget)
@@ -59,10 +59,15 @@ export class OrderBO extends BaseBO {
             const order = await this.orderService.create(data)
 
             // Fire & Forget — DO NOT use await
-            this.ws.emitToUser(String(data.userId), 'order:created', {
-                orderId: order.id,
-                status: order.status,
-            })
+            this.ws.emitToUser(
+                String(data.userId),
+                'order:created',
+                {
+                    orderId: order.id,
+                    status: order.status,
+                },
+                '/orders'
+            ) // Optional namespace parameter
 
             return this.created(order, 'Order created successfully')
         })
@@ -74,22 +79,23 @@ export class OrderBO extends BaseBO {
 
 ## Contract API (`IWebSocketService`)
 
-| Method                                 | Description                                           |
-| -------------------------------------- | ----------------------------------------------------- |
-| `emitToUser(userId, event, payload)`   | Emit to all user connections via `user_{userId}` room |
-| `broadcast(event, payload)`            | Emit to all connected clients                         |
-| `emitToRoom(roomName, event, payload)` | Emit to all members of a room                         |
-| `addUserToRoom(userId, roomName)`      | Add a user to a room                                  |
-| `removeUserFromRoom(userId, roomName)` | Remove a user from a room                             |
-| `getLocalConnectionsCount()`           | Returns active connections on this node               |
-| `shutdown()`                           | Closes the WebSocket server                           |
+| Method                                             | Description                                                          |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| `emitToUser(userId, event, payload, namespace?)`   | Emit to all user connections via `user_{userId}` room in a namespace |
+| `broadcast(event, payload, namespace?)`            | Emit to all connected clients in a namespace                         |
+| `emitToRoom(roomName, event, payload, namespace?)` | Emit to all members of a room in a namespace                         |
+| `addUserToRoom(userId, roomName, namespace?)`      | Add a user to a room within a namespace                              |
+| `removeUserFromRoom(userId, roomName, namespace?)` | Remove a user from a room within a namespace                         |
+| `getLocalConnectionsCount()`                       | Returns active connections on this node                              |
+| `shutdown()`                                       | Closes the WebSocket server                                          |
 
-## Authentication
+## Authentication and Namespaces
 
 The service consumes the `express-session` middleware during the Socket.io handshake:
 
-- Connections **without an authenticated session** are automatically rejected.
+- Connections **without an authenticated session** are automatically rejected via a lock (`requireAuth`).
 - The `userId` is extracted from `socket.request.session.userId`.
+- The lock is applied to the root namespace (`/`) natively, and dynamically injected into any secondary namespaces upon the `new_namespace` event.
 
 ## Local Tracking
 

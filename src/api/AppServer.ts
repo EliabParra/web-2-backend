@@ -4,15 +4,11 @@ import {
     IContainer,
     IConfig,
     ILogger,
-    ISecurityService,
     ISessionService,
-    IAuditService,
     IDatabase,
     II18nService,
     AppRequest,
     AppResponse,
-    IValidator,
-    IEmailService,
 } from '../types/index.js'
 import { registerFrontendHosting } from '../frontend-adapters/index.js'
 
@@ -23,25 +19,19 @@ import {
     applyRequestLogger,
     applyCorsIfEnabled,
     applyBodyParsers,
+    applySessionMiddleware,
     createJsonSyntaxErrorHandler,
     createCsrfProtection,
     createCsrfTokenHandler,
     createFinalErrorHandler,
 } from './http/middleware/index.js'
 
-// Rate limiters
+
 import {
     createLoginRateLimiter,
     createToProccessRateLimiter,
     createAuthPasswordResetRateLimiter,
 } from './http/rate-limit/index.js'
-
-import { PermissionGuard } from '../core/security/PermissionGuard.js'
-import { AuthorizationService } from '../core/security/AuthorizationService.js'
-import { TransactionMapper } from '../core/transaction/TransactionMapper.js'
-import { TransactionExecutor } from '../core/transaction/TransactionExecutor.js'
-import { TransactionOrchestrator } from '../core/transaction/TransactionOrchestrator.js'
-import { SecurityService } from '../services/SecurityService.js'
 
 // Handlers
 import { AuthController } from './http/controllers/AuthController.js'
@@ -75,22 +65,14 @@ export class AppServer {
     // Dependencias inyectadas
     private readonly config: IConfig
     private readonly log: ILogger
-    private readonly security: ISecurityService
     private readonly session: ISessionService
     private readonly i18n: II18nService
-    private readonly audit: IAuditService
     private readonly db: IDatabase
-    private readonly validator: IValidator
-    private readonly email: IEmailService
-
-    // Servicios Core (Nuevos)
-    private authorization!: AuthorizationService
-    private orchestrator!: TransactionOrchestrator
 
     // Controladores
-    private authController!: AuthController
-    private txController!: TransactionController
-    private probeController!: ProbeController
+    private authController: AuthController
+    private txController: TransactionController
+    private probeController: ProbeController
 
     // Middlewares guardados
     private loginRateLimiter: RequestHandler
@@ -103,13 +85,14 @@ export class AppServer {
         this.container = container
         this.config = container.resolve<IConfig>('config')
         this.log = container.resolve<ILogger>('log').child({ category: 'System' })
-        this.security = container.resolve<ISecurityService>('security')
         this.session = container.resolve<ISessionService>('session')
         this.i18n = container.resolve<II18nService>('i18n')
-        this.audit = container.resolve<IAuditService>('audit')
         this.db = container.resolve<IDatabase>('db')
-        this.validator = container.resolve<IValidator>('validator')
-        this.email = container.resolve<IEmailService>('email')
+        
+        // Resolve pre-registered controllers from the IoC container
+        this.authController = container.resolve<AuthController>('authController')
+        this.txController = container.resolve<TransactionController>('txController')
+        this.probeController = container.resolve<ProbeController>('probeController')
 
         this.app = express()
 
@@ -155,38 +138,10 @@ export class AppServer {
      * Inicializa el servidor, controladores y rutas.
      */
     async init(): Promise<void> {
-        // 0. Inicializar Core Services (New Architecture)
-        // Usar la instancia de PermissionGuard iniciada en SecurityService
-        const securityService = this.security as SecurityService
-
-        // Register Guard & Mapper (from SecurityService) so other services can resolve them
-        this.container.register('guard', securityService.getGuard())
-        this.container.register('mapper', securityService.getMapper())
-
-        // 1. Authorization Service
-        this.authorization = new AuthorizationService(this.container)
-        this.container.register('authorization', this.authorization)
-
-        // 2. Transaction Executor
-        const transactionExecutor = new TransactionExecutor(this.container)
-        this.container.register('executor', transactionExecutor)
-
-        // 3. Orchestrator
-        this.orchestrator = new TransactionOrchestrator(this.container)
-
-        // Registrar orchestrator en el contenedor para que los controllers lo resuelvan
-        this.container.register('orchestrator', this.orchestrator)
-
-        // 1. Instanciar Controladores (todos reciben el container)
-        this.authController = new AuthController(this.container)
-        this.txController = new TransactionController(this.container)
-        this.probeController = new ProbeController(this.container)
-
-        // 2. Session Middleware
-        const { applySessionMiddleware } =
-            await import('./http/session/apply-session-middleware.js')
+        // 1. Session Middleware
         applySessionMiddleware(this.app, this.container)
 
+        // 2. Session Adapter
         const sessionAdapter = {
             sessionExists: (req: AppRequest) => this.session.sessionExists(req),
         }

@@ -2,7 +2,23 @@ import { describe, it, before } from 'node:test'
 import assert from 'node:assert/strict'
 import request from 'supertest'
 import { AppServer } from '../../src/api/AppServer.js'
+import { AuthController } from '../../src/api/http/controllers/AuthController.js'
+import { TransactionController } from '../../src/api/http/controllers/TransactionController.js'
 import { AuthQueries } from '../../BO/Auth/AuthQueries.js'
+import { createMockContainer } from '../_helpers/mock-container.mjs'
+import { PermissionGuard } from '../../src/core/security/PermissionGuard.js'
+import { TransactionMapper } from '../../src/core/transaction/TransactionMapper.js'
+import { TransactionExecutor } from '../../src/core/transaction/TransactionExecutor.js'
+import { TransactionOrchestrator } from '../../src/core/transaction/TransactionOrchestrator.js'
+
+function buildSecurityContainer(deps) {
+    const container = createMockContainer(deps)
+    container.register('permissionGuard', new PermissionGuard(container))
+    container.register('transactionMapper', new TransactionMapper(container))
+    container.register('transactionExecutor', new TransactionExecutor(container))
+    container.register('orchestrator', new TransactionOrchestrator(container))
+    return container
+}
 
 // Mock Data
 const MOCK_USER = {
@@ -154,7 +170,7 @@ function createDeps() {
     // DB Mock
     const db = {
         query: async (queryDef, params) => {
-            const sql = typeof queryDef === 'string' ? queryDef : queryDef.sql
+            const sql = typeof queryDef === 'string' ? queryDef : queryDef.sql; console.log("HTTP DB Query:", sql.trim());
 
             // Permissions
             if (sql.includes('profile_method')) {
@@ -199,6 +215,10 @@ function createDeps() {
 
             return { rows: [] }
         },
+        queryRow: async function (q, p) {
+            const res = await this.query(q, p)
+            return res.rows.length ? res.rows[0] : null
+        }
     }
 
     // We need Real SecurityService to test BO execution
@@ -220,7 +240,6 @@ function createDeps() {
 }
 
 import { SecurityService } from '../../src/services/SecurityService.js'
-import { createMockContainer } from '../_helpers/mock-container.mjs'
 
 describe('Auth Module Integration (HTTP)', async () => {
     let app
@@ -232,31 +251,23 @@ describe('Auth Module Integration (HTTP)', async () => {
         const deps = createDeps()
         testDeps = deps
 
-        // Use Real SecurityService
-        const security = new SecurityService(
-            createMockContainer({
-                db: deps.db,
-                log: deps.log,
-                config: deps.config,
-                i18n: deps.i18n,
-                audit: deps.audit,
-                session: deps.session,
-                validator: { validate: (d, s) => ({ valid: true, data: d }) }, // Bypass validation, pass data (arg1)
-                email: {
-                    send: async () => ({ ok: true }),
-                    sendTemplate: async () => ({ ok: true }),
-                    maskEmail: (e) => e,
-                },
-            })
-        )
-        await security.init()
+        const mockAppContainer = buildSecurityContainer({
+            ...deps,
+            validator: { validate: (d, s) => ({ valid: true, data: d }) },
+            email: {
+                send: async () => ({ ok: true }),
+                sendTemplate: async () => ({ ok: true }),
+                maskEmail: (e) => e,
+            },
+        })
 
-        appServer = new AppServer(
-            createMockContainer({
-                ...deps,
-                security,
-            })
-        )
+        const security = new SecurityService(mockAppContainer)
+        mockAppContainer.register('security', security)
+        await security.init()
+        mockAppContainer.register('authController', new AuthController(mockAppContainer))
+        mockAppContainer.register('txController', new TransactionController(mockAppContainer))
+
+        appServer = new AppServer(mockAppContainer)
         await appServer.init()
         app = appServer.app
     })
@@ -331,18 +342,15 @@ describe('Auth Module Integration (HTTP)', async () => {
 
         if (res.status !== 200 && res.status !== 201) {
             console.error('Register FAILS. Status:', res.status)
+            console.error('Response Body:', res.body)
             const logs = testDeps?.logs || []
-            console.log('All Logs:', JSON.stringify(logs, null, 2)) // DEBUG
             const errLog = logs.find((l) => l.type === 1) // Find TYPE_ERROR
             if (errLog) {
                 console.error('BaseBO Error Msg:', errLog.ctx?.message || errLog.msg)
                 if (errLog.ctx?.stack) console.error('Stack:', errLog.ctx.stack.split('\n')[0])
-                if (errLog.ctx && !errLog.ctx.message && !errLog.ctx.stack)
-                    console.error('Ctx:', JSON.stringify(errLog.ctx))
-            } else {
-                console.error('No error log found')
             }
         }
+        console.log('Test 4 Response Body:', res.body)
         assert.ok(res.status === 200 || res.status === 201, 'Status should be success')
         assert.ok(res.body.code === 200 || res.body.code === 201)
     })

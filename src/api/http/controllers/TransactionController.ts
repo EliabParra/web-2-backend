@@ -5,7 +5,6 @@ import {
     II18nService,
     AppRequest,
     AppResponse,
-    ILogger,
 } from '../../../types/index.js'
 import { sendInvalidParameters } from '../../../utils/http-responses.js'
 import { TransactionOrchestrator } from '../../../core/transaction/TransactionOrchestrator.js'
@@ -21,14 +20,12 @@ export class TransactionController {
     private session: ISessionService
     private config: IConfig
     private i18n: II18nService
-    private log: ILogger
 
     constructor(container: IContainer) {
         this.orchestrator = container.resolve<TransactionOrchestrator>('orchestrator')
         this.session = container.resolve<ISessionService>('session')
         this.config = container.resolve<IConfig>('config')
         this.i18n = container.resolve<II18nService>('i18n')
-        this.log = container.resolve<ILogger>('log').child({ category: 'TransactionController' })
     }
 
     /**

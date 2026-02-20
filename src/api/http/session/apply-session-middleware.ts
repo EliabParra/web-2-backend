@@ -1,7 +1,7 @@
 import session, { SessionOptions, Store } from 'express-session'
 import connectPgSimple from 'connect-pg-simple'
 import { IContainer, IConfig, ILogger, IDatabase } from '../../../types/core.js'
-import { Express } from 'express'
+import { Express, RequestHandler } from 'express'
 import { Pool } from 'pg'
 
 // Definición de tipos para la configuración de sesión
@@ -64,7 +64,7 @@ export function applySessionMiddleware(app: Express, container: IContainer) {
     }
 
     const sessionMw = session(sessionOptions)
-    container.register('sessionMiddleware', sessionMw)
+    container.register<RequestHandler>('sessionMiddleware', sessionMw)
     app.use(sessionMw)
 }
 

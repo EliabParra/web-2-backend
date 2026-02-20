@@ -4,6 +4,8 @@ import { PermissionGuard } from '../core/security/PermissionGuard.js'
 import { MenuProvider } from '../core/security/MenuProvider.js'
 import { TransactionExecutor } from '../core/transaction/TransactionExecutor.js'
 import { MenuStructure } from '../types/security.js'
+import { TransactionOrchestrator } from '../core/transaction/TransactionOrchestrator.js'
+import { AuthorizationService } from '../core/security/AuthorizationService.js'
 
 /**
  * Servicio de seguridad y orquestador principal del framework.
@@ -31,6 +33,9 @@ export class SecurityService implements ISecurityService {
     private guard: PermissionGuard
     private executor: TransactionExecutor
     private menuProvider: MenuProvider
+    private orchestrator: TransactionOrchestrator
+    private auth: AuthorizationService
+
 
     private i18n: II18nService
     private log: ILogger
@@ -49,14 +54,13 @@ export class SecurityService implements ISecurityService {
         this.log = container.resolve<ILogger>('log').child({ category: 'Security' })
         this.i18n = container.resolve<II18nService>('i18n')
 
-        // Initialize sub-components
-        this.mapper = new TransactionMapper(container)
-        this.guard = new PermissionGuard(container)
-        this.menuProvider = new MenuProvider(container)
-
-        // Initialize Executor with Container
-        // Note: TransactionExecutor uses lazy resolution for security to avoid circular dependency
-        this.executor = new TransactionExecutor(container)
+        // Resolve dependencies explicitly from the DI container (IoC)
+        this.orchestrator = container.resolve<TransactionOrchestrator>('orchestrator')
+        this.mapper = container.resolve<TransactionMapper>('transactionMapper')
+        this.executor = container.resolve<TransactionExecutor>('transactionExecutor')
+        this.guard = container.resolve<PermissionGuard>('permissionGuard')
+        this.menuProvider = container.resolve<MenuProvider>('menuProvider')
+        this.auth = container.resolve<AuthorizationService>('authorization')
     }
 
     /**
@@ -271,5 +275,37 @@ export class SecurityService implements ISecurityService {
      */
     getMapper(): TransactionMapper {
         return this.mapper
+    }
+
+    /**
+     * Devuelve la instancia interna del MenuProvider.
+     * Útil para inyectar en otros servicios.
+     */
+    getMenuProvider(): MenuProvider {
+        return this.menuProvider
+    }
+
+    /**
+     * Devuelve la instancia interna del TransactionExecutor.
+     * Útil para inyectar en otros servicios.
+     */
+    getExecutor(): TransactionExecutor {
+        return this.executor
+    }
+
+    /**
+     * Devuelve la instancia interna del TransactionOrchestrator.
+     * Útil para inyectar en otros servicios.
+     */
+    getOrchestrator(): TransactionOrchestrator {
+        return this.orchestrator
+    }
+
+    /**
+     * Devuelve la instancia interna del AuthorizationService.
+     * Útil para inyectar en otros servicios.
+     */
+    getAuth(): AuthorizationService {
+        return this.auth
     }
 }

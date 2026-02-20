@@ -32,9 +32,9 @@ export class TransactionOrchestrator {
     private i18n: II18nService
 
     constructor(container: IContainer) {
-        this.mapper = container.resolve<ITransactionMapper>('mapper')
+        this.mapper = container.resolve<ITransactionMapper>('transactionMapper')
         this.auth = container.resolve<AuthorizationService>('authorization')
-        this.executor = container.resolve<ITransactionExecutor>('executor')
+        this.executor = container.resolve<ITransactionExecutor>('transactionExecutor')
         this.log = container.resolve<ILogger>('log').child({ category: 'TransactionOrchestrator' })
         this.audit = container.resolve<IAuditService>('audit')
         this.i18n = container.resolve<II18nService>('i18n')

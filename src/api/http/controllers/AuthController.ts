@@ -5,7 +5,6 @@ import {
     II18nService,
     AppRequest,
     AppResponse,
-    ILogger,
 } from '../../../types/index.js'
 import { sendInvalidParameters } from '../../../utils/http-responses.js'
 
@@ -18,13 +17,11 @@ import { sendInvalidParameters } from '../../../utils/http-responses.js'
 export class AuthController {
     private session: ISessionService
     private audit: IAuditService
-    private log: ILogger
     private i18n: II18nService
 
     constructor(container: IContainer) {
         this.session = container.resolve<ISessionService>('session')
         this.audit = container.resolve<IAuditService>('audit')
-        this.log = container.resolve<ILogger>('log').child({ category: 'AuthController' })
         this.i18n = container.resolve<II18nService>('i18n')
     }
 

@@ -19,6 +19,19 @@ import { WebSocketService } from './services/WebSocketService.js'
 import { es } from './locales/es.js'
 import { en } from './locales/en.js'
 
+// Controllers
+import { AuthController } from './api/http/controllers/AuthController.js'
+import { TransactionController } from './api/http/controllers/TransactionController.js'
+import { ProbeController } from './api/http/controllers/ProbeController.js'
+
+// Core Security & Transactions
+import { PermissionGuard } from './core/security/PermissionGuard.js'
+import { AuthorizationService } from './core/security/AuthorizationService.js'
+import { MenuProvider } from './core/security/MenuProvider.js'
+import { TransactionMapper } from './core/transaction/TransactionMapper.js'
+import { TransactionExecutor } from './core/transaction/TransactionExecutor.js'
+import { TransactionOrchestrator } from './core/transaction/TransactionOrchestrator.js'
+
 /**
  * Resuelve rutas relativas al directorio raíz del repositorio.
  *
@@ -61,6 +74,21 @@ container.registerFactory('email', (c) => new EmailService(c))
 container.registerFactory('session', (c) => new SessionManager(c))
 container.registerFactory('security', (c) => new SecurityService(c))
 container.registerFactory('websocket', (c) => new WebSocketService(c))
+
+// 7. Core Security & Transactions
+container.registerFactory('transactionMapper', (c) => new TransactionMapper(c))
+container.registerFactory('transactionExecutor', (c) => new TransactionExecutor(c))
+container.registerFactory('permissionGuard', (c) => new PermissionGuard(c))
+container.registerFactory('authorization', (c) => new AuthorizationService(c))
+container.registerFactory('menuProvider', (c) => new MenuProvider(c))
+container.registerFactory('orchestrator', (c) => new TransactionOrchestrator(c))
+
+// 8. API Controllers
+container.registerFactory('authController', (c) => new AuthController(c))
+container.registerFactory('txController', (c) => new TransactionController(c))
+container.registerFactory('probeController', (c) => new ProbeController(c))
+
+// 9. App Server
 container.registerFactory('appServer', (c) => new AppServer(c))
 
 // Exportar solo el container — fuente única de verdad

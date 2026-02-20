@@ -26,12 +26,12 @@ WS_ADAPTER=redis
 
 > Socket.io usará `ioredis` con `@socket.io/redis-adapter` para crear `pubClient` y `subClient` con manejo automático de errores.
 
-## Arquitectura de Salas (Rooms)
+## Arquitectura de Salas (Rooms) y Namespaces
 
-El enrutamiento **no itera sobre diccionarios**. Usa las Salas nativas de Socket.io:
+El enrutamiento **no itera sobre diccionarios**. Usa las Salas y Namespaces nativos de Socket.io:
 
-1. Al conectarse, cada socket hace `join('user_{userId}')`.
-2. Emitir a un usuario es siempre `io.to('user_{userId}').emit(...)`.
+1. Al conectarse, cada socket hace `join('user_{userId}')` dentro de su namespace determinado.
+2. Emitir a un usuario es siempre `io.of(namespace || '/').to('user_{userId}').emit(...)`.
 3. El adaptador (Memory o Redis) delega automáticamente el ruteo multi-nodo.
 
 ## Uso en Business Objects (Fire & Forget)
@@ -59,10 +59,15 @@ export class OrderBO extends BaseBO {
             const order = await this.orderService.create(data)
 
             // Fire & Forget — NO usar await
-            this.ws.emitToUser(String(data.userId), 'order:created', {
-                orderId: order.id,
-                status: order.status,
-            })
+            this.ws.emitToUser(
+                String(data.userId),
+                'order:created',
+                {
+                    orderId: order.id,
+                    status: order.status,
+                },
+                '/orders'
+            ) // Parámetro namespace opcional
 
             return this.created(order, 'Orden creada exitosamente')
         })
@@ -74,22 +79,23 @@ export class OrderBO extends BaseBO {
 
 ## API del Contrato (`IWebSocketService`)
 
-| Método                                 | Descripción                                                         |
-| -------------------------------------- | ------------------------------------------------------------------- |
-| `emitToUser(userId, event, payload)`   | Emite a todas las conexiones de un usuario vía sala `user_{userId}` |
-| `broadcast(event, payload)`            | Emite a todos los clientes conectados                               |
-| `emitToRoom(roomName, event, payload)` | Emite a todos los miembros de una sala                              |
-| `addUserToRoom(userId, roomName)`      | Agrega un usuario a una sala                                        |
-| `removeUserFromRoom(userId, roomName)` | Remueve un usuario de una sala                                      |
-| `getLocalConnectionsCount()`           | Retorna conexiones activas del nodo                                 |
-| `shutdown()`                           | Cierra el servidor WebSocket                                        |
+| Método                                             | Descripción                                                                              |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `emitToUser(userId, event, payload, namespace?)`   | Emite a todas las conexiones de un usuario vía sala `user_{userId}` dentro del namespace |
+| `broadcast(event, payload, namespace?)`            | Emite a todos los clientes conectados en un namespace                                    |
+| `emitToRoom(roomName, event, payload, namespace?)` | Emite a todos los miembros de una sala en un namespace                                   |
+| `addUserToRoom(userId, roomName, namespace?)`      | Agrega un usuario a una sala de un namespace específico                                  |
+| `removeUserFromRoom(userId, roomName, namespace?)` | Remueve un usuario de una sala de un namespace específico                                |
+| `getLocalConnectionsCount()`                       | Retorna conexiones activas del nodo                                                      |
+| `shutdown()`                                       | Cierra el servidor WebSocket                                                             |
 
-## Autenticación
+## Autenticación y Namespaces
 
 El servicio consume el middleware de `express-session` durante el handshake de Socket.io:
 
-- Conexiones **sin sesión autenticada** son rechazadas automáticamente.
+- Conexiones **sin sesión autenticada** son rechazadas automáticamente mediante candado de seguridad (`requireAuth`).
 - El `userId` se extrae de `socket.request.session.userId`.
+- El candado se aplica al namespace root (`/`) e iterativamente a todos los sub-namespaces dinámicos mediante el hook `new_namespace`.
 
 ## Tracking Local
 

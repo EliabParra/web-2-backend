@@ -76,6 +76,9 @@ const app = (() => {
             if (res.ok) {
                 // Guardar identificador para restaurar sesión al recargar la página
                 localStorage.setItem('ws_user_id', identifier)
+                if (json.user?.user_id) {
+                    localStorage.setItem('ws_user_numeric', json.user.user_id)
+                }
                 
                 setAuthStatus('connected', `Sesión: ${identifier}`)
                 const authInfo = document.getElementById('auth-info')
@@ -118,6 +121,7 @@ const app = (() => {
             const json = await res.json()
             csrfToken = null
             localStorage.removeItem('ws_user_id')
+            localStorage.removeItem('ws_user_numeric')
             
             setAuthStatus('disconnected', 'Sin sesión')
             document.getElementById('auth-info').textContent = '🚪 Sesión cerrada'
@@ -384,7 +388,7 @@ const app = (() => {
     // Salas (Rooms) — comunicación directa via Socket.io
     // ═══════════════════════════════════════════════════════════════════════
 
-    function joinRoom() {
+    async function joinRoom() {
         const roomName = document.getElementById('room-name').value.trim()
         if (!roomName) return
         if (!socket?.connected) {
@@ -392,21 +396,59 @@ const app = (() => {
             return
         }
 
-        socket.emit('room:join', { roomName })
-        rooms.add(roomName)
-        renderRooms()
-        logEvent('system', `🏠 Solicitado unirse a sala: ${roomName}`)
+        const userId = localStorage.getItem('ws_user_numeric') || '0'
+        
+        try {
+            logEvent('system', `🏠 Solicitando unirse a sala via API: ${roomName}`)
+            const res = await fetch(`${getBackendUrl()}/toProccess`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+                },
+                credentials: 'include',
+                body: JSON.stringify({ tx: 21, params: { userId, roomName } })
+            })
+            const json = await res.json()
+            if (res.ok) {
+                rooms.add(roomName)
+                renderRooms()
+                logEvent('system', `✅ Unido a la sala: ${JSON.stringify(json)}`)
+            } else {
+                logEvent('error', `❌ Error uniendo a sala: ${JSON.stringify(json)}`)
+            }
+        } catch (err) {
+            logEvent('error', `Error API: ${err.message}`)
+        }
     }
 
-    function leaveRoom() {
+    async function leaveRoom() {
         const roomName = document.getElementById('room-name').value.trim()
         if (!roomName) return
         if (!socket?.connected) return
 
-        socket.emit('room:leave', { roomName })
-        rooms.delete(roomName)
-        renderRooms()
-        logEvent('system', `🚪 Solicitado salir de sala: ${roomName}`)
+        const userId = localStorage.getItem('ws_user_numeric') || '0'
+
+        try {
+            logEvent('system', `🚪 Solicitando salir de sala via API: ${roomName}`)
+            const res = await fetch(`${getBackendUrl()}/toProccess`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+                },
+                credentials: 'include',
+                body: JSON.stringify({ tx: 22, params: { userId, roomName } })
+            })
+            const json = await res.json()
+            if (res.ok) {
+                rooms.delete(roomName)
+                renderRooms()
+                logEvent('system', `✅ Salida exitosa: ${JSON.stringify(json)}`)
+            }
+        } catch (err) {
+            logEvent('error', `Error API: ${err.message}`)
+        }
     }
 
     async function emitToRoom() {
@@ -424,19 +466,44 @@ const app = (() => {
             return
         }
 
-        socket.emit('room:emit', { roomName, event, message })
-        sentCount++
-        updateMetric('metric-sent', sentCount)
-        logEvent('system', `📤 Emitido a sala "${roomName}": ${event}`)
+        const userId = localStorage.getItem('ws_user_numeric') || '0'
+
+        try {
+            logEvent('system', `📤 Emitiendo a sala via API "${roomName}": ${event}`)
+            const res = await fetch(`${getBackendUrl()}/toProccess`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+                },
+                credentials: 'include',
+                body: JSON.stringify({ tx: 23, params: { userId, roomName, event, message } })
+            })
+            const json = await res.json()
+            sentCount++
+            updateMetric('metric-sent', sentCount)
+            logEvent('system', `📨 API Response: ${JSON.stringify(json)}`)
+        } catch (err) {
+            logEvent('error', `Error API: ${err.message}`)
+        }
     }
 
-    function removeRoom(roomName) {
+    async function removeRoom(roomName) {
         if (socket?.connected) {
-            socket.emit('room:leave', { roomName })
+            const userId = localStorage.getItem('ws_user_numeric') || '0'
+            await fetch(`${getBackendUrl()}/toProccess`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+                },
+                credentials: 'include',
+                body: JSON.stringify({ tx: 22, params: { userId, roomName } })
+            })
         }
         rooms.delete(roomName)
         renderRooms()
-        logEvent('system', `🚪 Sala abandonada: ${roomName}`)
+        logEvent('system', `🚪 Sala abandonada y borrada tag: ${roomName}`)
     }
 
     // ═══════════════════════════════════════════════════════════════════════

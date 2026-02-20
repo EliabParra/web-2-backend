@@ -9,7 +9,19 @@
  * @returns {{ resolve: function, register: function, registerFactory: function, has: function }}
  */
 export function createMockContainer(deps = {}) {
-    const store = { ...deps }
+    const defaultMocks = {
+        orchestrator: { execute: async () => {} },
+        transactionMapper: { load: async () => {}, isReady: true, resolve: () => ({ objectName: 'Mock', methodName: 'mock' }) },
+        transactionExecutor: { execute: async () => ({ code: 200, msg: 'ok' }) },
+        permissionGuard: { load: async () => {}, isReady: true, hasPermission: () => true, check: () => true, grant: async () => true, revoke: async () => true },
+        menuProvider: { load: async () => {} },
+        authorization: { isAuthorized: () => true },
+        authController: {},
+        txController: {},
+        probeController: {},
+        ...deps
+    }
+    const store = { ...defaultMocks }
     const container = {
         resolve(key) {
             if (!(key in store)) {

@@ -1,13 +1,22 @@
-import { Server as SocketServer } from 'socket.io'
+import { Server } from 'http'
+import { Server as SocketServer, Socket } from 'socket.io'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { Redis } from 'ioredis'
-import type { IWebSocketService, IContainer, ILogger, IConfig } from '../types/index.js'
-import type { Express } from 'express'
+import type { RequestHandler } from 'express'
+import type { IncomingMessage } from 'http'
+import type { IWebSocketService, IContainer, ILogger, IConfig, AppResponse, AppRequest } from '../types/index.js'
+
+export interface IncomingMessageWithSession extends IncomingMessage {
+    session?: {
+        userId?: number | string
+        user_id?: number | string
+    }
+}
 
 /**
  * Servicio WebSocket con Arquitectura Híbrida.
  *
- * Soporta dos modos de transporte configurables:
+ * Soporta dos modos de tra_namespaceorte configurables:
  * - **memory**: Adaptador en memoria para desarrollo local (single-node).
  * - **redis**: Adaptador Redis Pub/Sub para alta disponibilidad multi-nodo.
  *
@@ -45,21 +54,14 @@ export class WebSocketService implements IWebSocketService {
      *
      * @param httpServer - Instancia del servidor HTTP de Node.js
      */
-    async initialize(httpServer: any): Promise<void> {
-        const corsOrigins = this.config.cors?.origins ?? ['*']
-
-        this.io = new SocketServer(httpServer, {
-            cors: {
-                origin: corsOrigins,
-                credentials: true,
-            },
-        })
+    async initialize(httpServer: Server): Promise<void> {
+        this.io = new SocketServer(httpServer, { cors: this.config.cors })
 
         await this.configureAdapter()
         this.applySessionMiddleware()
         this.registerConnectionHandlers()
 
-        this.log.info(`WebSocket inicializado con adaptador: ${this.config.websocket.adapter}`)
+        this.log.debug(`WebSocket inicializado con adaptador: ${this.config.websocket.adapter}`)
     }
 
     /**
@@ -69,8 +71,8 @@ export class WebSocketService implements IWebSocketService {
      * @param event - Nombre del evento
      * @param payload - Datos del evento
      */
-    emitToUser(userId: string, event: string, payload: any): void {
-        this.requireIO().to(`user_${userId}`).emit(event, payload)
+    emitToUser(userId: string, event: string, payload: any, namespace?: string): void {
+        this.requireIO().of(namespace || '/').to(`user_${userId}`).emit(event, payload)
     }
 
     /**
@@ -79,8 +81,8 @@ export class WebSocketService implements IWebSocketService {
      * @param event - Nombre del evento
      * @param payload - Datos del evento
      */
-    broadcast(event: string, payload: any): void {
-        this.requireIO().emit(event, payload)
+    broadcast(event: string, payload: any, namespace?: string): void {
+        this.requireIO().of(namespace || '/').emit(event, payload)
     }
 
     /**
@@ -90,8 +92,8 @@ export class WebSocketService implements IWebSocketService {
      * @param event - Nombre del evento
      * @param payload - Datos del evento
      */
-    emitToRoom(roomName: string, event: string, payload: any): void {
-        this.requireIO().to(roomName).emit(event, payload)
+    emitToRoom(roomName: string, event: string, payload: any, namespace?: string): void {
+        this.requireIO().of(namespace || '/').to(roomName).emit(event, payload)
     }
 
     /**
@@ -100,12 +102,13 @@ export class WebSocketService implements IWebSocketService {
      * @param userId - Identificador del usuario
      * @param roomName - Nombre de la sala
      */
-    addUserToRoom(userId: string, roomName: string): void {
+    addUserToRoom(userId: string, roomName: string, namespace?: string): void {
         const sockets = this.localConnections.get(userId)
         if (!sockets) return
 
+        const _namespace = this.requireIO().of(namespace || '/')
         for (const socketId of sockets) {
-            const socket = this.requireIO().sockets.sockets.get(socketId)
+            const socket = _namespace.sockets.get(socketId)
             socket?.join(roomName)
         }
     }
@@ -116,12 +119,13 @@ export class WebSocketService implements IWebSocketService {
      * @param userId - Identificador del usuario
      * @param roomName - Nombre de la sala
      */
-    removeUserFromRoom(userId: string, roomName: string): void {
+    removeUserFromRoom(userId: string, roomName: string, namespace?: string): void {
         const sockets = this.localConnections.get(userId)
         if (!sockets) return
 
+        const _namespace = this.requireIO().of(namespace || '/')
         for (const socketId of sockets) {
-            const socket = this.requireIO().sockets.sockets.get(socketId)
+            const socket = _namespace.sockets.get(socketId)
             socket?.leave(roomName)
         }
     }
@@ -153,9 +157,9 @@ export class WebSocketService implements IWebSocketService {
      * Rechaza conexiones sin sesión autenticada (userId ausente).
      */
     private applySessionMiddleware(): void {
-        let sessionMiddleware: any = null
+        let sessionMiddleware: RequestHandler | null = null
         try {
-            sessionMiddleware = this.container.resolve('sessionMiddleware')
+            sessionMiddleware = this.container.resolve<RequestHandler>('sessionMiddleware')
         } catch (err) {
             // No resuelto
         }
@@ -165,21 +169,35 @@ export class WebSocketService implements IWebSocketService {
             return
         }
 
-        this.requireIO().engine.use(sessionMiddleware)
+        // Bridge express middleware to allow parsing sessions on the initial TCP connection
+        this.requireIO().engine.use((req: AppRequest, res: AppResponse, next: (err?: unknown) => void) => {
+            sessionMiddleware!(req, res, next)
+        })
 
-        this.requireIO().use((socket, next) => {
-            const session = (socket.request as any)?.session
+        // Strictly Typed and Reusable security lock
+        const requireAuth = (socket: Socket, next: (err?: Error) => void) => {
+            const req = socket.request as IncomingMessageWithSession
+            const session = req.session
             const userId = session?.userId ?? session?.user_id
+            
             if (!userId) {
                 next(new Error('Conexión WebSocket rechazada: sesión no autenticada'))
                 return
             }
             next()
+        }
+
+        // Protect root namespace
+        this.requireIO().use(requireAuth)
+
+        // Protect any dynamically created or secondary namespaces
+        this.requireIO().on('new_namespace', (namespace) => {
+            namespace.use(requireAuth)
         })
     }
 
     /**
-     * Configura el adaptador de transporte según la configuración activa.
+     * Configura el adaptador de tra_namespaceorte según la configuración activa.
      * Si es `'redis'`, crea pubClient y subClient con manejo de errores.
      */
     private async configureAdapter(): Promise<void> {
@@ -228,31 +246,7 @@ export class WebSocketService implements IWebSocketService {
             socket.join(`user_${userId}`)
             this.log.debug(`Socket conectado: ${socket.id} → user_${userId}`)
 
-            // Handlers de salas (para playground y uso general)
-            socket.on('room:join', (data: { roomName: string }) => {
-                if (data?.roomName) {
-                    socket.join(data.roomName)
-                    this.log.debug(`Socket ${socket.id} unido a sala: ${data.roomName}`)
-                }
-            })
 
-            socket.on('room:leave', (data: { roomName: string }) => {
-                if (data?.roomName) {
-                    socket.leave(data.roomName)
-                    this.log.debug(`Socket ${socket.id} salió de sala: ${data.roomName}`)
-                }
-            })
-
-            socket.on('room:emit', (data: { roomName: string; event: string; message: string }) => {
-                if (data?.roomName && data?.event) {
-                    this.requireIO().to(data.roomName).emit(data.event, {
-                        message: data.message,
-                        from: userId,
-                        timestamp: new Date().toISOString(),
-                    })
-                    this.log.debug(`Emisión a sala "${data.roomName}": ${data.event}`)
-                }
-            })
 
             socket.on('disconnect', () => {
                 this.untrackConnection(userId, socket.id)

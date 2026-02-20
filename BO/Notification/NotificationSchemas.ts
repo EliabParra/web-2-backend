@@ -24,6 +24,23 @@ export const createNotificationSchemas = (messages: NotificationMessagesSet = No
             steps: z.number().int().min(3).max(20).default(8),
             delayMs: z.number().int().min(200).max(5000).default(600),
         }),
+        joinRoom: z.object({
+            userId: z.string().min(1, validation.requiredField),
+            roomName: z.string().min(1, validation.requiredField),
+            namespace: z.string().optional(),
+        }),
+        leaveRoom: z.object({
+            userId: z.string().min(1, validation.requiredField),
+            roomName: z.string().min(1, validation.requiredField),
+            namespace: z.string().optional(),
+        }),
+        emitRoom: z.object({
+            userId: z.string().min(1, validation.requiredField),
+            roomName: z.string().min(1, validation.requiredField),
+            event: z.string().min(1, validation.requiredField),
+            message: z.string().min(1, validation.requiredField),
+            namespace: z.string().optional(),
+        }),
     }
 }
 
@@ -32,3 +49,6 @@ export const NotificationSchemas = createNotificationSchemas(NotificationMessage
 export type SendInput = z.infer<typeof NotificationSchemas.send>
 export type BroadcastInput = z.infer<typeof NotificationSchemas.broadcast>
 export type SimulateInput = z.infer<typeof NotificationSchemas.simulate>
+export type JoinRoomInput = z.infer<typeof NotificationSchemas.joinRoom>
+export type LeaveRoomInput = z.infer<typeof NotificationSchemas.leaveRoom>
+export type EmitRoomInput = z.infer<typeof NotificationSchemas.emitRoom>
