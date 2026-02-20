@@ -42,7 +42,7 @@ describe('Security & Orchestration Core', () => {
             child: () => mockLog,
         }
         const mockAudit = { log: async () => {} }
-        const mockI18n = { error: (k) => ({ code: 500, msg: k }) }
+        const mockI18n = { error: (k) => ({ code: 500, msg: k }), errorKey: (k) => ({ code: 500, msg: k }) }
 
         const context = { userId: 1, profileId: 10, username: 'test' }
 
