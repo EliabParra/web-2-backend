@@ -596,6 +596,10 @@ const app = (() => {
     // ═══════════════════════════════════════════════════════════════════════
 
     async function init() {
+        // Auto-detect the correct backend IP if accessing from a local network via phone
+        const urlInput = document.getElementById('backend-url')
+        urlInput.value = `${window.location.protocol}//${window.location.hostname}:3000`
+
         const savedUser = localStorage.getItem('ws_user_id')
         if (savedUser) {
             setAuthStatus('connecting', 'Restaurando...')
