@@ -114,9 +114,11 @@ test('createCsrfTokenHandler returns error if no session', () => {
 })
 
 // --- createCsrfProtection tests ---
+const mockConfig = { app: { env: 'production' } }
+
 test('createCsrfProtection allows request without session for /toProccess', () => {
     const i18n = createMockI18n()
-    const middleware = createCsrfProtection(i18n)
+    const middleware = createCsrfProtection(i18n, mockConfig)
 
     const req = { path: '/toProccess', session: {} }
     let nextCalled = false
@@ -132,7 +134,7 @@ test('createCsrfProtection allows request without session for /toProccess', () =
 
 test('createCsrfProtection allows request without session for /logout', () => {
     const i18n = createMockI18n()
-    const middleware = createCsrfProtection(i18n)
+    const middleware = createCsrfProtection(i18n, mockConfig)
 
     const req = { path: '/logout', session: {} }
     let nextCalled = false
@@ -148,7 +150,7 @@ test('createCsrfProtection allows request without session for /logout', () => {
 
 test('createCsrfProtection rejects when no expected token', () => {
     const i18n = createMockI18n()
-    const middleware = createCsrfProtection(i18n)
+    const middleware = createCsrfProtection(i18n, mockConfig)
 
     const req = {
         path: '/api/action',
@@ -171,7 +173,7 @@ test('createCsrfProtection rejects when no expected token', () => {
 
 test('createCsrfProtection rejects when token mismatch', () => {
     const i18n = createMockI18n()
-    const middleware = createCsrfProtection(i18n)
+    const middleware = createCsrfProtection(i18n, mockConfig)
 
     const req = {
         path: '/api/action',
@@ -194,7 +196,7 @@ test('createCsrfProtection rejects when token mismatch', () => {
 
 test('createCsrfProtection allows when token matches', () => {
     const i18n = createMockI18n()
-    const middleware = createCsrfProtection(i18n)
+    const middleware = createCsrfProtection(i18n, mockConfig)
 
     const req = {
         path: '/api/action',
@@ -211,3 +213,25 @@ test('createCsrfProtection allows when token matches', () => {
 
     assert.equal(nextCalled, true)
 })
+
+test('createCsrfProtection flexibilizes token mismatch in development for local networks', () => {
+    const i18n = createMockI18n()
+    const devConfig = { app: { env: 'development' } }
+    const middleware = createCsrfProtection(i18n, devConfig)
+
+    const req = {
+        path: '/api/action',
+        session: { userId: 1, csrfToken: 'expected-token' },
+        get: (header) => header === 'Origin' ? 'http://192.168.1.5:3000' : 'wrong-token',
+    }
+    let nextCalled = false
+    const next = () => {
+        nextCalled = true
+    }
+    const res = {}
+
+    middleware(req, res, next)
+
+    assert.equal(nextCalled, true)
+})
+

@@ -18,6 +18,8 @@ export interface AppConfig {
     name: string
     /** Idioma por defecto (es, en) */
     lang: string
+    /** Entorno de la aplicación (development, production, etc) */
+    env: string
     /** Modo de frontend: 'spa', 'pages', 'none' */
     frontendMode: 'spa' | 'pages' | 'none'
     /** URL del frontend */

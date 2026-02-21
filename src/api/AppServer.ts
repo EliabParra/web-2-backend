@@ -105,7 +105,7 @@ export class AppServer {
 
         // Inicializar Middlewares de Seguridad (Factories)
         this.csrfTokenHandler = createCsrfTokenHandler(this.i18n)
-        this.csrfProtection = createCsrfProtection(this.i18n)
+        this.csrfProtection = createCsrfProtection(this.i18n, this.config)
 
         this.loginRateLimiter = createLoginRateLimiter(this.container)
         this.authPasswordResetRateLimiter = createAuthPasswordResetRateLimiter(this.container)
