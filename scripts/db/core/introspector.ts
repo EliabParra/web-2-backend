@@ -22,7 +22,8 @@ interface ColumnInfo {
 export class Introspector {
     constructor(
         private db: Database,
-        private outputDir: string
+        private ddlDir: string,
+        private dmlDir: string
     ) {}
 
     /**
@@ -86,11 +87,11 @@ export class Introspector {
         const existingTables = new Map<string, string>()
 
         try {
-            const files = await fs.readdir(this.outputDir)
+            const files = await fs.readdir(this.ddlDir)
             for (const file of files) {
                 if (!file.endsWith('.ts')) continue
 
-                const filePath = path.join(this.outputDir, file)
+                const filePath = path.join(this.ddlDir, file)
                 const content = await fs.readFile(filePath, 'utf-8')
 
                 const regex =
@@ -126,6 +127,11 @@ export class Introspector {
         const generatedFiles: string[] = []
 
         for (const table of tables) {
+            if (table.table_schema === 'security') {
+                console.log(`   ⏭️  Ignoring Security table: ${table.table_schema}.${table.table_name}`.yellow)
+                continue
+            }
+
             const key = `${table.table_schema}.${table.table_name}`.toLowerCase()
             const existingFile = existingTables.get(key)
             let shouldProcess = true
@@ -156,7 +162,7 @@ export class Introspector {
                                 data
                             )
                             const dataFilename = `90_data_${priority}_${table.table_schema}_${table.table_name}.ts`
-                            const dataFilepath = path.join(this.outputDir, dataFilename)
+                            const dataFilepath = path.join(this.dmlDir, dataFilename)
 
                             await fs.writeFile(dataFilepath, dataContent, 'utf-8')
                             console.log(`   ✅ Generated Data: ${dataFilename}`.green)
@@ -170,14 +176,22 @@ export class Introspector {
 
             const columns = await this.getColumns(table.table_schema, table.table_name)
             let indexes: string[] = []
-            let data: string[] = []
 
             indexes = await this.getIndexes(table.table_schema, table.table_name)
 
+            // When writing a new file, we ALSO need to handle data extraction to DML
             if (options.withData) {
-                data = await this.getData(table.table_schema, table.table_name)
+                const data = await this.getData(table.table_schema, table.table_name)
                 if (data.length > 0) {
                     console.log(`      📝 Found ${data.length} records in ${table.table_name}`.gray)
+                    const priority = this.getTablePriority(table.table_name)
+                    const dataContent = this.generateDataFile(table.table_schema, table.table_name, data)
+                    const dataFilename = `90_data_${priority}_${table.table_schema}_${table.table_name}.ts`
+                    const dataFilepath = path.join(this.dmlDir, dataFilename)
+                    
+                    await fs.writeFile(dataFilepath, dataContent, 'utf-8')
+                    console.log(`   ✅ Generated Data: ${dataFilename}`.green)
+                    generatedFiles.push(dataFilepath)
                 }
             }
 
@@ -186,12 +200,12 @@ export class Introspector {
                 table.table_name,
                 columns,
                 indexes,
-                data
+                [] // Ensure we NEVER inject data into the DDL file anymore
             )
 
             // Determine filename: Use existing if available, else new standardized name
             const filename = existingFile || `80_${table.table_schema}_${table.table_name}.ts`
-            const filepath = path.join(this.outputDir, filename)
+            const filepath = path.join(this.ddlDir, filename)
 
             await fs.writeFile(filepath, content, 'utf-8')
             const statusIcon = existingFile ? '🔄 Updated' : '✅ Generated'

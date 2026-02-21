@@ -123,7 +123,7 @@ async function main() {
 
             case 'introspect': {
                 console.log(colors.cyan('\n🔍 Running Introspect (DB → Code)...'))
-                const introspector = new Introspector(db, ddlDir)
+                const introspector = new Introspector(db, ddlDir, dmlDir)
                 await introspector.introspectAll({
                     withData: config.security.introspectData,
                 })
