@@ -1,57 +1,71 @@
-import readline from 'node:readline/promises'
+import * as p from '@clack/prompts'
 import 'colors'
 
 export class Interactor {
-    private rl: readline.Interface
-
-    constructor() {
-        this.rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
-        })
-    }
+    constructor() {}
 
     close() {
-        this.rl.close()
+        // No-op for clack prompts, as we use `cancel` handles directly
     }
 
     async header() {
-        console.log('')
-        console.log('🚀 ToProccess DB Init CLI'.cyan.bold)
-        console.log('================================================'.gray)
-        console.log('Initialized your robust, scalable architecture DB'.gray)
-        console.log('')
+        console.clear()
+        p.intro(`${'🚀 ToProccess DB Init CLI'.cyan.bold}`)
+        p.note('Initialized your robust, scalable architecture DB', 'Info')
     }
 
     async ask(question: string, defaultValue?: string): Promise<string> {
-        const def = defaultValue ? ` (${defaultValue.dim})` : ''
-        const q = `${'➜'.green} ${question.bold}${def}: `
-        const ans = await this.rl.question(q)
-        return ans.trim() || defaultValue || ''
+        const result = await p.text({
+            message: question,
+            defaultValue: defaultValue,
+            placeholder: defaultValue,
+        })
+        
+        if (p.isCancel(result)) {
+            p.cancel('Operation cancelled.')
+            process.exit(0)
+        }
+        
+        return result as string
     }
 
     async confirm(question: string, defaultYes = true): Promise<boolean> {
-        const yn = defaultYes ? '[Y/n]' : '[y/N]'
-        const ans = await this.ask(`${question} ${yn}`, defaultYes ? 'y' : 'n')
-        return ans.toLowerCase().startsWith('y')
+        const result = await p.confirm({
+            message: question,
+            initialValue: defaultYes,
+        })
+        
+        if (p.isCancel(result)) {
+            p.cancel('Operation cancelled.')
+            process.exit(0)
+        }
+        
+        return result as boolean
     }
 
     async select(question: string, options: string[], defaultOption?: string): Promise<string> {
-        console.log(`${'➜'.green} ${question.bold}:`)
-        options.forEach((opt, i) => {
-            console.log(`  ${i + 1}. ${opt}`)
-        })
-
-        while (true) {
-            const ans = await this.ask(
-                `Select (1-${options.length})`,
-                defaultOption ? String(options.indexOf(defaultOption) + 1) : undefined
-            )
-            const idx = parseInt(ans) - 1
-            if (idx >= 0 && idx < options.length) {
-                return options[idx]
-            }
-            console.log(`${'⚠'.yellow} Invalid selection`)
+        const clackOptions = options.map((opt) => ({
+            value: opt,
+            label: opt,
+        }))
+        
+        let initialValue = clackOptions[0].value
+        if (defaultOption) {
+            const found = clackOptions.find(opt => opt.value.includes(defaultOption))
+            if (found) initialValue = found.value
         }
+
+        const result = await p.select({
+            message: question,
+            options: clackOptions,
+            initialValue,
+        })
+        
+        if (p.isCancel(result)) {
+            p.cancel('Operation cancelled.')
+            process.exit(0)
+        }
+        
+        return result as string
     }
 }

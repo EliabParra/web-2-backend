@@ -3,6 +3,7 @@ import { Executor } from './executor.js'
 import { Database } from './db.js'
 import path from 'path'
 import colors from 'colors'
+import Table from 'cli-table3'
 
 export interface RunnerConfig {
     dryRun?: boolean
@@ -25,63 +26,117 @@ export class MigrationRunner {
         this.loader = new SchemaLoader(schemasDir)
     }
 
+    private async initHistoryTable(): Promise<void> {
+        if (this.config.dryRun) return
+
+        const sql = `
+            CREATE TABLE IF NOT EXISTS _migration_history (
+                id SERIAL PRIMARY KEY,
+                filename VARCHAR(255) NOT NULL UNIQUE,
+                applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `
+        await this.db.exeRaw(sql)
+    }
+
+    private async getAppliedMigrations(): Promise<string[]> {
+        if (this.config.dryRun) return []
+
+        try {
+            const { rows } = await this.db.exeRaw('SELECT filename FROM _migration_history ORDER BY id ASC')
+            return rows.map(r => r.filename)
+        } catch (e) {
+            return []
+        }
+    }
+
+    private async markAsApplied(filename: string): Promise<void> {
+        if (this.config.dryRun) return
+        await this.db.exeRaw('INSERT INTO _migration_history (filename) VALUES ($1)', [filename])
+    }
+
     async run(): Promise<void> {
-        console.log(`\n🔍 Scanning for schemas in: ${this.schemasDir}`.cyan)
+        if (!this.config.silent) console.log(`\n🔍 Scanning for migrations in: ${this.schemasDir}`.cyan)
+
+        await this.initHistoryTable()
+        const applied = await this.getAppliedMigrations()
 
         const files = await this.loader.listSchemaFiles()
 
         if (files.length === 0) {
-            console.log('⚠️  No schema files found.'.yellow)
+            if (!this.config.silent) console.log('⚠️  No schema files found.'.yellow)
             return
         }
 
-        console.log(`✨ Found ${files.length} schema files. Starting execution...\n`.green)
+        const pendingFiles = files.filter(f => !applied.includes(path.basename(f)))
+
+        if (pendingFiles.length === 0) {
+            if (!this.config.silent) console.log(`✨ Database is up to date for this directory. No pending migrations.\n`.green)
+            return
+        }
+
+        if (!this.config.silent) console.log(`✨ Found ${pendingFiles.length} pending files. Starting execution...\n`.green)
 
         const executor = new Executor(this.db, this.config.dryRun)
+        
+        const table = new Table({
+            head: [colors.cyan('ID'), colors.cyan('Migration File'), colors.cyan('Status')],
+            style: { head: [], border: [] }
+        })
 
-        for (const file of files) {
+        let index = 1
+
+        for (const file of pendingFiles) {
             const fileName = path.basename(file)
-            console.log(`📄 Processing: ${fileName}`.bold)
+            if (!this.config.silent) console.log(`📄 Processing: ${fileName}`.bold)
 
             try {
-                // Dynamically import the schema file
-                // Windows path handling: file:// prefix needed for ESM import
                 const fileUrl = path.sep === '\\' ? `file://${file}` : file
                 const module = await import(fileUrl)
 
-                // Extract the exported array (convention: Look for array exports)
                 const schemaQueries = this.extractQueries(module)
 
                 if (schemaQueries.length === 0) {
-                    console.log(`   ⏭️  Skipping (No queries found)`.gray)
+                    if (!this.config.silent) console.log(`   ⏭️  Skipping (No queries found)`.gray)
+                    table.push([index++, fileName, colors.gray('SKIPPED')])
                     continue
                 }
 
-                // Execute generic SQL
+                if (!this.config.dryRun) await executor.run('BEGIN')
+                
                 for (const sql of schemaQueries) {
                     await executor.run(sql, [], fileName)
                 }
+                
+                await this.markAsApplied(fileName)
+
+                if (!this.config.dryRun) await executor.run('COMMIT')
+                
+                table.push([index++, fileName, colors.green('APPLIED')])
             } catch (err: any) {
+                if (!this.config.dryRun) {
+                    try { await executor.run('ROLLBACK') } catch (e) {}
+                }
                 console.error(`❌ Error processing ${fileName}:`.red, err.message)
+                table.push([index++, fileName, colors.red('FAILED')])
+                console.log(table.toString())
                 throw err
             }
         }
 
-        console.log(`\n✅ All migrations applied successfully.`.green.bold)
+        if (!this.config.silent) {
+            console.log('\n📅 Migration Result Summary:')
+            console.log(table.toString())
+            console.log(`\n✅ All new migrations applied successfully.`.green.bold)
+        }
     }
 
-    /**
-     * Inspects the module exports to find the schema array.
-     * Starts looking for specific naming conventions or takes the first array found.
-     */
     private extractQueries(module: any): string[] {
-        // 1. Look for known exports
         if (Array.isArray(module.BASE_SCHEMA)) return module.BASE_SCHEMA
         if (Array.isArray(module.USERS_SCHEMA)) return module.USERS_SCHEMA
         if (Array.isArray(module.GEO_SCHEMA)) return module.GEO_SCHEMA
         if (Array.isArray(module.AUDIT_SCHEMA)) return module.AUDIT_SCHEMA
 
-        // 2. Fallback: Find first exported array
         const values = Object.values(module)
         const found = values.find((v) => Array.isArray(v) && v.every((i) => typeof i === 'string'))
 

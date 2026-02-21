@@ -91,7 +91,8 @@ async function main() {
     )
 
     const db = new Database(dbConfig)
-    const schemasDir = path.join(__dirname, 'schemas')
+    const ddlDir = path.resolve(__dirname, '../../migrations/ddl')
+    const dmlDir = path.resolve(__dirname, '../../migrations/dml')
     const boRoot = path.resolve(__dirname, '../../BO')
 
     const runnerConfig = {
@@ -106,7 +107,7 @@ async function main() {
             case 'sync': {
                 console.log(colors.cyan('\n🔄 Running Sync (Code → DB)...'))
 
-                const runner = new MigrationRunner(db, runnerConfig, schemasDir)
+                const runner = new MigrationRunner(db, runnerConfig, ddlDir)
                 await runner.run()
 
                 // Auto-register BOs if enabled
@@ -122,7 +123,7 @@ async function main() {
 
             case 'introspect': {
                 console.log(colors.cyan('\n🔍 Running Introspect (DB → Code)...'))
-                const introspector = new Introspector(db, schemasDir)
+                const introspector = new Introspector(db, ddlDir)
                 await introspector.introspectAll({
                     withData: config.security.introspectData,
                 })
@@ -131,6 +132,11 @@ async function main() {
 
             case 'seed': {
                 console.log(colors.cyan('\n🌱 Running Seed...'))
+                
+                // Run DML migrations first
+                console.log(colors.cyan('\n📝 Applying DML Scripts (Migrations)...'))
+                const dmlRunner = new MigrationRunner(db, runnerConfig, dmlDir)
+                await dmlRunner.run()
 
                 // Seed profiles first (if enabled)
                 if (config.security.seedProfiles) {
@@ -192,9 +198,14 @@ async function main() {
                     await resetter.reset({ confirm: true })
 
                     // Re-apply schemas
-                    console.log(colors.cyan('\n🔄 Re-applying schemas...'))
-                    const runner = new MigrationRunner(db, runnerConfig, schemasDir)
-                    await runner.run()
+                    console.log(colors.cyan('\n🔄 Re-applying schemas (DDL)...'))
+                    const ddlRunner = new MigrationRunner(db, runnerConfig, ddlDir)
+                    await ddlRunner.run()
+                    
+                    // Re-apply seeds
+                    console.log(colors.cyan('\n🌱 Re-applying seeds (DML)...'))
+                    const dmlRunner = new MigrationRunner(db, runnerConfig, dmlDir)
+                    await dmlRunner.run()
                 } else {
                     console.log(colors.yellow('   Cancelled.'))
                 }
@@ -206,7 +217,7 @@ async function main() {
                 const runner = new MigrationRunner(
                     db,
                     { ...runnerConfig, dryRun: true },
-                    schemasDir
+                    ddlDir
                 )
                 await runner.run()
                 break
