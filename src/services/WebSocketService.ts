@@ -4,7 +4,14 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { Redis } from 'ioredis'
 import type { RequestHandler } from 'express'
 import type { IncomingMessage } from 'http'
-import type { IWebSocketService, IContainer, ILogger, IConfig, AppResponse, AppRequest } from '../types/index.js'
+import type {
+    IWebSocketService,
+    IContainer,
+    ILogger,
+    IConfig,
+    AppResponse,
+    AppRequest,
+} from '../types/index.js'
 
 export interface IncomingMessageWithSession extends IncomingMessage {
     session?: {
@@ -72,7 +79,10 @@ export class WebSocketService implements IWebSocketService {
      * @param payload - Datos del evento
      */
     emitToUser(userId: string, event: string, payload: any, namespace?: string): void {
-        this.requireIO().of(namespace || '/').to(`user_${userId}`).emit(event, payload)
+        this.requireIO()
+            .of(namespace || '/')
+            .to(`user_${userId}`)
+            .emit(event, payload)
     }
 
     /**
@@ -82,7 +92,9 @@ export class WebSocketService implements IWebSocketService {
      * @param payload - Datos del evento
      */
     broadcast(event: string, payload: any, namespace?: string): void {
-        this.requireIO().of(namespace || '/').emit(event, payload)
+        this.requireIO()
+            .of(namespace || '/')
+            .emit(event, payload)
     }
 
     /**
@@ -93,7 +105,10 @@ export class WebSocketService implements IWebSocketService {
      * @param payload - Datos del evento
      */
     emitToRoom(roomName: string, event: string, payload: any, namespace?: string): void {
-        this.requireIO().of(namespace || '/').to(roomName).emit(event, payload)
+        this.requireIO()
+            .of(namespace || '/')
+            .to(roomName)
+            .emit(event, payload)
     }
 
     /**
@@ -165,21 +180,25 @@ export class WebSocketService implements IWebSocketService {
         }
 
         if (!sessionMiddleware) {
-            this.log.warn('No se encontró middleware de sesión en el contenedor. WebSocket operará sin autenticación.')
+            this.log.warn(
+                'No se encontró middleware de sesión en el contenedor. WebSocket operará sin autenticación.'
+            )
             return
         }
 
         // Bridge express middleware to allow parsing sessions on the initial TCP connection
-        this.requireIO().engine.use((req: AppRequest, res: AppResponse, next: (err?: unknown) => void) => {
-            sessionMiddleware!(req, res, next)
-        })
+        this.requireIO().engine.use(
+            (req: AppRequest, res: AppResponse, next: (err?: unknown) => void) => {
+                sessionMiddleware!(req, res, next)
+            }
+        )
 
         // Strictly Typed and Reusable security lock
         const requireAuth = (socket: Socket, next: (err?: Error) => void) => {
             const req = socket.request as IncomingMessageWithSession
             const session = req.session
             const userId = session?.userId ?? session?.user_id
-            
+
             if (!userId) {
                 next(new Error('Conexión WebSocket rechazada: sesión no autenticada'))
                 return
@@ -209,7 +228,10 @@ export class WebSocketService implements IWebSocketService {
         this.pubClient.on('error', (err) => this.log.error('Redis pubClient error', err))
         this.subClient.on('error', (err) => this.log.error('Redis subClient error', err))
 
-        await Promise.all([this.waitForConnection(this.pubClient), this.waitForConnection(this.subClient)])
+        await Promise.all([
+            this.waitForConnection(this.pubClient),
+            this.waitForConnection(this.subClient),
+        ])
 
         this.requireIO().adapter(createAdapter(this.pubClient, this.subClient))
         this.log.info('Adaptador Redis Pub/Sub configurado')
@@ -245,8 +267,6 @@ export class WebSocketService implements IWebSocketService {
             this.trackConnection(userId, socket.id)
             socket.join(`user_${userId}`)
             this.log.debug(`Socket conectado: ${socket.id} → user_${userId}`)
-
-
 
             socket.on('disconnect', () => {
                 this.untrackConnection(userId, socket.id)
@@ -300,7 +320,8 @@ export class WebSocketService implements IWebSocketService {
      * Obtiene la instancia de SocketServer o lanza error si no inicializado.
      */
     private requireIO(): SocketServer {
-        if (!this.io) throw new Error('WebSocketService no inicializado. Llama a initialize() primero.')
+        if (!this.io)
+            throw new Error('WebSocketService no inicializado. Llama a initialize() primero.')
         return this.io
     }
 

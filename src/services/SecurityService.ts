@@ -36,7 +36,6 @@ export class SecurityService implements ISecurityService {
     private orchestrator: TransactionOrchestrator
     private auth: AuthorizationService
 
-
     private i18n: II18nService
     private log: ILogger
 

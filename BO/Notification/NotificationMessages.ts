@@ -36,5 +36,5 @@ export const NotificationMessages = {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
         },
-    }
+    },
 }

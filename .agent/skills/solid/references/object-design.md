@@ -7,6 +7,7 @@ The key insight: **Objects are defined by their responsibilities, not their data
 ### Finding Objects
 
 Start with:
+
 1. **Nouns** in requirements → candidate objects
 2. **Verbs** → candidate methods/behaviors
 3. **Domain concepts** → value objects
@@ -14,6 +15,7 @@ Start with:
 ### Finding Responsibilities
 
 Each object should answer:
+
 - What does this object **know**?
 - What does this object **do**?
 - What does this object **decide**?
@@ -22,18 +24,19 @@ Each object should answer:
 
 Every class fits one (or maybe two) stereotypes:
 
-| Stereotype | Purpose | Example |
-|------------|---------|---------|
-| **Information Holder** | Knows things, holds data | `User`, `Product`, `Address` |
-| **Structurer** | Maintains relationships | `OrderItems`, `UserGroup` |
-| **Service Provider** | Performs work | `PaymentProcessor`, `EmailSender` |
-| **Coordinator** | Orchestrates workflow | `OrderFulfillmentService` |
-| **Controller** | Makes decisions, delegates | `CheckoutController` |
-| **Interfacer** | Transforms between systems | `UserAPIAdapter`, `DatabaseMapper` |
+| Stereotype             | Purpose                    | Example                            |
+| ---------------------- | -------------------------- | ---------------------------------- |
+| **Information Holder** | Knows things, holds data   | `User`, `Product`, `Address`       |
+| **Structurer**         | Maintains relationships    | `OrderItems`, `UserGroup`          |
+| **Service Provider**   | Performs work              | `PaymentProcessor`, `EmailSender`  |
+| **Coordinator**        | Orchestrates workflow      | `OrderFulfillmentService`          |
+| **Controller**         | Makes decisions, delegates | `CheckoutController`               |
+| **Interfacer**         | Transforms between systems | `UserAPIAdapter`, `DatabaseMapper` |
 
 ### The Two Questions
 
 For every class, ask:
+
 1. **"What pattern is this?"** - Which stereotype? Which design pattern?
 2. **"Is it doing too much?"** - Check object calisthenics rules
 
@@ -48,14 +51,14 @@ If you can't answer clearly, the class needs refactoring.
 ```typescript
 // BAD: Asking, then doing
 if (account.getBalance() >= amount) {
-  account.setBalance(account.getBalance() - amount);
-  // more logic here...
+    account.setBalance(account.getBalance() - amount)
+    // more logic here...
 }
 
 // GOOD: Telling
-const result = account.withdraw(amount);
+const result = account.withdraw(amount)
 if (result.isSuccess()) {
-  // ...
+    // ...
 }
 ```
 
@@ -66,30 +69,31 @@ The object that has the data should have the behavior.
 ## Design by Contract (DbC)
 
 Every method has:
+
 - **Preconditions** - What must be true BEFORE calling
 - **Postconditions** - What will be true AFTER calling
 - **Invariants** - What is ALWAYS true about the object
 
 ```typescript
 class BankAccount {
-  private balance: Money;
+    private balance: Money
 
-  // INVARIANT: balance is never negative
+    // INVARIANT: balance is never negative
 
-  // PRECONDITION: amount > 0
-  // POSTCONDITION: balance decreased by amount OR error returned
-  withdraw(amount: Money): WithdrawResult {
-    if (amount.isNegativeOrZero()) {
-      return WithdrawResult.invalidAmount();
+    // PRECONDITION: amount > 0
+    // POSTCONDITION: balance decreased by amount OR error returned
+    withdraw(amount: Money): WithdrawResult {
+        if (amount.isNegativeOrZero()) {
+            return WithdrawResult.invalidAmount()
+        }
+
+        if (this.balance.isLessThan(amount)) {
+            return WithdrawResult.insufficientFunds()
+        }
+
+        this.balance = this.balance.minus(amount)
+        return WithdrawResult.success(this.balance)
     }
-
-    if (this.balance.isLessThan(amount)) {
-      return WithdrawResult.insufficientFunds();
-    }
-
-    this.balance = this.balance.minus(amount);
-    return WithdrawResult.success(this.balance);
-  }
 }
 ```
 
@@ -100,36 +104,41 @@ class BankAccount {
 **Prefer composing objects over extending classes.**
 
 ### Why Inheritance is Problematic:
+
 - Tight coupling between parent and child
 - Fragile base class problem
 - Difficult to change parent without breaking children
 - Forces "is-a" relationship that may not fit
 
 ### When to Use Inheritance:
+
 - True "is-a" relationship (rare)
 - Framework requirements
 - Template Method pattern (intentional)
 
 ### Prefer Composition:
+
 ```typescript
 // BAD: Inheritance
 class PremiumUser extends User {
-  getDiscount(): number { return 20; }
+    getDiscount(): number {
+        return 20
+    }
 }
 
 // GOOD: Composition
 class User {
-  constructor(private discountPolicy: DiscountPolicy) {}
+    constructor(private discountPolicy: DiscountPolicy) {}
 
-  getDiscount(): number {
-    return this.discountPolicy.calculate();
-  }
+    getDiscount(): number {
+        return this.discountPolicy.calculate()
+    }
 }
 
 // Now discount behavior is pluggable
-new User(new PremiumDiscount());
-new User(new StandardDiscount());
-new User(new NoDiscount());
+new User(new PremiumDiscount())
+new User(new StandardDiscount())
+new User(new NoDiscount())
 ```
 
 ---
@@ -139,6 +148,7 @@ new User(new NoDiscount());
 **Only talk to your immediate friends.**
 
 A method should only call:
+
 1. Methods on `this`
 2. Methods on parameters
 3. Methods on objects it creates
@@ -146,10 +156,10 @@ A method should only call:
 
 ```typescript
 // BAD: Reaching through objects
-order.getCustomer().getAddress().getCity();
+order.getCustomer().getAddress().getCity()
 
 // GOOD: Ask the immediate friend
-order.getShippingCity();
+order.getShippingCity()
 ```
 
 This reduces coupling - changes to `Address` don't ripple through all callers.
@@ -161,6 +171,7 @@ This reduces coupling - changes to `Address` don't ripple through all callers.
 **Hide internal details, expose behavior.**
 
 ### Levels of Encapsulation:
+
 1. **Data** - private fields, no direct access
 2. **Implementation** - how things work internally
 3. **Type** - concrete class hidden behind interface
@@ -169,27 +180,27 @@ This reduces coupling - changes to `Address` don't ripple through all callers.
 ```typescript
 // BAD: Exposed internals
 class Order {
-  public items: Item[] = [];
-  public total: number = 0;
+    public items: Item[] = []
+    public total: number = 0
 }
 
 // Client can corrupt state
-order.items.push(item);
-order.total = -999; // Oops!
+order.items.push(item)
+order.total = -999 // Oops!
 
 // GOOD: Encapsulated
 class Order {
-  private items: OrderItems;
-  private total: Money;
+    private items: OrderItems
+    private total: Money
 
-  addItem(item: Item): void {
-    this.items.add(item);
-    this.recalculateTotal();
-  }
+    addItem(item: Item): void {
+        this.items.add(item)
+        this.recalculateTotal()
+    }
 
-  getTotal(): Money {
-    return this.total; // Returns copy or immutable
-  }
+    getTotal(): Money {
+        return this.total // Returns copy or immutable
+    }
 }
 ```
 
@@ -202,32 +213,32 @@ class Order {
 ```typescript
 // BAD: Type checking
 function calculateShipping(method: string, value: number): number {
-  if (method === 'standard') return value < 50 ? 5 : 0;
-  if (method === 'express') return 15;
-  if (method === 'overnight') return 25;
-  throw new Error('Unknown method');
+    if (method === 'standard') return value < 50 ? 5 : 0
+    if (method === 'express') return 15
+    if (method === 'overnight') return 25
+    throw new Error('Unknown method')
 }
 
 // GOOD: Polymorphism
 interface ShippingMethod {
-  calculateCost(orderValue: number): number;
+    calculateCost(orderValue: number): number
 }
 
 class StandardShipping implements ShippingMethod {
-  calculateCost(orderValue: number): number {
-    return orderValue < 50 ? 5 : 0;
-  }
+    calculateCost(orderValue: number): number {
+        return orderValue < 50 ? 5 : 0
+    }
 }
 
 class ExpressShipping implements ShippingMethod {
-  calculateCost(orderValue: number): number {
-    return 15;
-  }
+    calculateCost(orderValue: number): number {
+        return 15
+    }
 }
 
 // Usage - no conditionals
 function calculateShipping(method: ShippingMethod, value: number): number {
-  return method.calculateCost(value);
+    return method.calculateCost(value)
 }
 ```
 
@@ -236,6 +247,7 @@ function calculateShipping(method: ShippingMethod, value: number): number {
 ## Value Objects vs Entities
 
 ### Value Objects
+
 - Defined by their attributes (no identity)
 - Immutable
 - Comparable by value
@@ -243,26 +255,26 @@ function calculateShipping(method: ShippingMethod, value: number): number {
 
 ```typescript
 class Money {
-  constructor(
-    private readonly amount: number,
-    private readonly currency: string
-  ) {}
+    constructor(
+        private readonly amount: number,
+        private readonly currency: string
+    ) {}
 
-  equals(other: Money): boolean {
-    return this.amount === other.amount &&
-           this.currency === other.currency;
-  }
-
-  add(other: Money): Money {
-    if (this.currency !== other.currency) {
-      throw new CurrencyMismatch();
+    equals(other: Money): boolean {
+        return this.amount === other.amount && this.currency === other.currency
     }
-    return new Money(this.amount + other.amount, this.currency);
-  }
+
+    add(other: Money): Money {
+        if (this.currency !== other.currency) {
+            throw new CurrencyMismatch()
+        }
+        return new Money(this.amount + other.amount, this.currency)
+    }
 }
 ```
 
 ### Entities
+
 - Have identity (survives attribute changes)
 - Usually mutable (via methods)
 - Comparable by identity
@@ -270,19 +282,19 @@ class Money {
 
 ```typescript
 class User {
-  constructor(
-    private readonly id: UserId,
-    private email: Email,
-    private name: Name
-  ) {}
+    constructor(
+        private readonly id: UserId,
+        private email: Email,
+        private name: Name
+    ) {}
 
-  equals(other: User): boolean {
-    return this.id.equals(other.id); // Identity comparison
-  }
+    equals(other: User): boolean {
+        return this.id.equals(other.id) // Identity comparison
+    }
 
-  changeEmail(newEmail: Email): void {
-    this.email = newEmail; // Still same user
-  }
+    changeEmail(newEmail: Email): void {
+        this.email = newEmail // Still same user
+    }
 }
 ```
 

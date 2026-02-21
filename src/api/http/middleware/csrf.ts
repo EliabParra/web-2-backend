@@ -44,7 +44,7 @@ export function createCsrfTokenHandler(i18n: II18nService) {
  * Comportamiento:
  * - Si no hay sesión de usuario, permite paso (para login)
  * - Si hay sesión, exige token válido
- * - Excepción para desarrollo: permite omitir token válido si la petición 
+ * - Excepción para desarrollo: permite omitir token válido si la petición
  *   proviene de intranet local (para facilitar pruebas con clientes móviles)
  *
  * @param i18n - Servicio de internacionalización
@@ -61,11 +61,15 @@ export function createCsrfProtection(i18n: II18nService, config: IConfig) {
 
         const expected = req.session?.csrfToken
         const provided = req.get('X-CSRF-Token')
-        
+
         let isValid = false
-        
-        if (typeof expected === 'string' && expected.length > 0 && 
-            typeof provided === 'string' && provided === expected) {
+
+        if (
+            typeof expected === 'string' &&
+            expected.length > 0 &&
+            typeof provided === 'string' &&
+            provided === expected
+        ) {
             isValid = true
         }
 
@@ -97,7 +101,7 @@ export function createCsrfProtection(i18n: II18nService, config: IConfig) {
             const errDef = i18n.messages.errors.client.csrfInvalid
             return res.status(errDef.code).send(errDef)
         }
-        
+
         return next()
     }
 }

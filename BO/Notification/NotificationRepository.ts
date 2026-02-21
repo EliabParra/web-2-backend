@@ -14,7 +14,10 @@ export class NotificationRepository implements Types.INotificationRepository {
      * Busca todos los notifications
      */
     async findAll(): Promise<Types.NotificationSummary[]> {
-        const result = await this.db.query<Types.NotificationSummary>(NotificationQueries.findAll, [])
+        const result = await this.db.query<Types.NotificationSummary>(
+            NotificationQueries.findAll,
+            []
+        )
         return result.rows
     }
 
@@ -39,7 +42,10 @@ export class NotificationRepository implements Types.INotificationRepository {
     /**
      * Actualiza notification
      */
-    async update(id: number, data: Partial<Types.Notification>): Promise<Types.Notification | null> {
+    async update(
+        id: number,
+        data: Partial<Types.Notification>
+    ): Promise<Types.Notification | null> {
         const result = await this.db.query<Types.Notification>(NotificationQueries.update, [
             id,
             // TODO: Mapear campos de data a parámetros del query
@@ -51,7 +57,9 @@ export class NotificationRepository implements Types.INotificationRepository {
      * Elimina notification
      */
     async delete(id: number): Promise<boolean> {
-        const result = await this.db.query<Types.RowCountNotification>(NotificationQueries.delete, [id])
+        const result = await this.db.query<Types.RowCountNotification>(NotificationQueries.delete, [
+            id,
+        ])
         return result.rowCount !== null && result.rowCount > 0
     }
 
@@ -59,7 +67,9 @@ export class NotificationRepository implements Types.INotificationRepository {
      * Verifica si notification existe
      */
     async exists(id: number): Promise<boolean> {
-        const result = await this.db.query<Types.ExistsNotification>(NotificationQueries.exists, [id])
+        const result = await this.db.query<Types.ExistsNotification>(NotificationQueries.exists, [
+            id,
+        ])
         return result.rows[0].exists
     }
 }

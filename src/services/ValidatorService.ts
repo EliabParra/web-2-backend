@@ -157,7 +157,9 @@ export class ValidatorService implements IValidator {
             if (issue.code === 'invalid_type') {
                 // Caso especial para campos requeridos faltantes
                 if (issue.received === 'undefined' || issue.received === 'null') {
-                    return this.i18n.format(alertMessages.notEmpty || 'Required', { value: pathStr })
+                    return this.i18n.format(alertMessages.notEmpty || 'Required', {
+                        value: pathStr,
+                    })
                 }
 
                 const realIssue = issue as { expected?: string }
@@ -186,7 +188,9 @@ export class ValidatorService implements IValidator {
             if (issue.code === 'invalid_string') {
                 const realIssue = issue as { validation?: string }
                 if (realIssue.validation === 'email') {
-                    return this.i18n.format(alertMessages.email || 'Invalid email', { value: pathStr })
+                    return this.i18n.format(alertMessages.email || 'Invalid email', {
+                        value: pathStr,
+                    })
                 }
             }
 

@@ -18,9 +18,9 @@ export const AUDIT_LOGS_SCHEMA = [
     );`,
 
     // Indexes
-    `CREATE UNIQUE INDEX audit_logs_pkey ON security.audit_logs USING btree (id);`, 
-    `CREATE INDEX ix_audit_logs_created_at ON security.audit_logs USING btree (created_at);`, 
-    `CREATE INDEX ix_audit_logs_profile_id ON security.audit_logs USING btree (profile_id);`, 
-    `CREATE INDEX ix_audit_logs_request_id ON security.audit_logs USING btree (request_id);`, 
-    `CREATE INDEX ix_audit_logs_user_id ON security.audit_logs USING btree (user_id);`, 
+    `CREATE UNIQUE INDEX audit_logs_pkey ON security.audit_logs USING btree (id);`,
+    `CREATE INDEX ix_audit_logs_created_at ON security.audit_logs USING btree (created_at);`,
+    `CREATE INDEX ix_audit_logs_profile_id ON security.audit_logs USING btree (profile_id);`,
+    `CREATE INDEX ix_audit_logs_request_id ON security.audit_logs USING btree (request_id);`,
+    `CREATE INDEX ix_audit_logs_user_id ON security.audit_logs USING btree (user_id);`,
 ]

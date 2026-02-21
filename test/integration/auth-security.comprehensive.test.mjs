@@ -16,7 +16,7 @@ function buildSecurityContainer(deps) {
     const container = createMockContainer(deps)
     container.register('permissionGuard', new PermissionGuard(container))
     container.register('transactionMapper', new TransactionMapper(container))
-    
+
     // We only need the real executor mapping for the success path,
     // the serverError path explicitly overrides it anyway.
     container.register('transactionExecutor', new TransactionExecutor(container))
@@ -427,10 +427,16 @@ test('SecurityService: executeMethod returns serverError for non-existent BO', a
         async () => {
             Object.assign(globalThis, createMockDeps())
 
-            const security = new SecurityService(createMockContainer({
-                ...globalThis,
-                transactionExecutor: { execute: async () => { throw new Error('Not found') } },
-            }))
+            const security = new SecurityService(
+                createMockContainer({
+                    ...globalThis,
+                    transactionExecutor: {
+                        execute: async () => {
+                            throw new Error('Not found')
+                        },
+                    },
+                })
+            )
             await security.init()
 
             const result = await security.executeMethod({

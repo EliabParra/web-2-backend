@@ -24,20 +24,21 @@
 Test ONE class or function in isolation.
 
 **Characteristics:**
+
 - Fast (milliseconds)
 - No external dependencies (mocked)
 - Most of your tests should be unit tests
 
 ```typescript
 describe('Order', () => {
-  it('calculates total correctly', () => {
-    const order = new Order();
-    order.addItem({ price: 100 });
-    order.addItem({ price: 50 });
+    it('calculates total correctly', () => {
+        const order = new Order()
+        order.addItem({ price: 100 })
+        order.addItem({ price: 50 })
 
-    expect(order.calculateTotal()).toBe(150);
-  });
-});
+        expect(order.calculateTotal()).toBe(150)
+    })
+})
 ```
 
 ### Integration Tests
@@ -45,28 +46,29 @@ describe('Order', () => {
 Test multiple components together.
 
 **Characteristics:**
+
 - Slower (may use real DB)
 - Test boundaries between components
 - Fewer than unit tests
 
 ```typescript
 describe('OrderService Integration', () => {
-  let db: Database;
-  let service: OrderService;
+    let db: Database
+    let service: OrderService
 
-  beforeAll(async () => {
-    db = await Database.connect();
-    service = new OrderService(new PostgresOrderRepo(db));
-  });
+    beforeAll(async () => {
+        db = await Database.connect()
+        service = new OrderService(new PostgresOrderRepo(db))
+    })
 
-  it('saves and retrieves an order', async () => {
-    const order = Order.create({ customerId: '123' });
-    await service.save(order);
+    it('saves and retrieves an order', async () => {
+        const order = Order.create({ customerId: '123' })
+        await service.save(order)
 
-    const retrieved = await service.findById(order.id);
-    expect(retrieved).toEqual(order);
-  });
-});
+        const retrieved = await service.findById(order.id)
+        expect(retrieved).toEqual(order)
+    })
+})
 ```
 
 ### E2E / Acceptance Tests
@@ -74,22 +76,23 @@ describe('OrderService Integration', () => {
 Test the entire system from user perspective.
 
 **Characteristics:**
+
 - Slowest
 - Most brittle (many moving parts)
 - Test critical paths only
 
 ```typescript
 describe('Checkout Flow', () => {
-  it('user can complete purchase', async () => {
-    await page.goto('/products');
-    await page.click('[data-testid="add-to-cart"]');
-    await page.click('[data-testid="checkout"]');
-    await page.fill('[name="card"]', '4242424242424242');
-    await page.click('[data-testid="pay"]');
+    it('user can complete purchase', async () => {
+        await page.goto('/products')
+        await page.click('[data-testid="add-to-cart"]')
+        await page.click('[data-testid="checkout"]')
+        await page.fill('[name="card"]', '4242424242424242')
+        await page.click('[data-testid="pay"]')
 
-    expect(await page.textContent('h1')).toBe('Order Confirmed');
-  });
-});
+        expect(await page.textContent('h1')).toBe('Order Confirmed')
+    })
+})
 ```
 
 ---
@@ -100,17 +103,17 @@ Structure EVERY test this way:
 
 ```typescript
 it('applies discount to premium users', () => {
-  // ARRANGE - Set up the test world
-  const user = new User({ isPremium: true });
-  const cart = new Cart(user);
-  cart.addItem({ price: 100 });
+    // ARRANGE - Set up the test world
+    const user = new User({ isPremium: true })
+    const cart = new Cart(user)
+    cart.addItem({ price: 100 })
 
-  // ACT - Execute the behavior under test
-  const total = cart.calculateTotal();
+    // ACT - Execute the behavior under test
+    const total = cart.calculateTotal()
 
-  // ASSERT - Verify the expected outcome
-  expect(total).toBe(80); // 20% discount
-});
+    // ASSERT - Verify the expected outcome
+    expect(total).toBe(80) // 20% discount
+})
 ```
 
 ### Writing AAA Backwards
@@ -167,8 +170,8 @@ describe('given a premium user', () => {
 Object passed but never used.
 
 ```typescript
-const dummyLogger = {} as Logger;
-new UserService(realRepo, dummyLogger);
+const dummyLogger = {} as Logger
+new UserService(realRepo, dummyLogger)
 ```
 
 ### Stub
@@ -177,9 +180,9 @@ Returns predefined values.
 
 ```typescript
 const stubRepo: UserRepo = {
-  findById: () => Promise.resolve(new User({ name: 'Test' })),
-  save: () => Promise.resolve(),
-};
+    findById: () => Promise.resolve(new User({ name: 'Test' })),
+    save: () => Promise.resolve(),
+}
 ```
 
 ### Spy
@@ -188,14 +191,14 @@ Records how it was called.
 
 ```typescript
 const emailSpy = {
-  sentEmails: [] as string[],
-  send(to: string, message: string) {
-    this.sentEmails.push(to);
-  }
-};
+    sentEmails: [] as string[],
+    send(to: string, message: string) {
+        this.sentEmails.push(to)
+    },
+}
 
 // Later
-expect(emailSpy.sentEmails).toContain('user@example.com');
+expect(emailSpy.sentEmails).toContain('user@example.com')
 ```
 
 ### Mock
@@ -203,11 +206,11 @@ expect(emailSpy.sentEmails).toContain('user@example.com');
 Verifies expected interactions.
 
 ```typescript
-const mockRepo = jest.fn<UserRepo>();
-mockRepo.save.mockResolvedValue(undefined);
+const mockRepo = jest.fn<UserRepo>()
+mockRepo.save.mockResolvedValue(undefined)
 
 // After test
-expect(mockRepo.save).toHaveBeenCalledWith(expectedUser);
+expect(mockRepo.save).toHaveBeenCalledWith(expectedUser)
 ```
 
 ### Fake
@@ -216,15 +219,15 @@ Working implementation (simplified).
 
 ```typescript
 class InMemoryUserRepo implements UserRepo {
-  private users: Map<string, User> = new Map();
+    private users: Map<string, User> = new Map()
 
-  async save(user: User): Promise<void> {
-    this.users.set(user.id, user);
-  }
+    async save(user: User): Promise<void> {
+        this.users.set(user.id, user)
+    }
 
-  async findById(id: string): Promise<User | null> {
-    return this.users.get(id) || null;
-  }
+    async findById(id: string): Promise<User | null> {
+        return this.users.get(id) || null
+    }
 }
 ```
 
@@ -240,18 +243,18 @@ class InMemoryUserRepo implements UserRepo {
 
 ```typescript
 describe('Money', () => {
-  it('adds amounts with same currency', () => {
-    const a = Money.dollars(10);
-    const b = Money.dollars(20);
-    expect(a.add(b).equals(Money.dollars(30))).toBe(true);
-  });
+    it('adds amounts with same currency', () => {
+        const a = Money.dollars(10)
+        const b = Money.dollars(20)
+        expect(a.add(b).equals(Money.dollars(30))).toBe(true)
+    })
 
-  it('throws when adding different currencies', () => {
-    const usd = Money.dollars(10);
-    const eur = Money.euros(10);
-    expect(() => usd.add(eur)).toThrow(CurrencyMismatch);
-  });
-});
+    it('throws when adding different currencies', () => {
+        const usd = Money.dollars(10)
+        const eur = Money.euros(10)
+        expect(() => usd.add(eur)).toThrow(CurrencyMismatch)
+    })
+})
 ```
 
 ### Application Layer
@@ -314,30 +317,30 @@ Verify implementations match interfaces.
 ```typescript
 // Shared contract test
 function testUserRepoContract(createRepo: () => UserRepo) {
-  describe('UserRepo Contract', () => {
-    let repo: UserRepo;
+    describe('UserRepo Contract', () => {
+        let repo: UserRepo
 
-    beforeEach(() => {
-      repo = createRepo();
-    });
+        beforeEach(() => {
+            repo = createRepo()
+        })
 
-    it('saves and retrieves user', async () => {
-      const user = User.create({ name: 'Test' });
-      await repo.save(user);
-      const found = await repo.findById(user.id);
-      expect(found).toEqual(user);
-    });
+        it('saves and retrieves user', async () => {
+            const user = User.create({ name: 'Test' })
+            await repo.save(user)
+            const found = await repo.findById(user.id)
+            expect(found).toEqual(user)
+        })
 
-    it('returns null for missing user', async () => {
-      const found = await repo.findById('nonexistent');
-      expect(found).toBeNull();
-    });
-  });
+        it('returns null for missing user', async () => {
+            const found = await repo.findById('nonexistent')
+            expect(found).toBeNull()
+        })
+    })
 }
 
 // Apply to all implementations
-testUserRepoContract(() => new InMemoryUserRepo());
-testUserRepoContract(() => new PostgresUserRepo(testDb));
+testUserRepoContract(() => new InMemoryUserRepo())
+testUserRepoContract(() => new PostgresUserRepo(testDb))
 ```
 
 ---
@@ -348,49 +351,49 @@ Create test objects easily.
 
 ```typescript
 class OrderBuilder {
-  private props: Partial<OrderProps> = {
-    id: 'order-1',
-    customerId: 'cust-1',
-    items: [],
-    status: 'pending',
-  };
+    private props: Partial<OrderProps> = {
+        id: 'order-1',
+        customerId: 'cust-1',
+        items: [],
+        status: 'pending',
+    }
 
-  withId(id: string): OrderBuilder {
-    this.props.id = id;
-    return this;
-  }
+    withId(id: string): OrderBuilder {
+        this.props.id = id
+        return this
+    }
 
-  withItems(items: Item[]): OrderBuilder {
-    this.props.items = items;
-    return this;
-  }
+    withItems(items: Item[]): OrderBuilder {
+        this.props.items = items
+        return this
+    }
 
-  paid(): OrderBuilder {
-    this.props.status = 'paid';
-    return this;
-  }
+    paid(): OrderBuilder {
+        this.props.status = 'paid'
+        return this
+    }
 
-  build(): Order {
-    return Order.create(this.props as OrderProps);
-  }
+    build(): Order {
+        return Order.create(this.props as OrderProps)
+    }
 }
 
 // Usage
 const order = new OrderBuilder()
-  .withItems([{ sku: 'ABC', price: 100 }])
-  .paid()
-  .build();
+    .withItems([{ sku: 'ABC', price: 100 }])
+    .paid()
+    .build()
 ```
 
 ---
 
 ## Common Testing Mistakes
 
-| Mistake | Problem | Solution |
-|---------|---------|----------|
-| Testing implementation | Brittle tests | Test behavior only |
-| Too many mocks | Tests prove nothing | Use real objects when possible |
-| Shared state | Flaky tests | Isolate each test |
-| No assertions | False confidence | Always assert something meaningful |
-| Testing trivial code | Wasted effort | Focus on logic and edge cases |
-| Slow tests | Reduced feedback | Optimize, use unit tests |
+| Mistake                | Problem             | Solution                           |
+| ---------------------- | ------------------- | ---------------------------------- |
+| Testing implementation | Brittle tests       | Test behavior only                 |
+| Too many mocks         | Tests prove nothing | Use real objects when possible     |
+| Shared state           | Flaky tests         | Isolate each test                  |
+| No assertions          | False confidence    | Always assert something meaningful |
+| Testing trivial code   | Wasted effort       | Focus on logic and edge cases      |
+| Slow tests             | Reduced feedback    | Optimize, use unit tests           |

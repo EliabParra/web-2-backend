@@ -28,7 +28,7 @@ export class NotificationError extends BOError {
         details?: Record<string, unknown>
     ) {
         super(message, tag, code, details)
-        this.name = 'NotificationError';
+        this.name = 'NotificationError'
     }
 }
 
@@ -74,12 +74,7 @@ export class NotificationValidationError extends NotificationError {
  */
 export class NotificationCannotDeleteError extends NotificationError {
     constructor(reason?: string) {
-        super(
-            defaultMessages.cannotDelete,
-            'NOTIFICATION_CANNOT_DELETE',
-            409,
-            { reason }
-        )
+        super(defaultMessages.cannotDelete, 'NOTIFICATION_CANNOT_DELETE', 409, { reason })
         this.name = 'NotificationCannotDeleteError'
     }
 }
@@ -89,12 +84,7 @@ export class NotificationCannotDeleteError extends NotificationError {
  */
 export class NotificationPermissionError extends NotificationError {
     constructor(action?: string) {
-        super(
-            defaultMessages.permissionDenied,
-            'NOTIFICATION_PERMISSION_DENIED',
-            403,
-            { action }
-        )
+        super(defaultMessages.permissionDenied, 'NOTIFICATION_PERMISSION_DENIED', 403, { action })
         this.name = 'NotificationPermissionError'
     }
 }
@@ -131,11 +121,7 @@ export function handleNotificationError(error: unknown): NotificationError {
     }
 
     // Tipo desconocido, crear error genérico
-    return new NotificationError(
-        defaultMessages.invalidData,
-        'NOTIFICATION_UNKNOWN_ERROR',
-        500
-    )
+    return new NotificationError(defaultMessages.invalidData, 'NOTIFICATION_UNKNOWN_ERROR', 500)
 }
 
 // ============================================================

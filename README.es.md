@@ -73,13 +73,21 @@ cp .env.example .env
 
 > **Nota**: El sistema no arrancará si detecta una configuración inválida (Zod Validation).
 
-### 4. Inicialización
+### 4. Inicialización (Zero-to-Hero)
 
-Crea las tablas del sistema (`security`, `session`, `audit`).
+Si tienes Docker instalado, puedes levantar un entorno completamente aislado (Base de Datos + Interfaz Web Adminer) al instante:
+
+```bash
+pnpm run dx:init
+```
+
+Una vez lista la base de datos, crea las tablas del sistema utilizando el CLI Interactivo:
 
 ```bash
 pnpm run db
 ```
+
+_Selecciona `Sync Code -> DB` seguido de `Seed -> Seed System Profiles` y `Register BO methods`_
 
 ### 5. Arrancar
 
@@ -140,7 +148,8 @@ pnpm run dev
 | `pnpm run dev`          | Modo desarrollo con `nodemon` (Hot Reload).      |
 | `pnpm start`            | Modo producción (Ejecuta `dist/index.js`).       |
 | `pnpm run verify`       | **Quality Gate**: Typecheck + Build + Tests.     |
-| `pnpm run db`           | CLI interactivo de BD (sync, seed, reset).       |
+| `pnpm run db`           | CLI interactivo de BD (sync, seed, introspect).  |
+| `pnpm run dx:init`      | Levanta el entorno de Base de Datos aislado.     |
 | `pnpm run config:check` | Valida el archivo `.env` sin arrancar el server. |
 | `pnpm run bo <cmd>`     | CLI para crear BOs: `new`, `sync`, `list`.       |
 | `pnpm run docs:gen`     | Genera documentación API (TypeDoc).              |

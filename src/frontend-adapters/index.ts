@@ -2,9 +2,7 @@ import type { Application } from 'express'
 import type { IContainer, IConfig, ISessionService } from '../types/index.js'
 
 function getFrontendMode(config: IConfig) {
-    const raw = String(config.app.frontendMode)
-        .trim()
-        .toLowerCase()
+    const raw = String(config.app.frontendMode).trim().toLowerCase()
     if (raw === 'pages' || raw === 'spa' || raw === 'none') return raw
     return 'pages'
 }

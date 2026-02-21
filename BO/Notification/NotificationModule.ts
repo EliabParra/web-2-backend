@@ -4,7 +4,10 @@ import { NotificationRepository } from './NotificationRepository.js'
 
 export function registerNotification(container: IContainer) {
     if (!container.has('NotificationRepository')) {
-        container.registerFactory('NotificationRepository', (c) => new NotificationRepository(c.resolve('db')))
+        container.registerFactory(
+            'NotificationRepository',
+            (c) => new NotificationRepository(c.resolve('db'))
+        )
     }
     if (!container.has('NotificationService')) {
         container.registerFactory('NotificationService', (c) => new NotificationService(c))

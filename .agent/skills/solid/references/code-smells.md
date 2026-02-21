@@ -7,55 +7,60 @@ Indicators that something MAY be wrong. Not bugs, but design problems that make 
 ## The Five Categories
 
 ### 1. Bloaters
+
 Code that has grown too large.
 
-| Smell | Symptom | Refactoring |
-|-------|---------|-------------|
-| **Long Method** | > 10 lines | Extract Method |
-| **Large Class** | > 50 lines, multiple responsibilities | Extract Class |
-| **Long Parameter List** | > 3 parameters | Introduce Parameter Object |
-| **Data Clumps** | Same group of variables appear together | Extract Class |
-| **Primitive Obsession** | Primitives instead of small objects | Wrap in Value Object |
+| Smell                   | Symptom                                 | Refactoring                |
+| ----------------------- | --------------------------------------- | -------------------------- |
+| **Long Method**         | > 10 lines                              | Extract Method             |
+| **Large Class**         | > 50 lines, multiple responsibilities   | Extract Class              |
+| **Long Parameter List** | > 3 parameters                          | Introduce Parameter Object |
+| **Data Clumps**         | Same group of variables appear together | Extract Class              |
+| **Primitive Obsession** | Primitives instead of small objects     | Wrap in Value Object       |
 
 ### 2. Object-Orientation Abusers
+
 Misuse of OO principles.
 
-| Smell | Symptom | Refactoring |
-|-------|---------|-------------|
-| **Switch Statements** | Type checking, large switch/if-else | Replace with Polymorphism |
-| **Parallel Inheritance** | Adding subclass requires adding another | Merge Hierarchies |
-| **Refused Bequest** | Subclass doesn't use parent methods | Replace Inheritance with Delegation |
-| **Alternative Classes** | Different interfaces, same concept | Rename, Extract Superclass |
+| Smell                    | Symptom                                 | Refactoring                         |
+| ------------------------ | --------------------------------------- | ----------------------------------- |
+| **Switch Statements**    | Type checking, large switch/if-else     | Replace with Polymorphism           |
+| **Parallel Inheritance** | Adding subclass requires adding another | Merge Hierarchies                   |
+| **Refused Bequest**      | Subclass doesn't use parent methods     | Replace Inheritance with Delegation |
+| **Alternative Classes**  | Different interfaces, same concept      | Rename, Extract Superclass          |
 
 ### 3. Change Preventers
+
 Code that makes changes difficult.
 
-| Smell | Symptom | Refactoring |
-|-------|---------|-------------|
-| **Divergent Change** | One class changed for many reasons | Extract Class (SRP) |
-| **Shotgun Surgery** | One change touches many classes | Move Method/Field together |
-| **Parallel Inheritance** | (see above) | Merge Hierarchies |
+| Smell                    | Symptom                            | Refactoring                |
+| ------------------------ | ---------------------------------- | -------------------------- |
+| **Divergent Change**     | One class changed for many reasons | Extract Class (SRP)        |
+| **Shotgun Surgery**      | One change touches many classes    | Move Method/Field together |
+| **Parallel Inheritance** | (see above)                        | Merge Hierarchies          |
 
 ### 4. Dispensables
+
 Code that can be removed.
 
-| Smell | Symptom | Refactoring |
-|-------|---------|-------------|
-| **Comments** | Explaining bad code | Rename, Extract Method |
-| **Duplicate Code** | Copy-paste | Extract Method, Pull Up Method |
-| **Dead Code** | Unreachable code | Delete |
-| **Speculative Generality** | "Just in case" code | Delete (YAGNI) |
-| **Lazy Class** | Class that does almost nothing | Inline Class |
+| Smell                      | Symptom                        | Refactoring                    |
+| -------------------------- | ------------------------------ | ------------------------------ |
+| **Comments**               | Explaining bad code            | Rename, Extract Method         |
+| **Duplicate Code**         | Copy-paste                     | Extract Method, Pull Up Method |
+| **Dead Code**              | Unreachable code               | Delete                         |
+| **Speculative Generality** | "Just in case" code            | Delete (YAGNI)                 |
+| **Lazy Class**             | Class that does almost nothing | Inline Class                   |
 
 ### 5. Couplers
+
 Excessive coupling between classes.
 
-| Smell | Symptom | Refactoring |
-|-------|---------|-------------|
-| **Feature Envy** | Method uses another class's data extensively | Move Method |
-| **Inappropriate Intimacy** | Classes know too much about each other | Move Method, Extract Class |
-| **Message Chains** | `a.getB().getC().getD()` | Hide Delegate |
-| **Middle Man** | Class only delegates | Inline Class |
+| Smell                      | Symptom                                      | Refactoring                |
+| -------------------------- | -------------------------------------------- | -------------------------- |
+| **Feature Envy**           | Method uses another class's data extensively | Move Method                |
+| **Inappropriate Intimacy** | Classes know too much about each other       | Move Method, Extract Class |
+| **Message Chains**         | `a.getB().getC().getD()`                     | Hide Delegate              |
+| **Middle Man**             | Class only delegates                         | Inline Class               |
 
 ---
 
@@ -68,36 +73,36 @@ Excessive coupling between classes.
 ```typescript
 // SMELL
 function processOrder(order: Order) {
-  // Validate
-  if (!order.items.length) throw new Error('Empty');
-  if (!order.customer) throw new Error('No customer');
+    // Validate
+    if (!order.items.length) throw new Error('Empty')
+    if (!order.customer) throw new Error('No customer')
 
-  // Calculate
-  let total = 0;
-  for (const item of order.items) {
-    total += item.price * item.quantity;
-    if (item.discount) {
-      total -= item.discount;
+    // Calculate
+    let total = 0
+    for (const item of order.items) {
+        total += item.price * item.quantity
+        if (item.discount) {
+            total -= item.discount
+        }
     }
-  }
 
-  // Apply tax
-  const taxRate = getTaxRate(order.customer.state);
-  total = total * (1 + taxRate);
+    // Apply tax
+    const taxRate = getTaxRate(order.customer.state)
+    total = total * (1 + taxRate)
 
-  // Save
-  db.orders.insert({ ...order, total });
+    // Save
+    db.orders.insert({ ...order, total })
 
-  // Notify
-  emailService.send(order.customer.email, 'Order confirmed');
+    // Notify
+    emailService.send(order.customer.email, 'Order confirmed')
 }
 
 // REFACTORED
 function processOrder(order: Order) {
-  validateOrder(order);
-  const total = calculateTotal(order);
-  saveOrder(order, total);
-  notifyCustomer(order);
+    validateOrder(order)
+    const total = calculateTotal(order)
+    saveOrder(order, total)
+    notifyCustomer(order)
 }
 ```
 
@@ -108,34 +113,50 @@ function processOrder(order: Order) {
 ```typescript
 // SMELL: God class
 class User {
-  // User data
-  name: string;
-  email: string;
+    // User data
+    name: string
+    email: string
 
-  // Authentication
-  login() { }
-  logout() { }
-  resetPassword() { }
+    // Authentication
+    login() {}
+    logout() {}
+    resetPassword() {}
 
-  // Preferences
-  setTheme() { }
-  setLanguage() { }
+    // Preferences
+    setTheme() {}
+    setLanguage() {}
 
-  // Notifications
-  sendEmail() { }
-  sendSMS() { }
+    // Notifications
+    sendEmail() {}
+    sendSMS() {}
 
-  // Billing
-  charge() { }
-  refund() { }
+    // Billing
+    charge() {}
+    refund() {}
 }
 
 // REFACTORED: Separate classes
-class User { name: string; email: string; }
-class AuthService { login(); logout(); resetPassword(); }
-class UserPreferences { setTheme(); setLanguage(); }
-class NotificationService { sendEmail(); sendSMS(); }
-class BillingService { charge(); refund(); }
+class User {
+    name: string
+    email: string
+}
+class AuthService {
+    login()
+    logout()
+    resetPassword()
+}
+class UserPreferences {
+    setTheme()
+    setLanguage()
+}
+class NotificationService {
+    sendEmail()
+    sendSMS()
+}
+class BillingService {
+    charge()
+    refund()
+}
 ```
 
 ### 3. Feature Envy
@@ -145,30 +166,30 @@ class BillingService { charge(); refund(); }
 ```typescript
 // SMELL: Order envies Customer
 class Order {
-  calculateShipping(customer: Customer): number {
-    if (customer.country === 'US') {
-      if (customer.state === 'CA') return 10;
-      return 15;
+    calculateShipping(customer: Customer): number {
+        if (customer.country === 'US') {
+            if (customer.state === 'CA') return 10
+            return 15
+        }
+        return 25
     }
-    return 25;
-  }
 }
 
 // REFACTORED: Move to Customer
 class Customer {
-  getShippingCost(): number {
-    if (this.country === 'US') {
-      if (this.state === 'CA') return 10;
-      return 15;
+    getShippingCost(): number {
+        if (this.country === 'US') {
+            if (this.state === 'CA') return 10
+            return 15
+        }
+        return 25
     }
-    return 25;
-  }
 }
 
 class Order {
-  calculateShipping(): number {
-    return this.customer.getShippingCost();
-  }
+    calculateShipping(): number {
+        return this.customer.getShippingCost()
+    }
 }
 ```
 
@@ -179,26 +200,26 @@ class Order {
 ```typescript
 // SMELL
 function createUser(email: string, age: number, zipCode: string) {
-  // No validation, easy to pass wrong values
-  if (!email.includes('@')) throw new Error();
-  if (age < 0) throw new Error();
+    // No validation, easy to pass wrong values
+    if (!email.includes('@')) throw new Error()
+    if (age < 0) throw new Error()
 }
 
 // REFACTORED: Value objects
 class Email {
-  constructor(private value: string) {
-    if (!value.includes('@')) throw new InvalidEmail();
-  }
+    constructor(private value: string) {
+        if (!value.includes('@')) throw new InvalidEmail()
+    }
 }
 
 class Age {
-  constructor(private value: number) {
-    if (value < 0 || value > 150) throw new InvalidAge();
-  }
+    constructor(private value: number) {
+        if (value < 0 || value > 150) throw new InvalidAge()
+    }
 }
 
 function createUser(email: Email, age: Age, address: Address) {
-  // Type system prevents invalid data
+    // Type system prevents invalid data
 }
 ```
 
@@ -209,30 +230,40 @@ function createUser(email: Email, age: Age, address: Address) {
 ```typescript
 // SMELL
 function getArea(shape: Shape): number {
-  switch (shape.type) {
-    case 'circle': return Math.PI * shape.radius ** 2;
-    case 'rectangle': return shape.width * shape.height;
-    case 'triangle': return 0.5 * shape.base * shape.height;
-  }
+    switch (shape.type) {
+        case 'circle':
+            return Math.PI * shape.radius ** 2
+        case 'rectangle':
+            return shape.width * shape.height
+        case 'triangle':
+            return 0.5 * shape.base * shape.height
+    }
 }
 
 function getPerimeter(shape: Shape): number {
-  switch (shape.type) { // Same switch again!
-    case 'circle': return 2 * Math.PI * shape.radius;
-    // ...
-  }
+    switch (
+        shape.type // Same switch again!
+    ) {
+        case 'circle':
+            return 2 * Math.PI * shape.radius
+        // ...
+    }
 }
 
 // REFACTORED: Polymorphism
 interface Shape {
-  getArea(): number;
-  getPerimeter(): number;
+    getArea(): number
+    getPerimeter(): number
 }
 
 class Circle implements Shape {
-  constructor(private radius: number) {}
-  getArea(): number { return Math.PI * this.radius ** 2; }
-  getPerimeter(): number { return 2 * Math.PI * this.radius; }
+    constructor(private radius: number) {}
+    getArea(): number {
+        return Math.PI * this.radius ** 2
+    }
+    getPerimeter(): number {
+        return 2 * Math.PI * this.radius
+    }
 }
 ```
 
@@ -243,40 +274,40 @@ class Circle implements Shape {
 ```typescript
 // SMELL
 class Order {
-  process() {
-    const inventory = new Inventory();
-    // Reaching into inventory's internals
-    for (const item of this.items) {
-      const stock = inventory.stockLevels[item.sku];
-      if (stock.quantity < item.quantity) {
-        throw new Error('Out of stock');
-      }
-      inventory.stockLevels[item.sku].quantity -= item.quantity;
+    process() {
+        const inventory = new Inventory()
+        // Reaching into inventory's internals
+        for (const item of this.items) {
+            const stock = inventory.stockLevels[item.sku]
+            if (stock.quantity < item.quantity) {
+                throw new Error('Out of stock')
+            }
+            inventory.stockLevels[item.sku].quantity -= item.quantity
+        }
     }
-  }
 }
 
 // REFACTORED: Tell, don't ask
 class Inventory {
-  reserve(items: OrderItem[]): ReserveResult {
-    // Inventory manages its own state
-    for (const item of items) {
-      if (!this.canReserve(item)) {
-        return ReserveResult.outOfStock(item);
-      }
+    reserve(items: OrderItem[]): ReserveResult {
+        // Inventory manages its own state
+        for (const item of items) {
+            if (!this.canReserve(item)) {
+                return ReserveResult.outOfStock(item)
+            }
+        }
+        this.deductStock(items)
+        return ReserveResult.success()
     }
-    this.deductStock(items);
-    return ReserveResult.success();
-  }
 }
 
 class Order {
-  process(inventory: Inventory) {
-    const result = inventory.reserve(this.items);
-    if (!result.isSuccess()) {
-      throw new OutOfStockError(result.failedItem);
+    process(inventory: Inventory) {
+        const result = inventory.reserve(this.items)
+        if (!result.isSuccess()) {
+            throw new OutOfStockError(result.failedItem)
+        }
     }
-  }
 }
 ```
 
@@ -287,28 +318,40 @@ class Order {
 ```typescript
 // SMELL: Over-engineered for hypothetical needs
 interface PaymentProcessor {
-  process(): void;
-  rollback(): void;
-  audit(): void;
-  generateReport(): void;
-  scheduleRecurring(): void;
+    process(): void
+    rollback(): void
+    audit(): void
+    generateReport(): void
+    scheduleRecurring(): void
 }
 
 class StripeProcessor implements PaymentProcessor {
-  process() { /* actual code */ }
-  rollback() { throw new Error('Not implemented'); }
-  audit() { throw new Error('Not implemented'); }
-  generateReport() { throw new Error('Not implemented'); }
-  scheduleRecurring() { throw new Error('Not implemented'); }
+    process() {
+        /* actual code */
+    }
+    rollback() {
+        throw new Error('Not implemented')
+    }
+    audit() {
+        throw new Error('Not implemented')
+    }
+    generateReport() {
+        throw new Error('Not implemented')
+    }
+    scheduleRecurring() {
+        throw new Error('Not implemented')
+    }
 }
 
 // REFACTORED: YAGNI
 interface PaymentProcessor {
-  process(): void;
+    process(): void
 }
 
 class StripeProcessor implements PaymentProcessor {
-  process() { /* actual code */ }
+    process() {
+        /* actual code */
+    }
 }
 // Add other methods when actually needed
 ```

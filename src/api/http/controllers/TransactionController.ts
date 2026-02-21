@@ -44,11 +44,12 @@ export class TransactionController {
             const publicProfileId = Number(this.config.auth?.publicProfileId)
 
             const rawSessionProfileId = req.session?.profileId
-            effectiveProfileId = hasSession && rawSessionProfileId != null
-                ? Number(rawSessionProfileId)
-                : Number.isInteger(publicProfileId) && publicProfileId > 0
-                  ? publicProfileId
-                  : null
+            effectiveProfileId =
+                hasSession && rawSessionProfileId != null
+                    ? Number(rawSessionProfileId)
+                    : Number.isInteger(publicProfileId) && publicProfileId > 0
+                      ? publicProfileId
+                      : null
 
             if (!hasSession && effectiveProfileId == null) {
                 res.status(this.i18n.messages.errors.client.login.code).send(

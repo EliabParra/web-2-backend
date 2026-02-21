@@ -213,14 +213,11 @@ export interface II18nService {
     /**
      * Método Legacy para obtener errores por string key.
      * Mantenido para compatibilidad con código antiguo.
-     * 
+     *
      * @param key - Clave string
      * @param params - Variables opcionales para interpolar
      */
-    errorKey(
-        key: string,
-        params?: Record<string, unknown>
-    ): { msg: string; code: number }
+    errorKey(key: string, params?: Record<string, unknown>): { msg: string; code: number }
 
     /**
      * Obtiene el valor raw de una clave (para estructuras anidadas).
@@ -624,9 +621,7 @@ export interface ISessionService {
      * @param req - Request con credenciales en el body
      */
     authenticate(req: AppRequest): Promise<SessionResult>
-    }
-
-    
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 7. Legacy (Deprecated — se eliminará en fases posteriores)

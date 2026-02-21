@@ -1,4 +1,9 @@
-import { BOService, II18nService, IEmailService, IContainer } from '../../src/core/business-objects/index.js'
+import {
+    BOService,
+    II18nService,
+    IEmailService,
+    IContainer,
+} from '../../src/core/business-objects/index.js'
 import { AuthRepository, AuthMessages, Errors, Types } from './AuthModule.js'
 import { createHash, randomBytes } from 'node:crypto'
 import bcrypt from 'bcryptjs'

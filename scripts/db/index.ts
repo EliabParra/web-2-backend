@@ -132,7 +132,7 @@ async function main() {
 
             case 'seed': {
                 console.log(colors.cyan('\n🌱 Running Seed...'))
-                
+
                 // Run DML migrations first
                 console.log(colors.cyan('\n📝 Applying DML Scripts (Migrations)...'))
                 const dmlRunner = new MigrationRunner(db, runnerConfig, dmlDir)
@@ -201,7 +201,7 @@ async function main() {
                     console.log(colors.cyan('\n🔄 Re-applying schemas (DDL)...'))
                     const ddlRunner = new MigrationRunner(db, runnerConfig, ddlDir)
                     await ddlRunner.run()
-                    
+
                     // Re-apply seeds
                     console.log(colors.cyan('\n🌱 Re-applying seeds (DML)...'))
                     const dmlRunner = new MigrationRunner(db, runnerConfig, dmlDir)
@@ -214,11 +214,7 @@ async function main() {
 
             case 'print': {
                 console.log(colors.cyan('\n📜 Printing SQL (dry-run mode)...'))
-                const runner = new MigrationRunner(
-                    db,
-                    { ...runnerConfig, dryRun: true },
-                    ddlDir
-                )
+                const runner = new MigrationRunner(db, { ...runnerConfig, dryRun: true }, ddlDir)
                 await runner.run()
                 break
             }

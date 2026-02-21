@@ -128,7 +128,10 @@ export class Introspector {
 
         for (const table of tables) {
             if (table.table_schema === 'security') {
-                console.log(`   ⏭️  Ignoring Security table: ${table.table_schema}.${table.table_name}`.yellow)
+                console.log(
+                    `   ⏭️  Ignoring Security table: ${table.table_schema}.${table.table_name}`
+                        .yellow
+                )
                 continue
             }
 
@@ -185,10 +188,14 @@ export class Introspector {
                 if (data.length > 0) {
                     console.log(`      📝 Found ${data.length} records in ${table.table_name}`.gray)
                     const priority = this.getTablePriority(table.table_name)
-                    const dataContent = this.generateDataFile(table.table_schema, table.table_name, data)
+                    const dataContent = this.generateDataFile(
+                        table.table_schema,
+                        table.table_name,
+                        data
+                    )
                     const dataFilename = `90_data_${priority}_${table.table_schema}_${table.table_name}.ts`
                     const dataFilepath = path.join(this.dmlDir, dataFilename)
-                    
+
                     await fs.writeFile(dataFilepath, dataContent, 'utf-8')
                     console.log(`   ✅ Generated Data: ${dataFilename}`.green)
                     generatedFiles.push(dataFilepath)

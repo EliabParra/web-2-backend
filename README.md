@@ -73,13 +73,21 @@ cp .env.example .env
 
 > **Note**: System won't start if it detects invalid config (Zod Validation).
 
-### 4. Initialization
+### 4. Initialization (Zero-to-Hero)
 
-Create system tables (`security`, `session`, `audit`).
+If you have Docker installed, you can initialize a completely isolated environment (Database + Adminer Web UI) instantly:
+
+```bash
+pnpm run dx:init
+```
+
+Once the database is up, you can generate the system tables using the interactive **Database CLI**:
 
 ```bash
 pnpm run db
 ```
+
+_Select `Sync Code -> DB` followed by `Seed -> Seed System Profiles` and `Register BO methods`_
 
 ### 5. Start
 
@@ -140,7 +148,8 @@ pnpm run dev
 | `pnpm run dev`          | Development mode with `nodemon` (Hot Reload).  |
 | `pnpm start`            | Production mode (Runs `dist/index.js`).        |
 | `pnpm run verify`       | **Quality Gate**: Typecheck + Build + Tests.   |
-| `pnpm run db`           | Interactive DB CLI (sync, seed, reset).        |
+| `pnpm run db`           | Interactive DB CLI (sync, seed, introspect).   |
+| `pnpm run dx:init`      | Starts Dockerized environment completely.      |
 | `pnpm run config:check` | Validates `.env` file without starting server. |
 | `pnpm run bo <cmd>`     | BO CLI: `new`, `sync`, `list`.                 |
 | `pnpm run docs:gen`     | Generates API documentation (TypeDoc).         |

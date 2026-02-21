@@ -43,8 +43,10 @@ export class MigrationRunner {
         if (this.config.dryRun) return []
 
         try {
-            const { rows } = await this.db.exeRaw('SELECT filename FROM _migration_history ORDER BY id ASC')
-            return rows.map(r => r.filename)
+            const { rows } = await this.db.exeRaw(
+                'SELECT filename FROM _migration_history ORDER BY id ASC'
+            )
+            return rows.map((r) => r.filename)
         } catch (e) {
             return []
         }
@@ -56,7 +58,8 @@ export class MigrationRunner {
     }
 
     async run(): Promise<void> {
-        if (!this.config.silent) console.log(`\n🔍 Scanning for migrations in: ${this.schemasDir}`.cyan)
+        if (!this.config.silent)
+            console.log(`\n🔍 Scanning for migrations in: ${this.schemasDir}`.cyan)
 
         await this.initHistoryTable()
         const applied = await this.getAppliedMigrations()
@@ -68,20 +71,26 @@ export class MigrationRunner {
             return
         }
 
-        const pendingFiles = files.filter(f => !applied.includes(path.basename(f)))
+        const pendingFiles = files.filter((f) => !applied.includes(path.basename(f)))
 
         if (pendingFiles.length === 0) {
-            if (!this.config.silent) console.log(`✨ Database is up to date for this directory. No pending migrations.\n`.green)
+            if (!this.config.silent)
+                console.log(
+                    `✨ Database is up to date for this directory. No pending migrations.\n`.green
+                )
             return
         }
 
-        if (!this.config.silent) console.log(`✨ Found ${pendingFiles.length} pending files. Starting execution...\n`.green)
+        if (!this.config.silent)
+            console.log(
+                `✨ Found ${pendingFiles.length} pending files. Starting execution...\n`.green
+            )
 
         const executor = new Executor(this.db, this.config.dryRun)
-        
+
         const table = new Table({
             head: [colors.cyan('ID'), colors.cyan('Migration File'), colors.cyan('Status')],
-            style: { head: [], border: [] }
+            style: { head: [], border: [] },
         })
 
         let index = 1
@@ -103,19 +112,21 @@ export class MigrationRunner {
                 }
 
                 if (!this.config.dryRun) await executor.run('BEGIN')
-                
+
                 for (const sql of schemaQueries) {
                     await executor.run(sql, [], fileName)
                 }
-                
+
                 await this.markAsApplied(fileName)
 
                 if (!this.config.dryRun) await executor.run('COMMIT')
-                
+
                 table.push([index++, fileName, colors.green('APPLIED')])
             } catch (err: any) {
                 if (!this.config.dryRun) {
-                    try { await executor.run('ROLLBACK') } catch (e) {}
+                    try {
+                        await executor.run('ROLLBACK')
+                    } catch (e) {}
                 }
                 console.error(`❌ Error processing ${fileName}:`.red, err.message)
                 table.push([index++, fileName, colors.red('FAILED')])

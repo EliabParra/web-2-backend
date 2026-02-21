@@ -22,13 +22,19 @@ export class AuthBO extends BaseBO {
     }
 
     async verifyEmail(params: Inputs.VerifyEmailInput): Promise<ApiResponse> {
-        return this.exec<Inputs.VerifyEmailInput, void>(params, AuthSchemas.verifyEmail, async (data) => {
-            await this.service.verifyEmail(data.token)
-            return this.success(null, this.authMessages.emailVerified)
-        })
+        return this.exec<Inputs.VerifyEmailInput, void>(
+            params,
+            AuthSchemas.verifyEmail,
+            async (data) => {
+                await this.service.verifyEmail(data.token)
+                return this.success(null, this.authMessages.emailVerified)
+            }
+        )
     }
 
-    async requestEmailVerification(params: Inputs.RequestEmailVerificationInput): Promise<ApiResponse> {
+    async requestEmailVerification(
+        params: Inputs.RequestEmailVerificationInput
+    ): Promise<ApiResponse> {
         return this.exec<Inputs.RequestEmailVerificationInput, void>(
             params,
             AuthSchemas.requestEmailVerification,
@@ -84,9 +90,12 @@ export class AuthBO extends BaseBO {
             AuthSchemas.requestUsername,
             async (data) => {
                 await this.service.requestUsername(data.email)
-                return this.success(null, this.i18n.format(this.authMessages.usernameSent, {
-                    email: data.email,
-                }))
+                return this.success(
+                    null,
+                    this.i18n.format(this.authMessages.usernameSent, {
+                        email: data.email,
+                    })
+                )
             }
         )
     }

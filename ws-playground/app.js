@@ -79,7 +79,7 @@ const app = (() => {
                 if (json.user?.user_id) {
                     localStorage.setItem('ws_user_numeric', json.user.user_id)
                 }
-                
+
                 setAuthStatus('connected', `Sesión: ${identifier}`)
                 const authInfo = document.getElementById('auth-info')
                 authInfo.textContent = `✅ Login exitoso — userId: ${json.user?.user_id ?? '?'} | profileId: ${json.user?.profile_id ?? '?'}`
@@ -122,7 +122,7 @@ const app = (() => {
             csrfToken = null
             localStorage.removeItem('ws_user_id')
             localStorage.removeItem('ws_user_numeric')
-            
+
             setAuthStatus('disconnected', 'Sin sesión')
             document.getElementById('auth-info').textContent = '🚪 Sesión cerrada'
             logEvent('system', `🚪 Logout: ${JSON.stringify(json)}`)
@@ -204,11 +204,11 @@ const app = (() => {
             if (eventName === 'progress:update') type = 'progress'
 
             if (eventName === 'progress:update') {
-               title = `Progreso: ${payload.label || 'Procesando...'}`
-               message = `${payload.percent}% completado (${payload.step}/${payload.totalSteps})`
-               showToast(title, message, type, payload.percent)
+                title = `Progreso: ${payload.label || 'Procesando...'}`
+                message = `${payload.percent}% completado (${payload.step}/${payload.totalSteps})`
+                showToast(title, message, type, payload.percent)
             } else {
-               showToast(title, message, type)
+                showToast(title, message, type)
             }
         })
     }
@@ -397,7 +397,7 @@ const app = (() => {
         }
 
         const userId = localStorage.getItem('ws_user_numeric') || '0'
-        
+
         try {
             logEvent('system', `🏠 Solicitando unirse a sala via API: ${roomName}`)
             const res = await fetch(`${getBackendUrl()}/toProccess`, {
@@ -407,7 +407,7 @@ const app = (() => {
                     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
                 },
                 credentials: 'include',
-                body: JSON.stringify({ tx: 21, params: { userId, roomName } })
+                body: JSON.stringify({ tx: 21, params: { userId, roomName } }),
             })
             const json = await res.json()
             if (res.ok) {
@@ -438,7 +438,7 @@ const app = (() => {
                     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
                 },
                 credentials: 'include',
-                body: JSON.stringify({ tx: 22, params: { userId, roomName } })
+                body: JSON.stringify({ tx: 22, params: { userId, roomName } }),
             })
             const json = await res.json()
             if (res.ok) {
@@ -477,7 +477,7 @@ const app = (() => {
                     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
                 },
                 credentials: 'include',
-                body: JSON.stringify({ tx: 23, params: { userId, roomName, event, message } })
+                body: JSON.stringify({ tx: 23, params: { userId, roomName, event, message } }),
             })
             const json = await res.json()
             sentCount++
@@ -498,7 +498,7 @@ const app = (() => {
                     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
                 },
                 credentials: 'include',
-                body: JSON.stringify({ tx: 22, params: { userId, roomName } })
+                body: JSON.stringify({ tx: 22, params: { userId, roomName } }),
             })
         }
         rooms.delete(roomName)
@@ -558,7 +558,8 @@ const app = (() => {
         updateMetric('metric-rooms', rooms.size)
 
         if (rooms.size === 0) {
-            container.innerHTML = '<span class="empty-state" style="padding:8px; font-size: 0.75rem">Sin salas</span>'
+            container.innerHTML =
+                '<span class="empty-state" style="padding:8px; font-size: 0.75rem">Sin salas</span>'
             return
         }
 
@@ -589,7 +590,7 @@ const app = (() => {
         if (savedUser) {
             setAuthStatus('connecting', 'Restaurando...')
             logEvent('system', `Intentando restaurar sesión para: ${savedUser}`)
-            
+
             const token = await fetchCsrfToken()
             if (token) {
                 setAuthStatus('connected', `Sesión: ${savedUser}`)

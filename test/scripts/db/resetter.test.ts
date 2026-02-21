@@ -7,11 +7,8 @@ describe('DatabaseResetter', () => {
     it('should throw an error if confirm is not passed to reset', async () => {
         const mockDb = { exeRaw: async () => ({ rows: [] }) } as any
         const resetter = new DatabaseResetter(mockDb)
-        
-        await assert.rejects(
-            async () => resetter.reset(),
-            /Reset requires explicit confirmation/
-        )
+
+        await assert.rejects(async () => resetter.reset(), /Reset requires explicit confirmation/)
     })
 
     it('should drop all non-system schemas and recreate public', async () => {
@@ -23,7 +20,7 @@ describe('DatabaseResetter', () => {
                     return { rows: [{ schema_name: 'security' }, { schema_name: 'business' }] }
                 }
                 return { rows: [] }
-            }
+            },
         } as any
 
         const resetter = new DatabaseResetter(mockDb)
@@ -44,7 +41,7 @@ describe('DatabaseResetter', () => {
                     return { rows: [] }
                 }
                 return { rows: [] }
-            }
+            },
         } as any
 
         const resetter = new DatabaseResetter(mockDb)
@@ -61,13 +58,15 @@ describe('DatabaseResetter', () => {
             exeRaw: async (sql: string) => {
                 queries.push(sql.trim())
                 if (sql.includes('information_schema.tables')) {
-                    return { rows: [
-                        { table_schema: 'security', table_name: 'users' },
-                        { table_schema: 'security', table_name: 'profiles' }
-                    ]}
+                    return {
+                        rows: [
+                            { table_schema: 'security', table_name: 'users' },
+                            { table_schema: 'security', table_name: 'profiles' },
+                        ],
+                    }
                 }
                 return { rows: [] }
-            }
+            },
         } as any
 
         const resetter = new DatabaseResetter(mockDb)

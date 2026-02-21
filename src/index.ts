@@ -12,7 +12,6 @@ import type { AppServer } from './api/AppServer.js'
 
 const log = container.resolve<ILogger>('log').child({ category: 'Main' })
 
-
 try {
     log.trace('Iniciando SecurityService...')
     const security = container.resolve<ISecurityService>('security')

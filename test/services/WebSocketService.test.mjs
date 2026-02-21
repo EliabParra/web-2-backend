@@ -64,18 +64,9 @@ test('WebSocketService inicializa con adaptador memory por defecto', async () =>
 test('WebSocketService lanza error si se usan métodos sin inicializar', () => {
     const service = createService()
 
-    assert.throws(
-        () => service.emitToUser('1', 'test', {}),
-        { message: /no inicializado/ }
-    )
-    assert.throws(
-        () => service.broadcast('test', {}),
-        { message: /no inicializado/ }
-    )
-    assert.throws(
-        () => service.emitToRoom('room', 'test', {}),
-        { message: /no inicializado/ }
-    )
+    assert.throws(() => service.emitToUser('1', 'test', {}), { message: /no inicializado/ })
+    assert.throws(() => service.broadcast('test', {}), { message: /no inicializado/ })
+    assert.throws(() => service.emitToRoom('room', 'test', {}), { message: /no inicializado/ })
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -223,7 +214,11 @@ test('WebSocketService acepta conexiones con sesión autenticada y registra en l
         })
 
         assert.equal(connected, true, 'Cliente con sesión debería conectarse')
-        assert.equal(service.getLocalConnectionsCount(), 1, 'Debería registrar 1 usuario en localConnections')
+        assert.equal(
+            service.getLocalConnectionsCount(),
+            1,
+            'Debería registrar 1 usuario en localConnections'
+        )
     } finally {
         client.disconnect()
         // Esperar a que el evento disconnect se procese

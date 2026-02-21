@@ -27,15 +27,17 @@ Day 3: Juan does git pull, runs the app and... 💥
 
 > **Golden Rule**: Code is the single source of truth for the database.
 
-In ToProccess, all database changes are defined in TypeScript files under `scripts/db/schemas/`. When any developer runs `pnpm run db sync`, their local database is automatically updated.
+In ToProccess, all database changes are defined in TypeScript files. When any developer runs `pnpm run db sync` or `pnpm run db seed`, their local database is automatically updated.
 
 ```
-scripts/db/schemas/
-├── 01_base.ts          # System tables (security, sessions)
-├── 10_users_extended.ts # User extensions
-├── 20_auth.ts          # Authentication (optional)
-├── 50_products.ts      # ← YOUR TABLES GO HERE
-└── 90_audit.ts         # Auditing
+migrations/
+├── ddl/                  # Data Definition (Schemas)
+│   ├── 01_base.ts        # System tables (security, sessions)
+│   ├── 10_users_ext.ts   # User extensions
+│   └── 50_products.ts    # ← YOUR TABLES GO HERE
+└── dml/                  # Data Manipulation (Seeds)
+    ├── 91_data_security_profiles.ts
+    └── 98_data_security_user_profile.ts
 ```
 
 ---
@@ -65,7 +67,7 @@ pnpm run dev
 1. **Create the schema file**:
 
 ```bash
-# Create scripts/db/schemas/50_products.ts
+# Create migrations/ddl/50_products.ts
 ```
 
 ```typescript
@@ -98,7 +100,7 @@ pnpm run verify
 4. **Push to Git**:
 
 ```bash
-git add scripts/db/schemas/50_products.ts
+git add migrations/ddl/50_products.ts
 git commit -m "feat(db): add products table"
 git push
 ```
@@ -118,7 +120,7 @@ pnpm run verify
 ## 4. Anatomy of a Schema File
 
 ```typescript
-// scripts/db/schemas/50_my_module.ts
+// migrations/ddl/50_my_module.ts
 
 export const sql = [
     // 1. ALWAYS use IF NOT EXISTS
@@ -214,14 +216,14 @@ pnpm run db bo --prune
 
 ## 6. Essential Commands
 
-| Situation         | Command                                            |
-| ----------------- | -------------------------------------------------- |
-| **Start of day**  | `git pull && pnpm run db sync && pnpm run db bo`   |
-| **New table**     | Create file in `schemas/`, then `pnpm run db sync` |
-| **New BO method** | `pnpm run db bo`                                   |
-| **Verify state**  | `pnpm run db bo --dry-run`                         |
-| **Clean orphans** | `pnpm run db bo --prune`                           |
-| **Total reset**   | `pnpm run db reset --yes`                          |
+| Situation         | Command                                                                 |
+| ----------------- | ----------------------------------------------------------------------- |
+| **Start of day**  | `git pull && pnpm run db sync && pnpm run db seed -y && pnpm run db bo` |
+| **New table**     | Create file in `migrations/ddl/`, then `pnpm run db sync`               |
+| **New BO method** | `pnpm run db bo`                                                        |
+| **Verify state**  | `pnpm run db bo --dry-run`                                              |
+| **Clean orphans** | `pnpm run db bo --prune`                                                |
+| **Total reset**   | `pnpm run db reset --yes`                                               |
 
 ---
 
@@ -232,7 +234,7 @@ For separate Backend + Frontend teams:
 ```
 my-company/
 ├── my-app-backend/   ← ToProccess (API)
-│   ├── scripts/db/schemas/
+│   ├── migrations/   ← (ddl and dml)
 │   ├── BO/
 │   └── src/
 │

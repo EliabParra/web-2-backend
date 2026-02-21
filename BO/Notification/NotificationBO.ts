@@ -1,5 +1,15 @@
-import { BaseBO, ApiResponse, IContainer, IWebSocketService } from '../../src/core/business-objects/index.js'
-import { NotificationMessages, NotificationSchemas, Inputs, registerNotification } from './NotificationModule.js'
+import {
+    BaseBO,
+    ApiResponse,
+    IContainer,
+    IWebSocketService,
+} from '../../src/core/business-objects/index.js'
+import {
+    NotificationMessages,
+    NotificationSchemas,
+    Inputs,
+    registerNotification,
+} from './NotificationModule.js'
 
 /**
  * Business Object de prueba para el Playground de WebSocket.
@@ -26,23 +36,19 @@ export class NotificationBO extends BaseBO {
      * Usa `emitToUser` (Fire & Forget — sin await).
      */
     async send(params: Inputs.SendInput): Promise<ApiResponse> {
-        return this.exec<Inputs.SendInput, any>(
-            params,
-            NotificationSchemas.send,
-            async (data) => {
-                this.log.debug('emitToUser', { userId: data.userId, event: data.event })
+        return this.exec<Inputs.SendInput, any>(params, NotificationSchemas.send, async (data) => {
+            this.log.debug('emitToUser', { userId: data.userId, event: data.event })
 
-                this.ws.emitToUser(data.userId, data.event, {
-                    message: data.message,
-                    timestamp: new Date().toISOString(),
-                })
+            this.ws.emitToUser(data.userId, data.event, {
+                message: data.message,
+                timestamp: new Date().toISOString(),
+            })
 
-                return this.success(
-                    { sent: true, userId: data.userId, event: data.event },
-                    this.notificationMessages.send
-                )
-            }
-        )
+            return this.success(
+                { sent: true, userId: data.userId, event: data.event },
+                this.notificationMessages.send
+            )
+        })
     }
 
     /**
@@ -140,7 +146,11 @@ export class NotificationBO extends BaseBO {
             const status = current >= steps ? 'completed' : 'in_progress'
 
             this.log.debug('chunk emitted', {
-                taskId, step: current, totalSteps: steps, percent, label,
+                taskId,
+                step: current,
+                totalSteps: steps,
+                percent,
+                label,
             })
 
             this.ws.emitToUser(userId, 'progress:update', {
@@ -208,11 +218,16 @@ export class NotificationBO extends BaseBO {
             async (data) => {
                 this.log.debug('emitRoom', { roomName: data.roomName, event: data.event })
 
-                this.ws.emitToRoom(data.roomName, data.event, {
-                    message: data.message,
-                    from: data.userId,
-                    timestamp: new Date().toISOString(),
-                }, data.namespace)
+                this.ws.emitToRoom(
+                    data.roomName,
+                    data.event,
+                    {
+                        message: data.message,
+                        from: data.userId,
+                        timestamp: new Date().toISOString(),
+                    },
+                    data.namespace
+                )
 
                 return this.success(
                     { emitted: true, roomName: data.roomName, event: data.event },

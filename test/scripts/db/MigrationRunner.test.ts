@@ -31,19 +31,19 @@ describe('MigrationRunner', () => {
 
     it('should run only unapplied migrations and track history', async () => {
         const queries: string[] = []
-        
+
         // Mock DB connection
         const mockDb = {
             exeRaw: async (sql: string, params: any[] = []) => {
                 queries.push(sql.trim())
-                
+
                 // Simulate that 01_schema_one.ts is already applied
                 if (sql.includes('SELECT filename FROM _migration_history')) {
                     return { rows: [{ filename: '01_schema_one.ts' }] }
                 }
-                
+
                 return { rows: [] }
-            }
+            },
         } as any
 
         const config = { silent: true }
@@ -51,7 +51,7 @@ describe('MigrationRunner', () => {
 
         await runner.run()
 
-        // What we expect: 
+        // What we expect:
         // 1. History table initialized
         // 2. Query history to find applied
         // 3. 02_schema_two.ts and 03_schema_empty.ts are picked up.
@@ -59,7 +59,7 @@ describe('MigrationRunner', () => {
         // 5. 02 has BEGIN, its SQL, mark as applied, and COMMIT.
 
         const queryStr = queries.join('||')
-        
+
         // History checked
         assert.ok(queryStr.includes('CREATE TABLE IF NOT EXISTS _migration_history'))
         assert.ok(queryStr.includes('SELECT filename FROM _migration_history'))
@@ -76,7 +76,7 @@ describe('MigrationRunner', () => {
 
     it('should trigger rollback if migration fails', async () => {
         const queries: string[] = []
-        
+
         const mockDb = {
             exeRaw: async (sql: string, params: any[] = []) => {
                 queries.push(sql.trim())
@@ -89,27 +89,24 @@ describe('MigrationRunner', () => {
                 if (sql.includes('CREATE TABLE two')) {
                     throw new Error('Fake SQL Error on table two')
                 }
-                
+
                 return { rows: [] }
-            }
+            },
         } as any
 
         const config = { silent: true }
         const runner = new MigrationRunner(mockDb, config, tempDir)
 
-        await assert.rejects(
-            async () => runner.run(),
-            /Fake SQL Error on table two/
-        )
+        await assert.rejects(async () => runner.run(), /Fake SQL Error on table two/)
 
         const queryStr = queries.join('||')
-        
+
         // It should have executed the first table fine:
         assert.ok(queryStr.includes('CREATE TABLE one (id INT);'))
         assert.ok(queryStr.includes('INSERT INTO one VALUES (1);'))
         assert.ok(queryStr.includes('INSERT INTO _migration_history (filename) VALUES ($1)'))
         assert.ok(queryStr.includes('COMMIT')) // of the first file successfully
-        
+
         // The second file triggered a Rollback
         assert.ok(queryStr.includes('ROLLBACK'))
     })
@@ -120,7 +117,7 @@ describe('MigrationRunner', () => {
             exeRaw: async (sql: string, params: any[] = []) => {
                 queries.push(sql.trim())
                 return { rows: [] }
-            }
+            },
         } as any
 
         const config = { silent: true, dryRun: true }
@@ -134,7 +131,7 @@ describe('MigrationRunner', () => {
         assert.ok(!queryStr.includes('INSERT INTO _migration_history'))
         assert.ok(!queryStr.includes('BEGIN'))
         assert.ok(!queryStr.includes('COMMIT'))
-        
+
         // It only "prints" sql but does not `exeRaw`, because executor tracks dryRun internally using console.log
         // Let's assert NO real queries to DB were made (exeRaw never called)
         assert.strictEqual(queries.length, 0)

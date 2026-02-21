@@ -138,10 +138,10 @@ test('Security Management API: Full Lifecycle', async () => {
                 sendTemplate: async () => ({ ok: true }),
                 maskEmail: (e) => e,
             }
-            
+
             const mockContainer = createMockContainer(globalThis)
-            
-            // This is an integration test, we must use the real MenuProvider 
+
+            // This is an integration test, we must use the real MenuProvider
             // tied to the mock container (which holds the Mock DB)
             mockContainer.register('menuProvider', new MenuProvider(mockContainer))
 

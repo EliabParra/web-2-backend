@@ -114,12 +114,22 @@ test('Security.init loads permissions + tx map and sets isReady', async () => {
                 sendTemplate: async () => ({ ok: true }),
                 maskEmail: (e) => e,
             }
-            
+
             // Sub-components explicitly resolved by SecurityService
             globalThis.orchestrator = { execute: async () => {} }
-            globalThis.transactionMapper = { load: async () => {}, isReady: true, resolve: (tx) => tx === 100 ? { objectName: 'Order', methodName: 'createOrder'} : false }
+            globalThis.transactionMapper = {
+                load: async () => {},
+                isReady: true,
+                resolve: (tx) =>
+                    tx === 100 ? { objectName: 'Order', methodName: 'createOrder' } : false,
+            }
             globalThis.transactionExecutor = {}
-            globalThis.permissionGuard = { load: async () => {}, isReady: true, hasPermission: () => true, check: (profileId) => profileId === 1 }
+            globalThis.permissionGuard = {
+                load: async () => {},
+                isReady: true,
+                hasPermission: () => true,
+                check: (profileId) => profileId === 1,
+            }
             globalThis.menuProvider = { load: async () => {} }
             globalThis.authorization = {}
 
@@ -200,9 +210,19 @@ test('Security.init captures initError and rejects ready when DB fails', async (
 
             // Sub-components explicitly resolved by SecurityService
             globalThis.orchestrator = { execute: async () => {} }
-            globalThis.transactionMapper = { load: async () => { throw new Error('db down') }, isReady: false }
+            globalThis.transactionMapper = {
+                load: async () => {
+                    throw new Error('db down')
+                },
+                isReady: false,
+            }
             globalThis.transactionExecutor = {}
-            globalThis.permissionGuard = { load: async () => { throw new Error('db down') }, isReady: false }
+            globalThis.permissionGuard = {
+                load: async () => {
+                    throw new Error('db down')
+                },
+                isReady: false,
+            }
             globalThis.menuProvider = { load: async () => {} }
             globalThis.authorization = {}
 
@@ -255,14 +275,18 @@ test('Security.executeMethod dynamically imports BO and caches the instance', as
                     debug: () => {},
                     info: () => {},
                     warn: () => {},
-                    error: (e, params) => { console.error("TEST EXECUTION ERROR: ", e, params); },
+                    error: (e, params) => {
+                        console.error('TEST EXECUTION ERROR: ', e, params)
+                    },
                     critical: () => {},
                     child: () => ({
                         trace: () => {},
                         debug: () => {},
                         info: () => {},
                         warn: () => {},
-                        error: (e, params) => { console.error("TEST EXECUTION CHILD ERROR: ", e, params); },
+                        error: (e, params) => {
+                            console.error('TEST EXECUTION CHILD ERROR: ', e, params)
+                        },
                         critical: () => {},
                     }),
                 }
@@ -289,24 +313,36 @@ test('Security.executeMethod dynamically imports BO and caches the instance', as
                 }
 
                 // Sub-components explicitly resolved by SecurityService
-                globalThis.orchestrator = { execute: async (tx, ctx, params) => { 
-                    // Delegamos al executor simulado para probar el ciclo de vida del BO en el test
-                    const obj = tx.objectName
-                    const method = tx.methodName
-                    return await globalThis.transactionExecutor.execute(obj, method, params)
-                }} // Will be dynamically bypassed or updated by test logic if needed
-                globalThis.transactionMapper = { load: async () => {}, isReady: true, resolve: () => ({ objectName, methodName: 'ping' }) }
+                globalThis.orchestrator = {
+                    execute: async (tx, ctx, params) => {
+                        // Delegamos al executor simulado para probar el ciclo de vida del BO en el test
+                        const obj = tx.objectName
+                        const method = tx.methodName
+                        return await globalThis.transactionExecutor.execute(obj, method, params)
+                    },
+                } // Will be dynamically bypassed or updated by test logic if needed
+                globalThis.transactionMapper = {
+                    load: async () => {},
+                    isReady: true,
+                    resolve: () => ({ objectName, methodName: 'ping' }),
+                }
                 let cached = false
-                globalThis.transactionExecutor = { execute: async (obj, method, params) => {
-                    // Because we mocked the executor which would normally read the dynamically created file,
-                    // we must simulate the success response and caching behavior here.
-                    if (!cached) {
-                        globalThis.__securityBoCtorCount++
-                        cached = true
-                    }
-                    return { code: 200, msg: 'ok', data: params }
-                }}
-                globalThis.permissionGuard = { load: async () => {}, isReady: true, check: () => true }
+                globalThis.transactionExecutor = {
+                    execute: async (obj, method, params) => {
+                        // Because we mocked the executor which would normally read the dynamically created file,
+                        // we must simulate the success response and caching behavior here.
+                        if (!cached) {
+                            globalThis.__securityBoCtorCount++
+                            cached = true
+                        }
+                        return { code: 200, msg: 'ok', data: params }
+                    },
+                }
+                globalThis.permissionGuard = {
+                    load: async () => {},
+                    isReady: true,
+                    check: () => true,
+                }
                 globalThis.menuProvider = { load: async () => {} }
                 globalThis.authorization = { isAuthorized: () => true }
 
@@ -384,9 +420,21 @@ test('Security.executeMethod returns serverError and logs when BO import fails',
             }
 
             // Sub-components explicitly resolved by SecurityService
-            globalThis.orchestrator = { execute: async () => { throw new Error('Not found') } }
-            globalThis.transactionMapper = { load: async () => {}, isReady: true, resolve: () => null }
-            globalThis.transactionExecutor = { execute: async () => { throw new Error('Cannot find module') }}
+            globalThis.orchestrator = {
+                execute: async () => {
+                    throw new Error('Not found')
+                },
+            }
+            globalThis.transactionMapper = {
+                load: async () => {},
+                isReady: true,
+                resolve: () => null,
+            }
+            globalThis.transactionExecutor = {
+                execute: async () => {
+                    throw new Error('Cannot find module')
+                },
+            }
             globalThis.permissionGuard = { load: async () => {}, isReady: true }
             globalThis.menuProvider = { load: async () => {} }
             globalThis.authorization = { isAuthorized: () => true }

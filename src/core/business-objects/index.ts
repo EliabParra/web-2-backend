@@ -2,9 +2,9 @@ export * from './BaseBO.js'
 export * from './BOService.js'
 
 // Re-export common types for convenience
-export type { 
-    IContainer, 
-    ILogger, 
+export type {
+    IContainer,
+    ILogger,
     IWebSocketService,
     IAuditService,
     ISecurityService,
@@ -19,6 +19,6 @@ export type {
     TransactionRoute,
     TxKey,
     AppMessages,
-    WithRequest 
+    WithRequest,
 } from '../../types/index.js'
 export { BOError } from './BOError.js'

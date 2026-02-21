@@ -26,7 +26,7 @@ export class DatabaseResetter {
             WHERE schema_name NOT IN ('pg_catalog', 'information_schema') 
               AND schema_name NOT LIKE 'pg_%'
         `)
-        
+
         const schemas = schemaResult.rows.map((r) => r.schema_name)
 
         if (schemas.length === 0) {
@@ -67,7 +67,7 @@ export class DatabaseResetter {
               AND table_schema NOT LIKE 'pg_%'
               AND table_type = 'BASE TABLE'
         `)
-        
+
         const tables = tablesResult.rows
 
         for (const { table_schema, table_name } of tables) {
@@ -75,7 +75,10 @@ export class DatabaseResetter {
                 await this.db.exeRaw(`TRUNCATE TABLE "${table_schema}"."${table_name}" CASCADE`)
                 console.log(`   🧹 Truncated: ${table_schema}.${table_name}`.gray)
             } catch (err: any) {
-                console.log(`   ⚠️  Could not truncate: ${table_schema}.${table_name} (${err.message})`.yellow)
+                console.log(
+                    `   ⚠️  Could not truncate: ${table_schema}.${table_name} (${err.message})`
+                        .yellow
+                )
             }
         }
 

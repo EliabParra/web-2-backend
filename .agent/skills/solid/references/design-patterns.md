@@ -80,37 +80,30 @@ class NotificationFactory {
 
 ```typescript
 class UserBuilder {
-  private user: Partial<User> = {};
+    private user: Partial<User> = {}
 
-  withName(name: string): UserBuilder {
-    this.user.name = name;
-    return this;
-  }
+    withName(name: string): UserBuilder {
+        this.user.name = name
+        return this
+    }
 
-  withEmail(email: string): UserBuilder {
-    this.user.email = email;
-    return this;
-  }
+    withEmail(email: string): UserBuilder {
+        this.user.email = email
+        return this
+    }
 
-  withAge(age: number): UserBuilder {
-    this.user.age = age;
-    return this;
-  }
+    withAge(age: number): UserBuilder {
+        this.user.age = age
+        return this
+    }
 
-  build(): User {
-    return new User(
-      this.user.name!,
-      this.user.email!,
-      this.user.age
-    );
-  }
+    build(): User {
+        return new User(this.user.name!, this.user.email!, this.user.age)
+    }
 }
 
 // Usage
-const user = new UserBuilder()
-  .withName('Alice')
-  .withEmail('alice@example.com')
-  .build();
+const user = new UserBuilder().withName('Alice').withEmail('alice@example.com').build()
 ```
 
 ### Prototype
@@ -121,23 +114,19 @@ const user = new UserBuilder()
 
 ```typescript
 interface Prototype {
-  clone(): Prototype;
+    clone(): Prototype
 }
 
 class Document implements Prototype {
-  constructor(
-    public title: string,
-    public content: string,
-    public metadata: Metadata
-  ) {}
+    constructor(
+        public title: string,
+        public content: string,
+        public metadata: Metadata
+    ) {}
 
-  clone(): Document {
-    return new Document(
-      this.title,
-      this.content,
-      { ...this.metadata }
-    );
-  }
+    clone(): Document {
+        return new Document(this.title, this.content, { ...this.metadata })
+    }
 }
 ```
 
@@ -182,41 +171,37 @@ class OldPaymentAdapter implements PaymentGateway {
 
 ```typescript
 interface Notifier {
-  send(message: string): void;
+    send(message: string): void
 }
 
 class EmailNotifier implements Notifier {
-  send(message: string): void {
-    console.log(`Email: ${message}`);
-  }
+    send(message: string): void {
+        console.log(`Email: ${message}`)
+    }
 }
 
 // Decorators
 class SMSDecorator implements Notifier {
-  constructor(private wrapped: Notifier) {}
+    constructor(private wrapped: Notifier) {}
 
-  send(message: string): void {
-    this.wrapped.send(message);
-    console.log(`SMS: ${message}`);
-  }
+    send(message: string): void {
+        this.wrapped.send(message)
+        console.log(`SMS: ${message}`)
+    }
 }
 
 class SlackDecorator implements Notifier {
-  constructor(private wrapped: Notifier) {}
+    constructor(private wrapped: Notifier) {}
 
-  send(message: string): void {
-    this.wrapped.send(message);
-    console.log(`Slack: ${message}`);
-  }
+    send(message: string): void {
+        this.wrapped.send(message)
+        console.log(`Slack: ${message}`)
+    }
 }
 
 // Usage - compose behaviors
-const notifier = new SlackDecorator(
-  new SMSDecorator(
-    new EmailNotifier()
-  )
-);
-notifier.send('Alert!'); // Sends to all three
+const notifier = new SlackDecorator(new SMSDecorator(new EmailNotifier()))
+notifier.send('Alert!') // Sends to all three
 ```
 
 ### Proxy
@@ -263,42 +248,39 @@ class ImageProxy implements Image {
 
 ```typescript
 interface Component {
-  getPrice(): number;
+    getPrice(): number
 }
 
 class Product implements Component {
-  constructor(private price: number) {}
+    constructor(private price: number) {}
 
-  getPrice(): number {
-    return this.price;
-  }
+    getPrice(): number {
+        return this.price
+    }
 }
 
 class Box implements Component {
-  private children: Component[] = [];
+    private children: Component[] = []
 
-  add(component: Component): void {
-    this.children.push(component);
-  }
+    add(component: Component): void {
+        this.children.push(component)
+    }
 
-  getPrice(): number {
-    return this.children.reduce(
-      (sum, child) => sum + child.getPrice(),
-      0
-    );
-  }
+    getPrice(): number {
+        return this.children.reduce((sum, child) => sum + child.getPrice(), 0)
+    }
 }
 
 // Usage
-const smallBox = new Box();
-smallBox.add(new Product(10));
-smallBox.add(new Product(20));
+const smallBox = new Box()
+smallBox.add(new Product(10))
+smallBox.add(new Product(20))
 
-const bigBox = new Box();
-bigBox.add(smallBox);
-bigBox.add(new Product(50));
+const bigBox = new Box()
+bigBox.add(smallBox)
+bigBox.add(new Product(50))
 
-console.log(bigBox.getPrice()); // 80
+console.log(bigBox.getPrice()) // 80
 ```
 
 ---
@@ -313,34 +295,34 @@ console.log(bigBox.getPrice()); // 80
 
 ```typescript
 interface PricingStrategy {
-  calculate(basePrice: number): number;
+    calculate(basePrice: number): number
 }
 
 class RegularPricing implements PricingStrategy {
-  calculate(basePrice: number): number {
-    return basePrice;
-  }
+    calculate(basePrice: number): number {
+        return basePrice
+    }
 }
 
 class PremiumDiscount implements PricingStrategy {
-  calculate(basePrice: number): number {
-    return basePrice * 0.8; // 20% off
-  }
+    calculate(basePrice: number): number {
+        return basePrice * 0.8 // 20% off
+    }
 }
 
 class BlackFriday implements PricingStrategy {
-  calculate(basePrice: number): number {
-    return basePrice * 0.5; // 50% off
-  }
+    calculate(basePrice: number): number {
+        return basePrice * 0.5 // 50% off
+    }
 }
 
 class ShoppingCart {
-  constructor(private pricing: PricingStrategy) {}
+    constructor(private pricing: PricingStrategy) {}
 
-  calculateTotal(items: Item[]): number {
-    const base = items.reduce((sum, i) => sum + i.price, 0);
-    return this.pricing.calculate(base);
-  }
+    calculateTotal(items: Item[]): number {
+        const base = items.reduce((sum, i) => sum + i.price, 0)
+        return this.pricing.calculate(base)
+    }
 }
 ```
 
@@ -352,39 +334,39 @@ class ShoppingCart {
 
 ```typescript
 interface Observer {
-  update(event: Event): void;
+    update(event: Event): void
 }
 
 class EventEmitter {
-  private observers: Observer[] = [];
+    private observers: Observer[] = []
 
-  subscribe(observer: Observer): void {
-    this.observers.push(observer);
-  }
+    subscribe(observer: Observer): void {
+        this.observers.push(observer)
+    }
 
-  unsubscribe(observer: Observer): void {
-    this.observers = this.observers.filter(o => o !== observer);
-  }
+    unsubscribe(observer: Observer): void {
+        this.observers = this.observers.filter((o) => o !== observer)
+    }
 
-  notify(event: Event): void {
-    this.observers.forEach(o => o.update(event));
-  }
+    notify(event: Event): void {
+        this.observers.forEach((o) => o.update(event))
+    }
 }
 
 // Usage
 class OrderService extends EventEmitter {
-  placeOrder(order: Order): void {
-    // Process order...
-    this.notify({ type: 'ORDER_PLACED', order });
-  }
+    placeOrder(order: Order): void {
+        // Process order...
+        this.notify({ type: 'ORDER_PLACED', order })
+    }
 }
 
 class EmailService implements Observer {
-  update(event: Event): void {
-    if (event.type === 'ORDER_PLACED') {
-      this.sendConfirmation(event.order);
+    update(event: Event): void {
+        if (event.type === 'ORDER_PLACED') {
+            this.sendConfirmation(event.order)
+        }
     }
-  }
 }
 ```
 
@@ -442,37 +424,37 @@ class JSONExporter extends DataExporter {
 
 ```typescript
 interface Command {
-  execute(): void;
-  undo(): void;
+    execute(): void
+    undo(): void
 }
 
 class AddItemCommand implements Command {
-  constructor(
-    private cart: Cart,
-    private item: Item
-  ) {}
+    constructor(
+        private cart: Cart,
+        private item: Item
+    ) {}
 
-  execute(): void {
-    this.cart.add(this.item);
-  }
+    execute(): void {
+        this.cart.add(this.item)
+    }
 
-  undo(): void {
-    this.cart.remove(this.item);
-  }
+    undo(): void {
+        this.cart.remove(this.item)
+    }
 }
 
 class CommandHistory {
-  private history: Command[] = [];
+    private history: Command[] = []
 
-  execute(command: Command): void {
-    command.execute();
-    this.history.push(command);
-  }
+    execute(command: Command): void {
+        command.execute()
+        this.history.push(command)
+    }
 
-  undo(): void {
-    const command = this.history.pop();
-    command?.undo();
-  }
+    undo(): void {
+        const command = this.history.pop()
+        command?.undo()
+    }
 }
 ```
 
@@ -495,10 +477,10 @@ This helps recognize patterns even in unfamiliar code.
 
 ## Anti-Patterns to Avoid
 
-| Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| **God Object** | Class does everything | Split by responsibility |
-| **Spaghetti Code** | Tangled, no structure | Refactor to layers |
-| **Golden Hammer** | Using one pattern for everything | Match pattern to problem |
-| **Premature Optimization** | Optimizing before needed | YAGNI, profile first |
-| **Copy-Paste Programming** | Duplication | Extract, Rule of Three |
+| Anti-Pattern               | Problem                          | Solution                 |
+| -------------------------- | -------------------------------- | ------------------------ |
+| **God Object**             | Class does everything            | Split by responsibility  |
+| **Spaghetti Code**         | Tangled, no structure            | Refactor to layers       |
+| **Golden Hammer**          | Using one pattern for everything | Match pattern to problem |
+| **Premature Optimization** | Optimizing before needed         | YAGNI, profile first     |
+| **Copy-Paste Programming** | Duplication                      | Extract, Rule of Three   |

@@ -222,7 +222,7 @@ test('createCsrfProtection flexibilizes token mismatch in development for local 
     const req = {
         path: '/api/action',
         session: { userId: 1, csrfToken: 'expected-token' },
-        get: (header) => header === 'Origin' ? 'http://192.168.1.5:3000' : 'wrong-token',
+        get: (header) => (header === 'Origin' ? 'http://192.168.1.5:3000' : 'wrong-token'),
     }
     let nextCalled = false
     const next = () => {
@@ -234,4 +234,3 @@ test('createCsrfProtection flexibilizes token mismatch in development for local 
 
     assert.equal(nextCalled, true)
 })
-

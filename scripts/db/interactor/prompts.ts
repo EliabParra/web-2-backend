@@ -20,12 +20,12 @@ export class Interactor {
             defaultValue: defaultValue,
             placeholder: defaultValue,
         })
-        
+
         if (p.isCancel(result)) {
             p.cancel('Operation cancelled.')
             process.exit(0)
         }
-        
+
         return result as string
     }
 
@@ -34,12 +34,12 @@ export class Interactor {
             message: question,
             initialValue: defaultYes,
         })
-        
+
         if (p.isCancel(result)) {
             p.cancel('Operation cancelled.')
             process.exit(0)
         }
-        
+
         return result as boolean
     }
 
@@ -48,10 +48,10 @@ export class Interactor {
             value: opt,
             label: opt,
         }))
-        
+
         let initialValue = clackOptions[0].value
         if (defaultOption) {
-            const found = clackOptions.find(opt => opt.value.includes(defaultOption))
+            const found = clackOptions.find((opt) => opt.value.includes(defaultOption))
             if (found) initialValue = found.value
         }
 
@@ -60,12 +60,12 @@ export class Interactor {
             options: clackOptions,
             initialValue,
         })
-        
+
         if (p.isCancel(result)) {
             p.cancel('Operation cancelled.')
             process.exit(0)
         }
-        
+
         return result as string
     }
 }

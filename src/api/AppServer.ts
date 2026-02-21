@@ -26,7 +26,6 @@ import {
     createFinalErrorHandler,
 } from './http/middleware/index.js'
 
-
 import {
     createLoginRateLimiter,
     createToProccessRateLimiter,
@@ -88,7 +87,7 @@ export class AppServer {
         this.session = container.resolve<ISessionService>('session')
         this.i18n = container.resolve<II18nService>('i18n')
         this.db = container.resolve<IDatabase>('db')
-        
+
         // Resolve pre-registered controllers from the IoC container
         this.authController = container.resolve<AuthController>('authController')
         this.txController = container.resolve<TransactionController>('txController')

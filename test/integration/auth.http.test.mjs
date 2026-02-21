@@ -170,7 +170,8 @@ function createDeps() {
     // DB Mock
     const db = {
         query: async (queryDef, params) => {
-            const sql = typeof queryDef === 'string' ? queryDef : queryDef.sql; console.log("HTTP DB Query:", sql.trim());
+            const sql = typeof queryDef === 'string' ? queryDef : queryDef.sql
+            console.log('HTTP DB Query:', sql.trim())
 
             // Permissions
             if (sql.includes('profile_method')) {
@@ -218,7 +219,7 @@ function createDeps() {
         queryRow: async function (q, p) {
             const res = await this.query(q, p)
             return res.rows.length ? res.rows[0] : null
-        }
+        },
     }
 
     // We need Real SecurityService to test BO execution

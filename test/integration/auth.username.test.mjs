@@ -113,7 +113,7 @@ function createDeps() {
             queryRow: async function (q, p) {
                 const res = await this.query(q, p)
                 return res.rows.length ? res.rows[0] : null
-            }
+            },
         },
         email: {
             sendTemplate: async (opts) => {
