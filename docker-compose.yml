@@ -12,6 +12,7 @@ services:
         container_name: toproc-api
         ports:
             - '3000:3000' # Mapea puerto 3000 del host al 3000 del contenedor
+            - '5173:5173' # WebSocket Playground
         volumes:
             # --- VOLUMEN MÁGICO PARA HOT RELOAD ---
             # Mapeamos la carpeta actual (.) del host a /app en el contenedor.
