@@ -148,11 +148,17 @@ export class BORegistrar {
     }
 
     private async upsertObject(objectName: string): Promise<number> {
+        // First check if object exists to avoid sequence increment on CONFLICT
+        const existing = await this.db.exeRaw(
+            'SELECT object_id FROM security.objects WHERE object_name = $1',
+            [objectName]
+        )
+        if (existing.rows[0]?.object_id) {
+            return existing.rows[0].object_id
+        }
+
         const result = await this.db.exeRaw(
-            `INSERT INTO security.objects (object_name) 
-             VALUES ($1) 
-             ON CONFLICT (object_name) DO UPDATE SET object_name = EXCLUDED.object_name 
-             RETURNING object_id`,
+            `INSERT INTO security.objects (object_name) VALUES ($1) RETURNING object_id`,
             [objectName]
         )
         return result.rows[0]?.object_id
@@ -166,9 +172,8 @@ export class BORegistrar {
         methodName: string,
         tx: number
     ): Promise<{ methodId: number; tx: number }> {
-        // 1. Upsert method (methods table only has method_id, method_name)
         // 1. Check if method already exists
-        let existingMethod = await this.db.exeRaw(
+        const existingMethod = await this.db.exeRaw(
             'SELECT method_id FROM security.methods WHERE method_name = $1',
             [methodName]
         )
@@ -184,15 +189,18 @@ export class BORegistrar {
         }
 
         // 2. Link object to method (object_method table)
-        await this.db.exeRaw(
-            `INSERT INTO security.object_method (object_id, method_id) 
-             VALUES ($1, $2) 
-             ON CONFLICT (object_id, method_id) DO NOTHING`,
+        const existingLink = await this.db.exeRaw(
+            'SELECT object_method_id FROM security.object_method WHERE object_id = $1 AND method_id = $2',
             [objectId, methodId]
         )
+        if (!existingLink.rows[0]?.object_method_id) {
+            await this.db.exeRaw(
+                `INSERT INTO security.object_method (object_id, method_id) VALUES ($1, $2)`,
+                [objectId, methodId]
+            )
+        }
 
         // 3. Create or get transaction entry
-        // First check if transaction exists for this method + object combo
         const existingTx = await this.db.exeRaw(
             `SELECT transaction_number FROM security.transactions 
              WHERE method_id = $1 AND object_id = $2`,
@@ -203,11 +211,8 @@ export class BORegistrar {
         if (existingTx.rows[0]?.transaction_number) {
             finalTx = Number(existingTx.rows[0].transaction_number)
         } else {
-            // Insert new transaction
             await this.db.exeRaw(
-                `INSERT INTO security.transactions (transaction_number, method_id, object_id) 
-                 VALUES ($1, $2, $3) 
-                 ON CONFLICT (transaction_number) DO NOTHING`,
+                `INSERT INTO security.transactions (transaction_number, method_id, object_id) VALUES ($1, $2, $3)`,
                 [tx.toString(), methodId, objectId]
             )
         }
@@ -216,12 +221,16 @@ export class BORegistrar {
     }
 
     private async grantPermission(profileId: number, methodId: number): Promise<void> {
-        await this.db.exeRaw(
-            `INSERT INTO security.profile_method (profile_id, method_id) 
-             VALUES ($1, $2) 
-             ON CONFLICT (profile_id, method_id) DO NOTHING`,
+        const existingPerm = await this.db.exeRaw(
+            'SELECT profile_method_id FROM security.profile_method WHERE profile_id = $1 AND method_id = $2',
             [profileId, methodId]
         )
+        if (!existingPerm.rows[0]?.profile_method_id) {
+            await this.db.exeRaw(
+                `INSERT INTO security.profile_method (profile_id, method_id) VALUES ($1, $2)`,
+                [profileId, methodId]
+            )
+        }
     }
 
     /**
