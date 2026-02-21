@@ -50,12 +50,27 @@ services:
         volumes:
             # Persistencia de datos: Si borras el contenedor, los datos sobreviven aquí.
             - postgres_data:/var/lib/postgresql/data
+            # Script de inicialización de BD
+            - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
         healthcheck:
             # Comprobación de salud para que la API sepa cuándo conectarse
             test: ['CMD-SHELL', 'pg_isready -U postgres']
             interval: 5s
             timeout: 5s
             retries: 5
+        networks:
+            - toproc-net
+
+    # --- Servicio Interfaz Web de Base de Datos (Adminer) ---
+    adminer:
+        image: adminer:stable
+        container_name: toproc-adminer
+        restart: always
+        ports:
+            - '8080:8080'
+        depends_on:
+            db:
+                condition: service_healthy
         networks:
             - toproc-net
 

@@ -16,6 +16,7 @@
         "verify": "pnpm run typecheck && pnpm run build && tsx scripts/smoke-dist.ts && pnpm test",
         "start": "node --import tsx src/index.ts",
         "dev": "nodemon --legacy-watch --watch src --watch BO --watch public --ext js,ts,json,html,css --signal SIGINT --exec \"node --import tsx src/index.ts\"",
+        "dx:init": "docker compose down -v && docker compose up -d db adminer && pnpm install",
         "db": "node --import tsx scripts/db/index.ts",
         "hashpw": "tsx scripts/hash-password.ts",
         "bo": "node --import tsx scripts/bo/index.ts",
