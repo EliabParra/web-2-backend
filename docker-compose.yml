@@ -63,7 +63,7 @@ services:
 
     # --- Servicio Interfaz Web de Base de Datos (Adminer) ---
     adminer:
-        image: adminer:stable
+        image: adminer:latest
         container_name: toproc-adminer
         restart: always
         ports:
