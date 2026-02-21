@@ -92,7 +92,7 @@ export class SecurityManager {
         if (action === 'list') {
             const rows = await this.db.exeRaw(`
                 SELECT u.user_id, u.username, p.profile_name,
-                       u.created_at::date as created
+                       u.user_created_at::date as created
                 FROM security.users u
                 LEFT JOIN security.profiles p ON u.profile_id = p.profile_id
                 ORDER BY u.user_id

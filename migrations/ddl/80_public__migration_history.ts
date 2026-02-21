@@ -11,6 +11,6 @@ export const _MIGRATION_HISTORY_SCHEMA = [
     );`,
 
     // Indexes
-    `CREATE UNIQUE INDEX _migration_history_filename_key ON public._migration_history USING btree (filename);`, 
-    `CREATE UNIQUE INDEX _migration_history_pkey ON public._migration_history USING btree (id);`, 
+    `CREATE UNIQUE INDEX IF NOT EXISTS _migration_history_filename_key ON public._migration_history USING btree (filename);`, 
+    `CREATE UNIQUE INDEX IF NOT EXISTS _migration_history_pkey ON public._migration_history USING btree (id);`, 
 ]
