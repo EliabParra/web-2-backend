@@ -5,7 +5,7 @@
 export const AUDIT_LOGS_SCHEMA = [
     // Table Definition
     `create table if not exists security.audit_logs (
-        id bigint not null,
+        id bigint generated always as identity,
         request_id text,
         user_id bigint,
         profile_id bigint,
