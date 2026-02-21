@@ -286,11 +286,11 @@ const app = (() => {
 
     async function sendToUser() {
         const userId = document.getElementById('emit-user-id').value.trim()
-        const event = document.getElementById('emit-user-event').value.trim()
+        const event = 'notification:send'
         const message = document.getElementById('emit-user-message').value.trim()
 
-        if (!userId || !event || !message) {
-            logEvent('error', 'Todos los campos son requeridos para emitir a usuario')
+        if (!userId || !message) {
+            logEvent('error', 'User ID y mensaje son requeridos')
             return
         }
 
@@ -328,11 +328,11 @@ const app = (() => {
     // ═══════════════════════════════════════════════════════════════════════
 
     async function sendBroadcast() {
-        const event = document.getElementById('broadcast-event').value.trim()
+        const event = 'notification:broadcast'
         const message = document.getElementById('broadcast-message').value.trim()
 
-        if (!event || !message) {
-            logEvent('error', 'Evento y mensaje son requeridos para broadcast')
+        if (!message) {
+            logEvent('error', 'Mensaje es requerido para broadcast')
             return
         }
 
@@ -520,11 +520,11 @@ const app = (() => {
     async function emitToRoom() {
         const roomName = document.getElementById('room-emit-name').value.trim()
         const namespace = document.getElementById('room-emit-namespace').value.trim() || undefined
-        const event = document.getElementById('room-emit-event').value.trim()
+        const event = 'room:message'
         const message = document.getElementById('room-emit-message').value.trim()
 
-        if (!roomName || !event || !message) {
-            logEvent('error', 'Sala, evento y mensaje son requeridos')
+        if (!roomName || !message) {
+            logEvent('error', 'Sala y mensaje son requeridos')
             return
         }
 

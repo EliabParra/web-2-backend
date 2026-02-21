@@ -95,15 +95,6 @@
                     <input type="text" id="emit-user-id" placeholder="ej: 42" />
                 </div>
                 <div class="form-group">
-                    <label>Evento</label>
-                    <input
-                        type="text"
-                        id="emit-user-event"
-                        value="notification:send"
-                        placeholder="ej: notification:send"
-                    />
-                </div>
-                <div class="form-group">
                     <label>Mensaje</label>
                     <input
                         type="text"
@@ -126,15 +117,6 @@
                     Llama a <code>ws.broadcast(event, payload)</code> a través del BO
                     NotificationBO.broadcast(). Emite a <strong>todos</strong> los clientes
                     conectados.
-                </div>
-                <div class="form-group">
-                    <label>Evento</label>
-                    <input
-                        type="text"
-                        id="broadcast-event"
-                        value="notification:broadcast"
-                        placeholder="ej: notification:broadcast"
-                    />
                 </div>
                 <div class="form-group">
                     <label>Mensaje</label>
@@ -279,15 +261,6 @@
                         type="text"
                         id="room-emit-namespace"
                         placeholder="Dejar vacío para namespace global"
-                    />
-                </div>
-                <div class="form-group">
-                    <label>Evento</label>
-                    <input
-                        type="text"
-                        id="room-emit-event"
-                        value="room:message"
-                        placeholder="Evento"
                     />
                 </div>
                 <div class="form-group">
