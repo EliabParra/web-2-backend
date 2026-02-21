@@ -6,6 +6,7 @@
  */
 const app = (() => {
     let socket = null
+    const nspSockets = {}
     let eventCount = 0
     let sentCount = 0
     let csrfToken = null
@@ -213,10 +214,67 @@ const app = (() => {
         })
     }
 
+    function connectToNamespace(namespace) {
+        if (!namespace || namespace === '/') return socket
+        if (nspSockets[namespace]) return nspSockets[namespace]
+
+        const url = getBackendUrl()
+        const nspUrl = `${url}${namespace.startsWith('/') ? '' : '/'}${namespace}`
+
+        logEvent('system', `🔌 Autoconectando a namespace: ${namespace}`)
+        
+        const newSocket = io(nspUrl, {
+            transports: ['websocket'],
+            withCredentials: true,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 2000,
+        })
+
+        newSocket.on('connect', () => {
+            logEvent('system', `✅ Conectado a namespace: ${namespace}`)
+        })
+
+        newSocket.on('disconnect', (reason) => {
+            logEvent('system', `⛔ Desconectado de namespace ${namespace}: ${reason}`)
+            delete nspSockets[namespace]
+        })
+
+        newSocket.on('connect_error', (err) => {
+            logEvent('error', `❌ Error en namespace ${namespace}: ${err.message}`)
+        })
+
+        newSocket.onAny((eventName, ...args) => {
+            if (['connect', 'disconnect', 'connect_error'].includes(eventName)) return
+
+            eventCount++
+            updateMetric('metric-events', eventCount)
+            logEvent('event', `[${namespace}] ${eventName}`, args[0])
+
+            const payload = args[0] || {}
+            const title = `[${namespace}] ${eventName}`
+            const message = payload.message || JSON.stringify(payload)
+            let type = 'info'
+
+            if (eventName.includes('success')) type = 'success'
+            if (eventName.includes('error')) type = 'error'
+
+            showToast(title, message, type)
+        })
+
+        nspSockets[namespace] = newSocket
+        return newSocket
+    }
+
     function disconnect() {
-        if (!socket) return
-        socket.disconnect()
-        socket = null
+        if (socket) {
+            socket.disconnect()
+            socket = null
+        }
+        for (const [nsp, s] of Object.entries(nspSockets)) {
+            if (s) s.disconnect()
+            delete nspSockets[nsp]
+        }
         rooms.clear()
         renderRooms()
         logEvent('system', 'Desconexión manual')
@@ -399,6 +457,10 @@ const app = (() => {
 
         const userId = localStorage.getItem('ws_user_numeric') || '0'
         const tagKey = namespace ? `${namespace}:${roomName}` : roomName
+
+        if (namespace) {
+            connectToNamespace(namespace)
+        }
 
         try {
             logEvent('system', `🏠 Solicitando unirse a sala via API: ${tagKey}`)
