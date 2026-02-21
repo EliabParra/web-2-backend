@@ -286,7 +286,6 @@ const app = (() => {
 
     async function sendToUser() {
         const userId = document.getElementById('emit-user-id').value.trim()
-        const event = 'notification:send'
         const message = document.getElementById('emit-user-message').value.trim()
 
         if (!userId || !message) {
@@ -301,7 +300,7 @@ const app = (() => {
 
             const payload = {
                 tx: 8, // Notification.send
-                params: { userId, event, message },
+                params: { userId, message },
             }
 
             const res = await fetch(`${url}/toProccess`, {
@@ -328,7 +327,6 @@ const app = (() => {
     // ═══════════════════════════════════════════════════════════════════════
 
     async function sendBroadcast() {
-        const event = 'notification:broadcast'
         const message = document.getElementById('broadcast-message').value.trim()
 
         if (!message) {
@@ -343,7 +341,7 @@ const app = (() => {
 
             const payload = {
                 tx: 9, // Notification.broadcast
-                params: { event, message },
+                params: { message },
             }
 
             const res = await fetch(`${url}/toProccess`, {
@@ -520,7 +518,6 @@ const app = (() => {
     async function emitToRoom() {
         const roomName = document.getElementById('room-emit-name').value.trim()
         const namespace = document.getElementById('room-emit-namespace').value.trim() || undefined
-        const event = 'room:message'
         const message = document.getElementById('room-emit-message').value.trim()
 
         if (!roomName || !message) {
@@ -545,7 +542,7 @@ const app = (() => {
                     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
                 },
                 credentials: 'include',
-                body: JSON.stringify({ tx: 13, params: { userId, roomName, event, message, namespace } }),
+                body: JSON.stringify({ tx: 13, params: { userId, roomName, message, namespace } }),
             })
             const json = await res.json()
             sentCount++

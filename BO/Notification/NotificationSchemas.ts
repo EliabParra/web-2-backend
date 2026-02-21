@@ -14,11 +14,9 @@ export const createNotificationSchemas = (
     return {
         send: z.object({
             userId: z.string().min(1, validation.requiredField),
-            event: z.string().min(1, validation.requiredField),
             message: z.string().min(1, validation.requiredField),
         }),
         broadcast: z.object({
-            event: z.string().min(1, validation.requiredField),
             message: z.string().min(1, validation.requiredField),
         }),
         simulate: z.object({
@@ -39,7 +37,6 @@ export const createNotificationSchemas = (
         emitRoom: z.object({
             userId: z.string().min(1, validation.requiredField),
             roomName: z.string().min(1, validation.requiredField),
-            event: z.string().min(1, validation.requiredField),
             message: z.string().min(1, validation.requiredField),
             namespace: z.string().optional(),
         }),

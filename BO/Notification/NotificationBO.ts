@@ -10,6 +10,7 @@ import {
     Inputs,
     registerNotification,
 } from './NotificationModule.js'
+import { NotificationEvents } from './NotificationEvents.js'
 
 /**
  * Business Object de prueba para el Playground de WebSocket.
@@ -37,15 +38,15 @@ export class NotificationBO extends BaseBO {
      */
     async send(params: Inputs.SendInput): Promise<ApiResponse> {
         return this.exec<Inputs.SendInput, any>(params, NotificationSchemas.send, async (data) => {
-            this.log.debug('emitToUser', { userId: data.userId, event: data.event })
+            this.log.debug('emitToUser', { userId: data.userId, event: NotificationEvents.SEND })
 
-            this.ws.emitToUser(data.userId, data.event, {
+            this.ws.emitToUser(data.userId, NotificationEvents.SEND, {
                 message: data.message,
                 timestamp: new Date().toISOString(),
             })
 
             return this.success(
-                { sent: true, userId: data.userId, event: data.event },
+                { sent: true, userId: data.userId },
                 this.notificationMessages.send
             )
         })
@@ -60,15 +61,15 @@ export class NotificationBO extends BaseBO {
             params,
             NotificationSchemas.broadcast,
             async (data) => {
-                this.log.debug('broadcast', { event: data.event })
+                this.log.debug('broadcast', { event: NotificationEvents.BROADCAST })
 
-                this.ws.broadcast(data.event, {
+                this.ws.broadcast(NotificationEvents.BROADCAST, {
                     message: data.message,
                     timestamp: new Date().toISOString(),
                 })
 
                 return this.success(
-                    { broadcasted: true, event: data.event },
+                    { broadcasted: true },
                     this.notificationMessages.broadcast
                 )
             }
@@ -216,11 +217,11 @@ export class NotificationBO extends BaseBO {
             params,
             NotificationSchemas.emitRoom,
             async (data) => {
-                this.log.debug('emitRoom', { roomName: data.roomName, event: data.event })
+                this.log.debug('emitRoom', { roomName: data.roomName, event: NotificationEvents.ROOM_MESSAGE })
 
                 this.ws.emitToRoom(
                     data.roomName,
-                    data.event,
+                    NotificationEvents.ROOM_MESSAGE,
                     {
                         message: data.message,
                         from: data.userId,
@@ -230,7 +231,7 @@ export class NotificationBO extends BaseBO {
                 )
 
                 return this.success(
-                    { emitted: true, roomName: data.roomName, event: data.event },
+                    { emitted: true, roomName: data.roomName },
                     this.notificationMessages.emitRoom
                 )
             }
