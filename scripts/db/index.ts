@@ -17,12 +17,13 @@ import { AdminSeeder } from './seeders/admin.js'
 import { ProfileSeeder } from './seeders/profiles.js'
 import { BORegistrar } from './seeders/bo-register.js'
 import { DatabaseResetter } from './seeders/resetter.js'
+import { SecurityManager } from './seeders/security-manager.js'
 
 // Setup paths for ESM
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-type MenuAction = 'sync' | 'introspect' | 'seed' | 'bo' | 'reset' | 'print' | 'exit'
+type MenuAction = 'sync' | 'introspect' | 'seed' | 'bo' | 'reset' | 'print' | 'manage' | 'exit'
 
 async function main() {
     console.log(colors.green(colors.bold('🚀 ToProc DB CLI')) + ' v2.0')
@@ -56,6 +57,7 @@ async function main() {
                 'introspect - Generate schemas from database (DB → Code)',
                 'seed       - Populate initial data (profiles, admin, BOs)',
                 'bo         - Sync BO methods (register new, find orphans)',
+                'manage     - Manage security data (users, profiles, menus...)',
                 'reset      - Drop and recreate all tables',
                 'exit       - Cancel',
             ],
@@ -234,6 +236,13 @@ async function main() {
                 console.log(colors.gray(`   Methods registered: ${result.added}`))
                 console.log(colors.gray(`   Methods pruned: ${result.pruned}`))
                 console.log(colors.gray(`   Orphans found: ${result.orphaned.length}`))
+                break
+            }
+
+            case 'manage': {
+                console.log(colors.cyan('\n🔐 Security Manager...'))
+                const manager = new SecurityManager(db)
+                await manager.run()
                 break
             }
 

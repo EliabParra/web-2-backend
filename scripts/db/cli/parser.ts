@@ -81,6 +81,7 @@ export function parseCliArgs(
     if (getBool('print')) config.action = 'print'
     if (getBool('apply')) config.action = 'apply'
     if (getBool('bo')) config.action = 'bo'
+    if (getBool('manage')) config.action = 'manage'
 
     if (getBool('with-data', 'data')) config.security!.introspectData = true
 
@@ -161,6 +162,7 @@ ${'Actions:'.cyan.bold}
   introspect  Generate schemas from database (DB → Code)
   seed        Populate initial data (profiles, admin)
   bo          Sync BO methods (Code ↔ DB)
+  manage      Manage security data interactively
   reset       Drop and recreate all tables
   print       Print SQL without executing
 
