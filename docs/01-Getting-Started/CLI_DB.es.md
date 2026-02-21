@@ -42,12 +42,13 @@ scripts/db/
 ├── core/
 │   ├── introspector.ts    # DB → Code (Introspección)
 │   └── MigrationRunner.ts # Code → DB (Sincronización)
-├── schemas/           # 📁 ESQUEMAS (Fuente de la Verdad)
-│   ├── 01_base.ts     # Tablas del sistema (Manual)
-│   ├── 10_users.ts    # Extensiones de usuarios (Manual)
-│   ├── 80_auto_x.ts   # Auto-generados (Introspect)
-│   └── 90_audit.ts    # Mantenimiento (Manual)
 └── seeders/           # Lógica de población de datos
+migrations/            # 📁 ESQUEMAS Y DATOS (Fuente de la Verdad)
+├── ddl/               # Definición de Datos (Tablas e Índices)
+│   ├── 01_base.ts     # Tablas del sistema (Manual)
+│   └── 80_auto_x.ts   # Auto-generados (Introspect)
+└── dml/               # Manipulación de Datos (Semillas)
+    └── 91_data_x.ts   # Datos Iniciales (Manual/Introspect)
 ```
 
 ---
@@ -56,13 +57,15 @@ scripts/db/
 
 ### Cómo Funciona
 
-1. El CLI lee todos los archivos `.ts` en `scripts/db/schemas/`
+1. El CLI lee todos los archivos `.ts` en `migrations/ddl/`
 2. Los ordena numéricamente.
-3. Ejecuta cada sentencia SQL en orden idempotente.
+3. Ejecuta cada sentencia SQL guardando un historial transaccional (`_migration_history`).
 
 ### Estándar de Nombres (Naming Convention)
 
-Para mantener el orden, usamos prefijos numéricos estrictos:
+Para mantener el orden y prevenir conflictos, usamos prefijos numéricos estrictos:
+
+#### DDL (Esquemas) en `migrations/ddl/`
 
 | Rango   | Uso                                        | Modificable |
 | :------ | :----------------------------------------- | :---------- |
@@ -72,6 +75,13 @@ Para mantener el orden, usamos prefijos numéricos estrictos:
 | `50-79` | **Lógica de Negocio Custom**               | Manual      |
 | `80-89` | **Auto-Generados** (Introspect)            | **Auto**    |
 | `90-99` | **Mantenimiento / Auditoría**              | Manual      |
+
+#### DML (Datos) en `migrations/dml/`
+
+| Rango    | Uso                                      | Modificable |
+| :------- | :--------------------------------------- | :---------- |
+| `90_`    | **Semillas Auto-Generadas** (Introspect) | **Auto**    |
+| `91-99_` | **Semillas Core Estáticas**              | Manual      |
 
 > ⚠️ Los archivos en `80-89` serán **SOBRESCRITOS** por el comando `introspect` si la tabla cambia. Los demás son protegidos.
 
@@ -327,11 +337,12 @@ pnpm run verify           # Quality gate
 
 ## Archivos Clave
 
-| Archivo                    | Propósito                  |
-| -------------------------- | -------------------------- |
-| `scripts/db/schemas/*.ts`  | Tus definiciones de tablas |
-| `scripts/db/core/db.ts`    | Clase de conexión          |
-| `scripts/db/cli/parser.ts` | Parser de argumentos       |
+| Archivo                    | Propósito                   |
+| -------------------------- | --------------------------- |
+| `migrations/ddl/*.ts`      | Tus definiciones de tablas  |
+| `migrations/dml/*.ts`      | Semillas de datos iniciales |
+| `scripts/db/core/db.ts`    | Clase de conexión           |
+| `scripts/db/cli/parser.ts` | Parser de argumentos        |
 
 ---
 

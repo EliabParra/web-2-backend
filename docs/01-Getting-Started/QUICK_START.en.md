@@ -23,25 +23,16 @@ This is the project standard. You don't need to install Node.js or Postgres on y
 
 ### 2. Start the Environment
 
-Run this command in the project root:
+Run this command in the project root to download images, boot up the DB, and run system migrations automatically:
 
 ```bash
-docker-compose up -d
+pnpm run dx:init
 ```
 
-> _This will download the images and start the API and Database._
-
-### 3. Initialize Database (First time only)
-
-Once the containers are up (green in Docker Desktop), run:
-
-```bash
-docker-compose exec api pnpm run db:init -- --yes --profile development
-```
-
-### 4. Start Developing!
+### 3. Start Developing!
 
 - Your API is at: `http://localhost:3000`
+- DB Web Interface is at: `http://localhost:8080`
 - **Hot Reload**: Edit any file in `src/` and read. The server will restart automatically.
 - **Logs**: To see what's happening, use `docker-compose logs -f`.
 
@@ -69,13 +60,13 @@ Follow the detailed step-by-step guide:
 
 ### Common Commands
 
-| Action               | 🐳 Docker                                | 🛠️ Manual          |
-| :------------------- | :--------------------------------------- | :----------------- |
-| **Start Server**     | `docker-compose up -d`                   | `pnpm run dev`     |
-| **View Logs**        | `docker-compose logs -f`                 | (In your terminal) |
-| **Create BO/Schema** | `docker-compose exec api pnpm run bo`    | `pnpm run bo`      |
-| **Tests**            | `docker-compose exec api pnpm test`      | `pnpm test`        |
-| **Audit**            | `docker-compose exec api pnpm run audit` | `pnpm run audit`   |
+| Action               | 🐳 Docker                | 🛠️ Manual          |
+| :------------------- | :----------------------- | :----------------- |
+| **Start Server**     | `docker-compose up -d`   | `pnpm run dev`     |
+| **View Logs**        | `docker-compose logs -f` | (In your terminal) |
+| **Generate Schemas** | `pnpm run db`            | `pnpm run db`      |
+| **Sync BOs**         | `pnpm run db bo`         | `pnpm run db bo`   |
+| **Tests**            | `pnpm test`              | `pnpm test`        |
 
 ### Pro Tips
 

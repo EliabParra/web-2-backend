@@ -2,24 +2,23 @@
 
 You installed everything and configured the environment. Now let's see what happens when you "push the power button".
 
-## 1. Database Initialization (`pnpm run db:init`)
+## 1. Database Initialization (`pnpm run dx:init`)
 
 This command is critical for the first run.
 
 ### What exactly does it do?
 
-1.  **Connection**: Connects to your Postgres using credentials from `.env`.
-2.  **Verification**: Checks if tables already exist.
-3.  **SQL Execution**: Runs initialization scripts located in `scripts/db-init/schema/`.
-    - `audit.ts`: Creates `audit_log` table.
-    - `auth.ts`: Creates `users`, `profiles`, `sessions` tables.
-    - `base.ts`: System base tables.
-4.  **Generators**: Creates dynamic files if necessary (e.g. automatic database documentation).
+1.  **Docker Orchestration**: Spins up the PostgreSQL container and Adminer web interface using `docker-compose`.
+2.  **Health Verification**: Waits for the database to be "Healthy" and ready to accept TCP connections.
+3.  **DB CLI Execution**: Triggers the secure internal initialization command invoking `pnpm run db:init` or by executing `MigrationRunner`.
+    - `01_base.ts`: Creates system base tables (`security`)
+    - `89_schema_security_audit.ts`: Creates `audit_log` table.
+4.  **Generators**: Creates dynamic files if necessary (e.g. automatic database documentation) by interacting with `/migrations`.
 
 ### Usage
 
 ```bash
-pnpm run db:init
+pnpm run dx:init
 ```
 
 **Expected Output:**

@@ -42,12 +42,13 @@ scripts/db/
 ├── core/
 │   ├── introspector.ts    # DB → Code (Introspection)
 │   └── MigrationRunner.ts # Code → DB (Synchronization)
-├── schemas/           # 📁 SCHEMAS (Source of Truth)
-│   ├── 01_base.ts     # System tables (Manual)
-│   ├── 10_users.ts    # User extensions (Manual)
-│   ├── 80_auto_x.ts   # Auto-generated (Introspect)
-│   └── 90_audit.ts    # Maintenance (Manual)
 └── seeders/           # Data population logic
+migrations/            # 📁 SCHEMAS & DATA (Source of Truth)
+├── ddl/               # Data Definition (Tables & Indexes)
+│   ├── 01_base.ts     # System tables (Manual)
+│   └── 80_auto_x.ts   # Auto-generated (Introspect)
+└── dml/               # Data Manipulation (Seeds)
+    └── 91_data_x.ts   # Initial Data (Manual/Introspect)
 ```
 
 ---
@@ -56,13 +57,15 @@ scripts/db/
 
 ### How It Works
 
-1. The CLI reads all `.ts` files in `scripts/db/schemas/`
+1. The CLI reads all `.ts` files in `migrations/ddl/`
 2. Orders them numerically.
-3. Executes each SQL statement using idempotent logic.
+3. Executes each SQL statement using a transactional history (`_migration_history`).
 
 ### Naming Convention Standard
 
-To maintain order, we use strict numeric prefixes:
+To maintain order and prevent conflicts, we use strict numeric prefixes:
+
+#### DDL (Schemas) in `migrations/ddl/`
 
 | Range   | Usage                                 | Modifiable |
 | :------ | :------------------------------------ | :--------- |
@@ -72,6 +75,13 @@ To maintain order, we use strict numeric prefixes:
 | `50-79` | **Custom Business Logic**             | Manual     |
 | `80-89` | **Auto-Generated** (Introspect)       | **Auto**   |
 | `90-99` | **Maintenance / Audit**               | Manual     |
+
+#### DML (Data) in `migrations/dml/`
+
+| Range    | Usage                                 | Modifiable |
+| :------- | :------------------------------------ | :--------- |
+| `90_`    | **Auto-Generated Seeds** (Introspect) | **Auto**   |
+| `91-99_` | **Static Core Seeds**                 | Manual     |
 
 > ⚠️ Files in `80-89` will be **OVERWRITTEN** by `introspect` if the table changes. Others are protected.
 
@@ -327,11 +337,12 @@ pnpm run verify           # Quality gate
 
 ## Key Files
 
-| File                       | Purpose                |
-| -------------------------- | ---------------------- |
-| `scripts/db/schemas/*.ts`  | Your table definitions |
-| `scripts/db/core/db.ts`    | Connection class       |
-| `scripts/db/cli/parser.ts` | Argument parser        |
+| File                       | Purpose                 |
+| -------------------------- | ----------------------- |
+| `migrations/ddl/*.ts`      | Your table definitions  |
+| `migrations/dml/*.ts`      | Your initial data seeds |
+| `scripts/db/core/db.ts`    | Connection class        |
+| `scripts/db/cli/parser.ts` | Argument parser         |
 
 ---
 

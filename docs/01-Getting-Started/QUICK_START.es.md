@@ -23,25 +23,16 @@ Este es el estándar del proyecto. No necesitas instalar Node.js ni Postgres en 
 
 ### 2. Iniciar el Entorno
 
-Ejecuta este comando en la raíz del proyecto:
+Ejecuta este comando en la raíz del proyecto para descargar las imágenes, levantar la BD y ejecutar las migraciones del sistema automáticamente:
 
 ```bash
-docker-compose up -d
+pnpm run dx:init
 ```
 
-> _Esto descargará las imágenes y levantará la API y la Base de Datos._
-
-### 3. Inicializar Base de Datos (Solo la primera vez)
-
-Una vez que los contenedores estén arriba (verde en Docker Desktop), ejecuta:
-
-```bash
-docker-compose exec api pnpm run db:init -- --yes --profile development
-```
-
-### 4. ¡A Desarrollar!
+### 3. ¡A Desarrollar!
 
 - Tu API está en: `http://localhost:3000`
+- Interfaz Gráfica BD: `http://localhost:8080`
 - **Hot Reload**: Edita cualquier archivo en `src/` y guarda. El servidor se reiniciará automáticamente.
 - **Logs**: Para ver qué pasa, usa `docker-compose logs -f`.
 
@@ -69,13 +60,13 @@ Sigue la guía detallada paso a paso:
 
 ### Comandos Comunes
 
-| Acción              | 🐳 Docker                                | 🛠️ Manual        |
-| :------------------ | :--------------------------------------- | :--------------- |
-| **Iniciar Server**  | `docker-compose up -d`                   | `pnpm run dev`   |
-| **Ver Logs**        | `docker-compose logs -f`                 | (En tu terminal) |
-| **Crear BO/Schema** | `docker-compose exec api pnpm run bo`    | `pnpm run bo`    |
-| **Tests**           | `docker-compose exec api pnpm test`      | `pnpm test`      |
-| **Auditoría**       | `docker-compose exec api pnpm run audit` | `pnpm run audit` |
+| Acción               | 🐳 Docker                | 🛠️ Manual        |
+| :------------------- | :----------------------- | :--------------- |
+| **Iniciar Server**   | `docker-compose up -d`   | `pnpm run dev`   |
+| **Ver Logs**         | `docker-compose logs -f` | (En tu terminal) |
+| **Generar Esquemas** | `pnpm run db`            | `pnpm run db`    |
+| **Sincronizar BOs**  | `pnpm run db bo`         | `pnpm run db bo` |
+| **Tests**            | `pnpm test`              | `pnpm test`      |
 
 ### Tips Pro
 

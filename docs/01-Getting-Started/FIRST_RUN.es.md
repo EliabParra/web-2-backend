@@ -2,24 +2,23 @@
 
 Ya instalaste todo y configuraste el entorno. Ahora vamos a ver qué pasa cuando "aprietas el botón de encendido".
 
-## 1. Inicialización de Base de Datos (`pnpm run db:init`)
+## 1. Inicialización de Base de Datos (`pnpm run dx:init`)
 
 Este comando es crítico para la primera vez.
 
 ### ¿Qué hace exactamente?
 
-1.  **Conexión**: Se conecta a tu Postgres usando las credenciales de `.env`.
-2.  **Verificación**: Revisa si ya existen tablas.
-3.  **Ejecución de SQL**: Corre scripts de inicialización ubicados en `scripts/db-init/schema/`.
-    - `audit.ts`: Crea tabla `audit_log`.
-    - `auth.ts`: Crea tablas `users`, `profiles`, `sessions`.
-    - `base.ts`: Tablas base del sistema.
-4.  **Generadores**: Crea archivos dinámicos si es necesario (e.g. documentación automática de base de datos).
+1.  **Docker Orchestration**: Levanta el contenedor de PostgreSQL y la interfaz web Adminer a través de `docker-compose`.
+2.  **Verificación Health**: Espera a que la base de datos esté "Healthy" y lista para aceptar conexiones TCP.
+3.  **Ejecución DB CLI**: Dispara el comando interno de inicialización segura invocando `pnpm run db:init` o ejecutando el `MigrationRunner`.
+    - `01_base.ts`: Crea tablas base del sistema (`security`)
+    - `89_schema_security_audit.ts`: Crea la tabla `audit_log`.
+4.  **Generadores**: Crea archivos dinámicos si es necesario (e.g. documentación automática de base de datos) interactuando con `/migrations`.
 
 ### Uso
 
 ```bash
-pnpm run db:init
+pnpm run dx:init
 ```
 
 **Salida Esperada:**
