@@ -1,4 +1,4 @@
-import { IDatabase, ILogger, IContainer } from '../../types/core.js'
+import { IDatabase, ILogger, IContainer, IMenuProvider } from '../../types/core.js'
 import {
     SecuritySubsystem,
     SecurityMenu,
@@ -13,14 +13,15 @@ import {
 import { SecurityQueries } from './SecurityQueries.js'
 
 /**
- * MenuProvider & Security Structure Manager
- * Responsible for:
- * 1. Loading and caching the security structure (Subsystems, Menus, Options).
- * 2. Managing Profile Assignments (Visibility).
- * 3. Building the Menu Structure for a specific profile.
- * 4. Providing CRUD operations for structure and assignments (Dual Write).
+ * MenuProvider — Proveedor de estructura de menús y gestión de asignaciones.
+ *
+ * Responsabilidades:
+ * 1. Carga y cachea la estructura de seguridad (Subsistemas, Menús, Opciones).
+ * 2. Gestiona asignaciones de perfil (visibilidad).
+ * 3. Construye la estructura de menús filtrada para un perfil.
+ * 4. CRUD con Dual Write (DB + memoria).
  */
-export class MenuProvider {
+export class MenuProvider implements IMenuProvider {
     private db: IDatabase
     private log: ILogger
     // Structural Maps

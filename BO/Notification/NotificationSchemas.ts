@@ -6,7 +6,7 @@ import { NotificationMessages } from './NotificationMessages.js'
  */
 export type NotificationMessagesSet = typeof NotificationMessages.es
 
-export const createNotificationSchemas = (
+const createNotificationSchemas = (
     messages: NotificationMessagesSet = NotificationMessages.es
 ) => {
     const validation = messages.validation ?? NotificationMessages.es.validation

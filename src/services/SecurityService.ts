@@ -1,18 +1,26 @@
-import type { IContainer, II18nService, ILogger, ISecurityService } from '../types/index.js'
-import { TransactionMapper } from '../core/transaction/TransactionMapper.js'
-import { PermissionGuard } from '../core/security/PermissionGuard.js'
-import { MenuProvider } from '../core/security/MenuProvider.js'
-import { TransactionExecutor } from '../core/transaction/TransactionExecutor.js'
+import type {
+    IContainer,
+    II18nService,
+    ILogger,
+    ISecurityService,
+    ITransactionMapper,
+    ITransactionExecutor,
+    IPermissionProvider,
+    IMenuProvider,
+} from '../types/index.js'
 import { MenuStructure } from '../types/security.js'
 
 /**
  * Servicio de seguridad y fachada principal del framework.
  *
  * Coordina los subsistemas de seguridad:
- * - **TransactionMapper** — Resuelve códigos de transacción a rutas BO/método
- * - **PermissionGuard** — Verifica permisos con cache en memoria (O(1))
- * - **TransactionExecutor** — Ejecuta métodos de negocio
- * - **MenuProvider** — Estructura de menús filtrada por perfil
+ * - **ITransactionMapper** — Resuelve códigos de transacción a rutas BO/método
+ * - **IPermissionProvider** — Verifica permisos con cache en memoria (O(1))
+ * - **ITransactionExecutor** — Ejecuta métodos de negocio
+ * - **IMenuProvider** — Estructura de menús filtrada por perfil
+ *
+ * Todas las dependencias se resuelven mediante interfaces del contenedor IoC,
+ * respetando el principio de inversión de dependencias (DIP).
  *
  * @example
  * ```typescript
@@ -26,10 +34,10 @@ import { MenuStructure } from '../types/security.js'
  * ```
  */
 export class SecurityService implements ISecurityService {
-    private mapper: TransactionMapper
-    private guard: PermissionGuard
-    private executor: TransactionExecutor
-    private menuProvider: MenuProvider
+    private mapper: ITransactionMapper
+    private guard: IPermissionProvider
+    private executor: ITransactionExecutor
+    private menuProvider: IMenuProvider
 
     private i18n: II18nService
     private log: ILogger
@@ -49,10 +57,10 @@ export class SecurityService implements ISecurityService {
         this.log = container.resolve<ILogger>('log').child({ category: 'Security' })
         this.i18n = container.resolve<II18nService>('i18n')
 
-        this.mapper = container.resolve<TransactionMapper>('transactionMapper')
-        this.executor = container.resolve<TransactionExecutor>('transactionExecutor')
-        this.guard = container.resolve<PermissionGuard>('permissionGuard')
-        this.menuProvider = container.resolve<MenuProvider>('menuProvider')
+        this.mapper = container.resolve<ITransactionMapper>('transactionMapper')
+        this.executor = container.resolve<ITransactionExecutor>('transactionExecutor')
+        this.guard = container.resolve<IPermissionProvider>('permissionGuard')
+        this.menuProvider = container.resolve<IMenuProvider>('menuProvider')
     }
 
     /**

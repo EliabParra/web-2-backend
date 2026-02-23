@@ -63,5 +63,6 @@ export type {
     ITransactionExecutor,
     TransactionRoute,
     IPermissionProvider,
+    IMenuProvider,
     ISecurityContext,
 } from './core.js'

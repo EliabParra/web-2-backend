@@ -1,6 +1,7 @@
 import { Pool } from 'pg'
 import type { AppMessages } from '../locales/es.js'
 import type { AppRequest, AppResponse } from './http.js'
+import type { MenuStructure, SecuritySubsystem, SecurityMenu, SecurityOption } from './security.js'
 
 export type { AppMessages }
 
@@ -459,6 +460,69 @@ export interface IPermissionProvider {
      * @param methodName - Nombre del método
      */
     check(profileId: number | null, objectName: string, methodName: string): boolean
+
+    /**
+     * Otorga un permiso dinámicamente (Dual Write: DB + memoria).
+     *
+     * @param profileId - ID del perfil
+     * @param objectName - Nombre del objeto
+     * @param methodName - Nombre del método
+     * @returns `true` si el permiso se otorgó correctamente
+     */
+    grant(profileId: number, objectName: string, methodName: string): Promise<boolean>
+
+    /**
+     * Revoca un permiso dinámicamente (Dual Write: DB + memoria).
+     *
+     * @param profileId - ID del perfil
+     * @param objectName - Nombre del objeto
+     * @param methodName - Nombre del método
+     * @returns `true` si el permiso se revocó correctamente
+     */
+    revoke(profileId: number, objectName: string, methodName: string): Promise<boolean>
+}
+
+/**
+ * Proveedor de estructura de menús y gestión de asignaciones.
+ * Implementado por `MenuProvider` para carga en memoria y CRUD dual-write.
+ */
+export interface IMenuProvider {
+    /** Carga la estructura de menús y asignaciones desde la base de datos. */
+    load(): Promise<void>
+
+    /**
+     * Construye la estructura de menús filtrada por perfil.
+     *
+     * @param profileId - ID del perfil
+     * @returns Árbol de menús con subsistemas, menús y opciones visibles
+     */
+    getStructure(profileId: number): Promise<MenuStructure>
+
+    /** Crea un subsistema. */
+    createSubsystem(name: string): Promise<SecuritySubsystem>
+    /** Elimina un subsistema y recarga la estructura. */
+    deleteSubsystem(id: number): Promise<boolean>
+
+    /** Asigna un subsistema a un perfil. */
+    assignSubsystem(profileId: number, subsystemId: number): Promise<void>
+    /** Revoca un subsistema de un perfil. */
+    revokeSubsystem(profileId: number, subsystemId: number): Promise<void>
+
+    /** Crea un menú dentro de un subsistema. */
+    createMenu(name: string, subsystemId: number): Promise<SecurityMenu>
+    /** Asigna un menú a un perfil. */
+    assignMenu(profileId: number, menuId: number): Promise<void>
+    /** Revoca un menú de un perfil. */
+    revokeMenu(profileId: number, menuId: number): Promise<void>
+
+    /** Crea una opción, opcionalmente enlazada a un método. */
+    createOption(name: string, methodId?: number): Promise<SecurityOption>
+    /** Enlaza una opción a un menú. */
+    assignOptionToMenu(menuId: number, optionId: number): Promise<void>
+    /** Asigna una opción a un perfil. */
+    assignOptionToProfile(profileId: number, optionId: number): Promise<void>
+    /** Revoca una opción de un perfil. */
+    revokeOptionFromProfile(profileId: number, optionId: number): Promise<void>
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -1,16 +1,5 @@
-import {
-    BaseBO,
-    ApiResponse,
-    IContainer,
-    IWebSocketService,
-} from '../../src/core/business-objects/index.js'
-import {
-    NotificationMessages,
-    NotificationSchemas,
-    Inputs,
-    registerNotification,
-} from './NotificationModule.js'
-import { NotificationEvents } from './NotificationEvents.js'
+import { BaseBO, ApiResponse, IContainer, IWebSocketService } from '../../src/core/business-objects/index.js'
+import { NotificationMessages, NotificationSchemas, NotificationEvents, Inputs } from './NotificationModule.js'
 
 /**
  * Business Object de prueba para el Playground de WebSocket.
@@ -23,7 +12,6 @@ export class NotificationBO extends BaseBO {
 
     constructor(container: IContainer) {
         super(container)
-        registerNotification(container)
         this.ws = container.resolve<IWebSocketService>('websocket')
         this.log.child({ bo: 'NotificationBO' })
     }
