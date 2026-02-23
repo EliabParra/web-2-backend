@@ -116,7 +116,7 @@ export class ConfigBuilder {
             }
         }
 
-        if (action === 'seed' || action === 'sync' || action === 'bo') {
+        if (action === 'seed' || action === 'sync') {
             if (cliConfig.security?.registerBo === undefined) {
                 config.security.registerBo = await this.interactor.confirm(
                     'Auto-register Business Object methods?',

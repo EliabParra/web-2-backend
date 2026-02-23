@@ -244,7 +244,7 @@ export class BORegistrar {
     }): Promise<{
         added: number
         pruned: number
-        orphaned: Array<{ objectName: string; methodName: string; tx: number }>
+        orphaned: Array<{ methodId: number; objectName: string; methodName: string; tx: number }>
     }> {
         console.log(`\n🔄 Syncing Business Objects...`.cyan)
 
@@ -307,10 +307,20 @@ export class BORegistrar {
             added,
             pruned: options.prune && !options.dryRun ? orphaned.length : 0,
             orphaned: orphaned.map((m) => ({
+                methodId: m.methodId,
                 objectName: m.objectName,
                 methodName: m.methodName,
                 tx: m.tx,
             })),
+        }
+    }
+
+    /**
+     * Delete multiple methods directly by their IDs
+     */
+    async executePrune(methodIds: number[]): Promise<void> {
+        for (const id of methodIds) {
+            await this.deleteMethod(id)
         }
     }
 

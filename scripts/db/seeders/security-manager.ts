@@ -2,9 +2,10 @@ import { Database } from '../core/db.js'
 import * as p from '@clack/prompts'
 import bcrypt from 'bcrypt'
 import colors from 'colors'
-import { writeFileSync, readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import Table from 'cli-table3'
 import { ZodType } from 'zod'
 import { PermissionMatrixWriter } from '../../../src/core/security/excel/PermissionMatrixWriter.js'
 import { PermissionMatrixReader } from '../../../src/core/security/excel/PermissionMatrixReader.js'
@@ -911,14 +912,15 @@ export class SecurityManager {
         if (codeBOs.length === 0) {
             console.log(colors.yellow('   No se encontraron BOs en BO/'))
         } else {
-            console.log(colors.gray('   ┌──────────────────────────────────────────────────┐'))
-            console.log(colors.gray(`   │ ${'Objeto'.padEnd(18)} │ ${'Métodos'.padEnd(6)} │ ${'Detalle'.padEnd(20)} │`))
-            console.log(colors.gray('   ├────────────────────┼────────┼──────────────────────┤'))
+            const tableCode = new Table({
+                head: [colors.gray('Objeto'), colors.gray('Métodos'), colors.gray('Detalle')],
+                style: { border: ['gray'] }
+            })
             for (const bo of codeBOs) {
                 const detail = bo.methods.slice(0, 3).join(', ') + (bo.methods.length > 3 ? '...' : '')
-                console.log(`   │ ${bo.objectName.padEnd(18)} │ ${String(bo.methods.length).padStart(4).padEnd(6)} │ ${detail.padEnd(20)} │`)
+                tableCode.push([bo.objectName, bo.methods.length, detail])
             }
-            console.log(colors.gray('   └──────────────────────────────────────────────────┘'))
+            console.log(tableCode.toString().replace(/^/gm, '   '))
         }
 
         // 6. Tabla: En base de datos
@@ -932,14 +934,15 @@ export class SecurityManager {
                 dbBOs.get(m.objectName)!.push(m.methodName)
             }
 
-            console.log(colors.gray('   ┌──────────────────────────────────────────────────┐'))
-            console.log(colors.gray(`   │ ${'Objeto'.padEnd(18)} │ ${'Métodos'.padEnd(6)} │ ${'Detalle'.padEnd(20)} │`))
-            console.log(colors.gray('   ├────────────────────┼────────┼──────────────────────┤'))
+            const tableDB = new Table({
+                head: [colors.gray('Objeto'), colors.gray('Métodos'), colors.gray('Detalle')],
+                style: { border: ['gray'] }
+            })
             for (const [objName, methods] of dbBOs) {
                 const detail = methods.slice(0, 3).join(', ') + (methods.length > 3 ? '...' : '')
-                console.log(`   │ ${objName.padEnd(18)} │ ${String(methods.length).padStart(4).padEnd(6)} │ ${detail.padEnd(20)} │`)
+                tableDB.push([objName, methods.length, detail])
             }
-            console.log(colors.gray('   └──────────────────────────────────────────────────┘'))
+            console.log(tableDB.toString().replace(/^/gm, '   '))
         }
 
         // 7. Resumen comparativo

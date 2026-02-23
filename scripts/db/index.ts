@@ -232,6 +232,22 @@ async function main() {
                     dryRun: config.app.dryRun,
                 })
 
+                if (result.orphaned.length > 0 && config.app.interactive && !config.security.pruneMethods && !config.app.dryRun) {
+                    const interactor = new Interactor()
+                    const prune = await interactor.confirm(
+                        `Found ${result.orphaned.length} orphaned methods in DB. Prune them?`,
+                        false
+                    )
+                    interactor.close()
+
+                    if (prune) {
+                        console.log(colors.cyan('\n🗑️  Pruning orphaned methods...'))
+                        await registrar.executePrune(result.orphaned.map((m) => m.methodId))
+                        result.pruned = result.orphaned.length
+                        console.log(colors.green(`   ✅ Pruned ${result.pruned} methods.`))
+                    }
+                }
+
                 console.log(colors.green(`\n✅ BO Sync complete!`))
                 console.log(colors.gray(`   Methods registered: ${result.added}`))
                 console.log(colors.gray(`   Methods pruned: ${result.pruned}`))
