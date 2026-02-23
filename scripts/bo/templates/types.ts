@@ -1,9 +1,24 @@
 /**
  * Genera el archivo Types
  */
-export function templateTypes(objectName: string) {
+export function templateTypes(objectName: string, methods: string[] = []) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
+
+    if (methods.length === 0) {
+        return `/**
+ * Definiciones de tipos para ${pascalName}
+ */
+
+export namespace ${pascalName} {
+    export interface Repository {}
+    export interface Service {}
+}
+
+export type I${pascalName}Repository = ${pascalName}.Repository
+export type I${pascalName}Service = ${pascalName}.Service
+`
+    }
 
     return `/**
  * Definiciones de tipos para ${pascalName}
@@ -94,3 +109,4 @@ export type I${pascalName}Repository = ${pascalName}.Repository
 export type I${pascalName}Service = ${pascalName}.Service
 `
 }
+

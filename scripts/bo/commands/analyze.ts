@@ -2,7 +2,7 @@ import { Context } from '../core/ctx.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { parseMethodsFromBO } from '../templates/bo.js'
-import 'colors'
+import colors from 'colors'
 
 interface AnalysisResult {
     name: string
@@ -38,22 +38,25 @@ export class AnalyzeCommand {
     constructor(private ctx: Context) {}
 
     async run(objectName?: string) {
-        console.log(`\n🔍 BO Health Analyzer`.cyan.bold)
-        console.log('══════════════════════════════════════════════════'.gray)
+        const { Interactor } = await import('../interactor/ui.js')
+        const ui = new Interactor()
+
+        ui.divider()
+        ui.info('🔍 BO Health Analyzer')
 
         if (objectName) {
-            await this.analyzeOne(objectName)
+            await this.analyzeOne(objectName, ui)
         } else {
-            await this.analyzeAll()
+            await this.analyzeAll(ui)
         }
     }
 
-    private async analyzeOne(objectName: string) {
+    private async analyzeOne(objectName: string, ui: any) {
         const result = await this.analyze(objectName)
-        this.printResult(result)
+        this.printResult(result, ui)
     }
 
-    private async analyzeAll() {
+    private async analyzeAll(ui: any) {
         const boRoot = path.join(this.ctx.config.rootDir, 'BO')
         const bos: string[] = []
 
@@ -65,45 +68,50 @@ export class AnalyzeCommand {
                 }
             }
         } catch {
-            console.log(`⚠️ BO directory not found. Run: pnpm run bo new <Name>`)
+            ui.warn(`BO directory not found. Run: pnpm run bo new <Name>`)
             return
         }
 
         if (bos.length === 0) {
-            console.log(`ℹ️ No BOs found. Run: pnpm run bo new <Name>`)
+            ui.info(`No BOs found. Run: pnpm run bo new <Name>`)
             return
         }
 
-        console.log(`\n📊 Analyzing ${bos.length} Business Objects...\n`)
+        ui.startSpinner(`Analyzing ${bos.length} Business Objects...`)
 
         let okCount = 0
         let warnCount = 0
         let errorCount = 0
+        
+        const summaryRows: string[][] = []
 
         for (const bo of bos) {
             const result = await this.analyze(bo)
 
             const icon = result.status === 'ok' ? '✅' : result.status === 'warning' ? '⚠️' : '❌'
-
             const fileCount = result.files.filter((f) => f.exists).length
             const methodCount = result.methods.length
 
-            console.log(
-                `${icon} ${result.name.padEnd(20)} ${fileCount}/9 files  ${methodCount} methods`
-            )
+            summaryRows.push([
+                 icon,
+                 result.name,
+                 `${fileCount}/9 files`,
+                 `${methodCount} methods`
+            ])
 
             if (result.status === 'ok') okCount++
             else if (result.status === 'warning') warnCount++
             else errorCount++
         }
 
-        console.log('')
-        console.log('──────────────────────────────────────────────────'.gray)
-        console.log(`   ✅ OK: ${okCount}   ⚠️ Warnings: ${warnCount}   ❌ Errors: ${errorCount}`)
-        console.log('')
+        ui.stopSpinner(true)
+        ui.table(['Status', 'BO', 'Files Found', 'Methods'], summaryRows)
+
+        ui.divider()
+        ui.info(`✅ OK: ${okCount}   ⚠️ Warnings: ${warnCount}   ❌ Errors: ${errorCount}`)
 
         if (warnCount > 0 || errorCount > 0) {
-            console.log(`Run pnpm run bo analyze <Name>`)
+            ui.info(`Run ${colors.bold('pnpm run bo analyze <Name>')} for details`)
         }
     }
 
@@ -199,44 +207,38 @@ export class AnalyzeCommand {
         return { name: objectName, status, files, methods, issues, suggestions }
     }
 
-    private printResult(result: AnalysisResult) {
-        const icon =
-            result.status === 'ok'
-                ? '✅'.green
-                : result.status === 'warning'
-                  ? '⚠️'.yellow
-                  : '❌'.red
-
-        console.log(`\n${icon} ${result.name}BO`)
-        console.log('────────────────────────────────────────'.gray)
+    private printResult(result: AnalysisResult, ui: any) {
+        const statusStr = result.status === 'ok' ? '✅ OK' : result.status === 'warning' ? '⚠️ Warning' : '❌ Error'
+        
+        ui.divider()
+        ui.info(`Health Check: ${result.name}BO (${statusStr})`)
 
         // Files
-        console.log('\n📁 Files:')
-        for (const f of result.files) {
-            const status = f.exists ? '✅'.green : '❌'.red
-            const size = f.size ? `(${this.formatSize(f.size)})` : ''
-            console.log(`   ${status} ${f.name} ${size.gray}`)
-        }
+        const fileRows = result.files.map(f => [
+            f.exists ? '✅' : '❌',
+            f.name,
+            f.size ? this.formatSize(f.size) : '---'
+        ])
+        ui.table(['Status', 'File', 'Size'], fileRows)
 
         // Methods
         if (result.methods.length > 0) {
-            console.log(`\n📋 Methods (${result.methods.length}):`)
-            console.log(`   ${result.methods.join(', ')}`.gray)
+            ui.step(`Methods (${result.methods.length}): ${result.methods.join(', ')}`, 'done')
         }
 
         // Issues
         if (result.issues.length > 0) {
-            console.log(`\n❌ Issues:`)
+            ui.error('Issues:')
             for (const issue of result.issues) {
-                console.log(`   • ${issue}`.red)
+                console.log(`   • ${colors.red(issue)}`)
             }
         }
 
         // Suggestions
         if (result.suggestions.length > 0) {
-            console.log(`\n💡 Suggestions:`)
+            ui.warn('Suggestions:')
             for (const suggestion of result.suggestions) {
-                console.log(`   • ${suggestion}`.gray)
+                console.log(`   • ${colors.yellow(suggestion)}`)
             }
         }
 

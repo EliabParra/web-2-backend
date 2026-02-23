@@ -47,9 +47,7 @@ export function templateSchemas(objectName: string, methods: string[]) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
 
-    // Default methods if none provided (new BO)
-    const methodsToGen =
-        methods.length > 0 ? methods : ['get', 'getAll', 'create', 'update', 'delete']
+    const methodsToGen = methods
 
     const methodSchemas = methodsToGen
         .map((m) => {
@@ -107,9 +105,22 @@ ${methodsToGen.map((m) => `export type ${m.charAt(0).toUpperCase() + m.slice(1)}
  * @param objectName - Nombre del objeto
  * @returns Contenido del archivo Repository.ts
  */
-export function templateRepository(objectName: string) {
+export function templateRepository(objectName: string, methods: string[] = []) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
+
+    if (methods.length === 0) {
+        return `import { IDatabase } from '../../src/core/business-objects/index.js'
+import { ${pascalName}Queries, Types } from './${pascalName}Module.js'
+
+/**
+ * Repositorio para operaciones de base de datos de ${pascalName}BO.
+ */
+export class ${pascalName}Repository implements Types.I${pascalName}Repository {
+    constructor(private readonly db: IDatabase) {}
+}
+`
+    }
 
     return `import { IDatabase } from '../../src/core/business-objects/index.js'
 import { ${pascalName}Queries, Types } from './${pascalName}Module.js'
@@ -185,9 +196,28 @@ export class ${pascalName}Repository implements Types.I${pascalName}Repository {
  * @param objectName - Nombre del objeto
  * @returns Contenido del archivo Service.ts
  */
-export function templateService(objectName: string) {
+export function templateService(objectName: string, methods: string[] = []) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
+
+    if (methods.length === 0) {
+        return `import { BOService, IContainer, IConfig, IDatabase } from '../../src/core/business-objects/index.js'
+import type { ILogger } from '../../src/types/core.js'
+import { ${pascalName}Repository, Errors, Types } from './${pascalName}Module.js'
+
+/**
+ * Capa de servicio para lógica de negocio de ${pascalName}.
+ */
+export class ${pascalName}Service extends BOService implements Types.I${pascalName}Service {
+    private repo: ${pascalName}Repository
+
+    constructor(container: IContainer) {
+        super(container)
+        this.repo = container.resolve<${pascalName}Repository>('${pascalName}Repository')
+    }
+}
+`
+    }
 
     return `import { BOService, IContainer, IConfig, IDatabase } from '../../src/core/business-objects/index.js'
 import type { ILogger } from '../../src/types/core.js'
@@ -309,9 +339,7 @@ export function templateBO(className: string, methods: string[]) {
     const lowerName = cleanName.toLowerCase()
     const boClassName = `${pascalName}BO`
 
-    // Default methods if none provided (new BO)
-    const methodsToGen =
-        methods.length > 0 ? methods : ['get', 'getAll', 'create', 'update', 'delete']
+    const methodsToGen = methods
 
     const methodStubs = methodsToGen
         .map((m) => {

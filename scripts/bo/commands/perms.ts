@@ -2,7 +2,7 @@ import { Context } from '../core/ctx.js'
 import { Interactor } from '../interactor/ui.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import 'colors'
+import colors from 'colors'
 
 interface Profile {
     profileId: number
@@ -115,17 +115,18 @@ export class PermsCommand {
             while (true) {
                 console.clear()
                 this.interactor.header()
-                console.log(`\n🔐 Editing Permissions: ${objectName}BO`.bold)
-                if (dirty) console.log(`${'⚠️  Unsaved changes'.yellow}`)
+                
+                if (dirty) {
+                    console.log(colors.yellow('⚠️  Unsaved changes'))
+                }
+                this.interactor.info(`Editing Permissions: ${objectName}BO`)
 
                 this.printPermissionMatrix(methods, profiles, state)
 
                 console.log(`\n💡 Actions:`)
-                console.log(
-                    `   1-${methods.length}   Toggle permissions (comma separated, e.g. "1, 3")`
-                )
-                console.log(`   ${'s'.green.bold}     Save & Exit`)
-                console.log(`   ${'x'.red}     Cancel / Exit without saving`)
+                console.log(`   1-${methods.length}   Toggle permissions (comma separated, e.g. "1, 3")`)
+                console.log(`   ${colors.green(colors.bold('s'))}     Save & Exit`)
+                console.log(`   ${colors.red('x')}     Cancel / Exit without saving\n`)
 
                 const answer = await this.interactor.ask('Action')
                 const choice = answer.trim().toLowerCase()
@@ -134,15 +135,15 @@ export class PermsCommand {
                     if (dirty) {
                         await this.saveChanges(db, state, objectId)
                     } else {
-                        console.log('No changes to save.')
+                        this.interactor.info('No changes to save.')
                     }
                     break
                 } else if (choice === 'x') {
                     if (dirty) {
-                        const confirm = await this.interactor.confirm('Discard unsaved changes?')
+                        const confirm = await this.interactor.confirm('Discard unsaved changes?', false)
                         if (!confirm) continue
                     }
-                    console.log('Changes discarded.')
+                    this.interactor.info('Changes discarded.')
                     break
                 } else {
                     // Try parsing numbers
@@ -161,32 +162,23 @@ export class PermsCommand {
                         }
 
                         // Ask for Profile to toggle
-                        console.log('\nSelect Profile to toggle for selected methods:')
-                        profiles.forEach((p, i) => console.log(`  ${i + 1}. ${p.profileName}`))
-
-                        const pAns = await this.interactor.ask('Profile #')
-                        const pIdx = parseInt(pAns) - 1
-
-                        if (pIdx >= 0 && pIdx < profiles.length) {
-                            const profileId = profiles[pIdx].profileId
-
-                            // Apply toggle
-                            let changesCount = 0
-                            for (const mIdx of indices) {
-                                const methodId = methods[mIdx].methodId
-                                const pSet = state.get(methodId)!
-                                if (pSet.has(profileId)) {
-                                    pSet.delete(profileId)
-                                } else {
-                                    pSet.add(profileId)
-                                }
-                                changesCount++
+                        const profileOptions = profiles.map(p => ({ label: p.profileName, value: String(p.profileId) }))
+                        const profileIdStr = await this.interactor.select('Select Profile to toggle for selected methods:', profileOptions)
+                        
+                        // Apply toggle
+                        let changesCount = 0
+                        const profileId = Number(profileIdStr)
+                        for (const mIdx of indices) {
+                            const methodId = methods[mIdx].methodId
+                            const pSet = state.get(methodId)!
+                            if (pSet.has(profileId)) {
+                                pSet.delete(profileId)
+                            } else {
+                                pSet.add(profileId)
                             }
-                            if (changesCount > 0) dirty = true
-                        } else {
-                            this.interactor.error('Invalid profile selected.')
-                            await this.wait()
+                            changesCount++
                         }
+                        if (changesCount > 0) dirty = true
                     }
                 }
             }
@@ -262,7 +254,6 @@ export class PermsCommand {
         this.interactor.startSpinner('Saving changes...')
 
         try {
-            await db.exeRaw('BEGIN')
 
             const methodIds = Array.from(state.keys())
             if (methodIds.length > 0) {
@@ -300,57 +291,19 @@ export class PermsCommand {
         profiles: Profile[],
         state: PermissionState
     ) {
-        const idColWidth = 4
-        const methodColWidth = Math.max(12, ...methods.map((m) => m.methodName.length))
-        const profileColWidth = 10
-
-        let header = '│ ' + '#'.padEnd(idColWidth) + '│ ' + 'Method'.padEnd(methodColWidth) + ' │'
-        let divider = '├' + '─'.repeat(idColWidth + 1) + '┼' + '─'.repeat(methodColWidth + 2) + '┼'
-
-        for (const p of profiles) {
-            header +=
-                ' ' + p.profileName.slice(0, profileColWidth - 2).padEnd(profileColWidth - 1) + '│'
-            divider += '─'.repeat(profileColWidth) + '┼'
-        }
-
-        const topBorder =
-            '┌' +
-            '─'.repeat(idColWidth + 1) +
-            '┬' +
-            '─'.repeat(methodColWidth + 2) +
-            '┬' +
-            profiles.map(() => '─'.repeat(profileColWidth)).join('┬') +
-            '┐'
-        const bottomBorder =
-            '└' +
-            '─'.repeat(idColWidth + 1) +
-            '┴' +
-            '─'.repeat(methodColWidth + 2) +
-            '┴' +
-            profiles.map(() => '─'.repeat(profileColWidth)).join('┴') +
-            '┘'
-
-        divider = divider.slice(0, -1) + '┤'
-
-        console.log(topBorder)
-        console.log(header.bold)
-        console.log(divider)
-
-        methods.forEach((m, idx) => {
-            const num = (idx + 1).toString()
-            let row =
-                '│ ' + num.padEnd(idColWidth) + '│ ' + m.methodName.padEnd(methodColWidth) + ' │'
-
+        const headers = ['#', 'Method', ...profiles.map(p => p.profileName)]
+        
+        const rows = methods.map((m, idx) => {
             const activeProfiles = state.get(m.methodId) || new Set()
-
-            for (const p of profiles) {
-                const checked = activeProfiles.has(p.profileId)
-                const icon = checked ? '✅'.green : '❌'.red
-                row += ' ' + icon.padEnd(profileColWidth + 8) + '│'
-            }
-            console.log(row)
+            const row = [
+                String(idx + 1),
+                m.methodName,
+                ...profiles.map(p => activeProfiles.has(p.profileId) ? '✅' : '❌')
+            ]
+            return row
         })
-        console.log(bottomBorder)
+
+        this.interactor.table(headers, rows)
     }
 
     private async listBOs(): Promise<string[]> {

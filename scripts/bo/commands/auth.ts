@@ -3,7 +3,7 @@ import { Interactor } from '../interactor/ui.js'
 import { AuthPreset } from '../templates/auth-preset.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import 'colors'
+import colors from 'colors'
 
 interface AuthOptions {
     isDryRun?: boolean
@@ -39,9 +39,8 @@ export class AuthCommand {
     }
 
     async run(opts: AuthOptions = {}) {
-        console.log('\n🔑 Auth Preset Generator'.cyan.bold)
-        console.log('══════════════════════════════════════════════════'.gray)
-        console.log('')
+        this.interactor.divider()
+        this.interactor.info('🔑 Auth Preset Generator')
 
         // Check if Auth already exists
         const authDir = path.join(this.ctx.config.rootDir, 'BO', 'Auth')
@@ -52,60 +51,56 @@ export class AuthCommand {
         } catch {}
 
         if (exists && !opts.isDryRun) {
-            console.log('⚠️ Auth module already exists at BO/Auth/'.yellow)
+            this.interactor.warn('Auth module already exists at BO/Auth/')
             const overwrite = await this.interactor.confirm('Overwrite existing files?', false)
             if (!overwrite) {
-                console.log('Cancelled.'.gray)
-                this.interactor.close()
+                this.interactor.info('Cancelled.')
                 return
             }
         }
 
         // Show available features
-        console.log('📋 Available Auth Features:')
-        console.log('')
+        this.interactor.info('Available Auth Features:')
 
-        for (const f of AUTH_FEATURES) {
-            if (f.comingSoon) {
-                console.log(`   ${'🔜'.gray} ${f.label} ${'[Coming Soon]'.yellow}`)
-            } else if (f.enabled) {
-                console.log(`   ${'✅'.green} ${f.label}`)
-            }
-        }
-
-        console.log('')
+        const featureRows = AUTH_FEATURES.map(f => [
+             f.comingSoon ? '🔜' : '✅',
+             f.label,
+             f.comingSoon ? colors.yellow('Coming Soon') : colors.green('Enabled')
+        ])
+        
+        this.interactor.table(['Status', 'Feature', 'Detail'], featureRows)
 
         // Confirm generation
         if (!opts.isDryRun) {
             const proceed = await this.interactor.confirm('Generate Auth module?', true)
             if (!proceed) {
-                console.log('Cancelled.'.gray)
-                this.interactor.close()
+                this.interactor.info('Cancelled.')
                 return
             }
         }
 
         if (opts.isDryRun) {
-            console.log('\n📋 Dry run - would create:'.gray)
-            console.log('   BO/Auth/')
-            console.log('      ├── 📦 AuthBO.ts')
-            console.log('      ├── 🧠 AuthService.ts')
-            console.log('      ├── 🗄️ AuthRepository.ts')
-            console.log('      ├── ✅ AuthSchemas.ts')
-            console.log('      ├── 📘 AuthTypes.ts')
-            console.log('      ├── 🌎 AuthMessages.ts')
-            console.log('      ├── ❌ AuthErrors.ts')
-            console.log('      ├── 🔍 AuthQueries.ts')
-            console.log('      ├── 📦 AuthModule.ts')
-            console.log('      └── 🔜 AuthSocialAuth.ts (Coming Soon)')
-            this.interactor.close()
+            this.interactor.info('Dry run - would create:')
+            
+            const dryFiles = [
+                ['📦', 'AuthBO.ts', 'Main Entry Point'],
+                ['🧠', 'AuthService.ts', 'Business Logic'],
+                ['🗄️', 'AuthRepository.ts', 'Data Access'],
+                ['✅', 'AuthSchemas.ts', 'Validation'],
+                ['📘', 'AuthTypes.ts', 'TypeScript Interfaces'],
+                ['🌎', 'AuthMessages.ts', 'Messages for i18n'],
+                ['❌', 'AuthErrors.ts', 'Domain Errors'],
+                ['🔍', 'AuthQueries.ts', 'SQL Queries'],
+                ['📦', 'AuthModule.ts', 'Module Barrel'],
+                ['🔜', 'AuthSocialAuth.ts', 'Coming Soon']
+            ]
+            this.interactor.table(['Icon', 'File (BO/Auth/)', 'Description'], dryFiles)
             return
         }
 
         // Create directories
         await fs.mkdir(authDir, { recursive: true })
-
-        console.log('\n📁 BO/Auth/')
+        this.interactor.startSpinner('Generating Auth module...')
 
         // Generate files with new naming convention
         const files = [
@@ -157,33 +152,34 @@ export class AuthCommand {
 
         for (const f of files) {
             await fs.writeFile(f.path, f.content)
-            const basename = path.basename(f.path)
-            console.log(`   ├── ${f.icon} ${basename} .............. ✅`)
         }
 
         // Create Social Auth placeholder
         const socialAuthPath = path.join(authDir, 'AuthSocialAuth.ts')
         await fs.writeFile(socialAuthPath, this.generateSocialAuthPlaceholder())
-        console.log(`   └── 🔜 AuthSocialAuth.ts ........ ${'Coming Soon'.yellow}`)
+        
+        this.interactor.stopSpinner(true)
+        this.interactor.success('Auth module created with 9 files!')
+
+        this.interactor.table(['File', 'Status'], [
+             ...files.map(f => [`${f.icon} ${path.basename(f.path)}`, colors.green('Created')]),
+             ['🔜 AuthSocialAuth.ts', colors.yellow('Coming Soon')]
+        ])
 
         console.log('')
-        console.log('🎉 Auth module created with 9 files!'.green.bold)
+        console.log(colors.cyan('💡 Next steps:'))
+        console.log(`   1. Edit ${colors.bold('AuthTypes.ts')} to define user interfaces`)
+        console.log(`   2. Edit ${colors.bold('AuthSchemas.ts')} to add validation rules`)
+        console.log(`   3. Configure auth in ${colors.bold('config.json')}:`)
+        console.log(colors.gray('      "auth": {'))
+        console.log(colors.gray('        "loginId": "email",'))
+        console.log(colors.gray('        "requireEmailVerification": true,'))
+        console.log(colors.gray('        "sessionProfileId": 3'))
+        console.log(colors.gray('      }'))
         console.log('')
-        console.log('💡 Next steps:'.cyan)
-        console.log(`   1. Edit ${'AuthTypes.ts'.bold} to define user interfaces`)
-        console.log(`   2. Edit ${'AuthSchemas.ts'.bold} to add validation rules`)
-        console.log(`   3. Configure auth in ${'config.json'.bold}:`)
-        console.log('      "auth": {')
-        console.log('        "loginId": "email",')
-        console.log('        "requireEmailVerification": true,')
-        console.log('        "sessionProfileId": 3')
-        console.log('      }')
+        console.log(`   4. Register methods: ${colors.bold('pnpm run bo sync Auth')}`)
+        console.log(`   5. Assign permissions: ${colors.bold('pnpm run bo perms Auth')}`)
         console.log('')
-        console.log(`   4. Register methods: ${'pnpm run bo sync Auth'.bold}`)
-        console.log(`   5. Assign permissions: ${'pnpm run bo perms Auth'.bold}`)
-        console.log('')
-
-        this.interactor.close()
     }
 
     private generateSocialAuthPlaceholder(): string {

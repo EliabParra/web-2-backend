@@ -1,20 +1,31 @@
 /**
  * Genera el archivo Messages
  */
-export function templateMessages(objectName: string) {
+export function templateMessages(objectName: string, methods: string[] = []) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
 
-    return `export const ${pascalName}Messages = {
-    es: {
-        // Success
+    const successEs = methods.length === 0 ? '' : `        // Success
         get: 'Obtenido exitosamente',
         getAll: 'Obtenido exitosamente',
         create: 'Creado exitosamente',
         update: 'Actualizado exitosamente',
         delete: 'Eliminado exitosamente',
 
-        // Common errors
+`
+
+    const successEn = methods.length === 0 ? '' : `        // Success
+        get: 'Retrieved successfully',
+        getAll: 'Retrieved successfully',
+        create: 'Created successfully',
+        update: 'Updated successfully',
+        delete: 'Deleted successfully',
+
+`
+
+    return `export const ${pascalName}Messages = {
+    es: {
+${successEs}        // Common errors
         notFound: '${pascalName} no encontrado',
         alreadyExists: 'Ya existe un registro con estos datos',
         invalidData: 'Datos inválidos',
@@ -28,14 +39,7 @@ export function templateMessages(objectName: string) {
         },
     },
     en: {
-        // Success
-        get: 'Retrieved successfully',
-        getAll: 'Retrieved successfully',
-        create: 'Created successfully',
-        update: 'Updated successfully',
-        delete: 'Deleted successfully',
-
-        // Common errors
+${successEn}        // Common errors
         notFound: '${pascalName} not found',
         alreadyExists: 'Record already exists',
         invalidData: 'Invalid data',

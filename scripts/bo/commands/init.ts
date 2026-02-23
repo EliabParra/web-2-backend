@@ -2,7 +2,7 @@ import { Context } from '../core/ctx.js'
 import { Interactor } from '../interactor/ui.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import 'colors'
+import colors from 'colors'
 
 interface InitOptions {
     isDryRun?: boolean
@@ -19,9 +19,8 @@ export class InitCommand {
     }
 
     async run(opts: InitOptions = {}) {
-        console.log(`\n🚀 ToProccess BO Setup Wizard`.cyan.bold)
-        console.log('══════════════════════════════════════════════════'.gray)
-        console.log('')
+        this.interactor.divider()
+        this.interactor.info('🚀 ToProccess BO Setup Wizard')
 
         // Check if BO directory exists
         const boRoot = path.join(this.ctx.config.rootDir, 'BO')
@@ -36,14 +35,12 @@ export class InitCommand {
             const boCount = entries.filter((e) => e.isDirectory()).length
 
             if (boCount > 0) {
-                console.log(`ℹ️  Found ${boCount} existing BO(s) in BO/`)
-                console.log('')
+                this.interactor.info(`Found ${boCount} existing BO(s) in BO/`)
             }
         }
 
         // Step 1: Create initial BO
-        console.log('📋 Step 1: Create your first Business Object')
-        console.log('')
+        this.interactor.step('Step 1: Create your first Business Object', 'pending')
 
         const createFirst = await this.interactor.confirm('Create a new BO now?', true)
 
@@ -51,20 +48,20 @@ export class InitCommand {
             const name = await this.interactor.ask('BO name (PascalCase)', 'Product')
 
             if (!name) {
-                console.log(`⚠️ Name required`)
-                this.interactor.close()
+                this.interactor.warn('Name required')
                 return
             }
 
             // Choose preset
-            console.log('')
-            console.log('📦 Choose a preset:')
-            console.log('   1. CRUD (get, getAll, create, update, delete)')
-            console.log('   2. ReadOnly (get, getAll)')
-            console.log('   3. Minimal (get)')
-            console.log('   4. Custom')
+            const presetOptions = [
+                { label: '1. CRUD (get, getAll, create, update, delete)', value: '1' },
+                { label: '2. ReadOnly (get, getAll)', value: '2' },
+                { label: '3. Minimal (get)', value: '3' },
+                { label: '4. Empty (No methods)', value: 'empty' },
+                { label: '5. Custom', value: 'custom' }
+            ]
 
-            const preset = await this.interactor.ask('Select preset', '1')
+            const preset = await this.interactor.select('Choose a preset:', presetOptions)
 
             let methods: string[]
             switch (preset) {
@@ -77,7 +74,10 @@ export class InitCommand {
                 case '3':
                     methods = ['get']
                     break
-                case '4':
+                case 'empty':
+                    methods = []
+                    break
+                case 'custom':
                     const custom = await this.interactor.ask(
                         'Methods (comma-separated)',
                         'get,getAll,create,update,delete'
@@ -92,11 +92,10 @@ export class InitCommand {
             }
 
             if (opts.isDryRun) {
-                console.log(`\n${'📋'.blue} Dry run - would create:`)
-                console.log(`   BO/${name}/`)
-                console.log(`   • ${name}BO.ts`)
-                console.log(`   • ${name}Service.ts`)
-                console.log(`   • ... (9 files total)`)
+                this.interactor.info('Dry run - would create:')
+                this.interactor.table(['Directory', 'Contents'], [
+                    [`BO/${name}/`, `${name}BO.ts, ${name}Service.ts... (9 files)`]
+                ])
             } else {
                 // Import and run new command
                 const { NewCommand } = await import('./new.js')
@@ -105,49 +104,32 @@ export class InitCommand {
         }
 
         // Step 2: Database setup reminder
-        console.log('')
-        console.log('📋 Step 2: Database Setup')
-        console.log('')
-        console.log('Make sure your database is configured:')
-        console.log('')
-        console.log('   1. Set environment variables:'.gray)
-        console.log('      PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD'.gray)
-        console.log('')
-        console.log('   2. Initialize database:'.gray)
-        console.log(`      ${'pnpm run db'.bold}`.gray)
-        console.log('')
+        this.interactor.step('Step 2: Database Setup', 'pending')
+        console.log('   Make sure your database is configured:')
+        console.log('   1. Set environment variables (PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD)')
+        console.log(`   2. Initialize database: ${colors.bold('pnpm run db')}\n`)
 
         // Step 3: Sync methods
-        console.log('📋 Step 3: Register BO Methods')
-        console.log('')
-        console.log('After creating BOs, sync them to the database:')
-        console.log(`   ${'pnpm run bo sync --all'.bold}`.gray)
-        console.log('')
+        this.interactor.step('Step 3: Register BO Methods', 'pending')
+        console.log('   After creating BOs, sync them to the database:')
+        console.log(`   ${colors.bold('pnpm run bo sync --all')}\n`)
 
         // Step 4: Set permissions
-        console.log('📋 Step 4: Configure Permissions')
-        console.log('')
-        console.log('Manage permissions for each BO:')
-        console.log(`   ${'pnpm run bo perms <Name>'.bold}`.gray)
-        console.log('')
+        this.interactor.step('Step 4: Configure Permissions', 'pending')
+        console.log('   Manage permissions for each BO:')
+        console.log(`   ${colors.bold('pnpm run bo perms <Name>')}\n`)
 
         // Summary
-        console.log('══════════════════════════════════════════════════'.gray)
-        console.log('')
-        console.log('🎉 Setup complete! Quick reference:'.green.bold)
-        console.log('')
-        console.log('┌───────────────────────────────────────────────────┐')
-        console.log('│ Command                      │ Description        │')
-        console.log('├───────────────────────────────────────────────────┤')
-        console.log('│ pnpm run bo new <Name>        │ Create new BO      │')
-        console.log('│ pnpm run bo list              │ List all BOs       │')
-        console.log('│ pnpm run bo sync --all        │ Sync methods to DB │')
-        console.log('│ pnpm run bo perms <Name>      │ Manage permissions │')
-        console.log('│ pnpm run bo analyze           │ Health check       │')
-        console.log('│ pnpm run bo auth              │ Generate Auth      │')
-        console.log('└───────────────────────────────────────────────────┘')
-        console.log('')
+        this.interactor.success('Setup complete! Quick reference:')
 
-        this.interactor.close()
+        const summaryRows = [
+            ['pnpm run bo new <Name>', 'Create new BO'],
+            ['pnpm run bo list', 'List all BOs'],
+            ['pnpm run bo sync --all', 'Sync methods to DB'],
+            ['pnpm run bo perms <Name>', 'Manage permissions'],
+            ['pnpm run bo analyze', 'Health check'],
+            ['pnpm run bo auth', 'Generate Auth']
+        ]
+        this.interactor.table(['Command', 'Description'], summaryRows)
     }
 }

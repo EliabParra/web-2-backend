@@ -106,21 +106,7 @@ export async function parseArgs(args: string[]) {
 }
 
 async function interactiveMenu(interactor: Interactor): Promise<string> {
-    console.log('')
-    console.log('? What would you like to do?'.bold)
-
-    for (let i = 0; i < MENU_OPTIONS.length; i++) {
-        console.log(`  ${String(i + 1).gray}. ${MENU_OPTIONS[i].label}`)
-    }
-
-    const answer = await interactor.ask('Select option', '1')
-    const idx = parseInt(answer) - 1
-
-    if (idx >= 0 && idx < MENU_OPTIONS.length) {
-        return MENU_OPTIONS[idx].value
-    }
-
-    return 'exit'
+    return await interactor.select('What would you like to do?', MENU_OPTIONS, 'new')
 }
 
 async function handleNewInteractive(ctx: Context, interactor: Interactor) {
@@ -132,15 +118,10 @@ async function handleNewInteractive(ctx: Context, interactor: Interactor) {
 
     const defaultMethods = ['get', 'getAll', 'create', 'update', 'delete']
     const selectedMethods = await interactor.multiSelect(
-        'Select methods to generate',
+        'Select methods to generate (Press Space to toggle, Enter to confirm, leave all unchecked for Empty BO)',
         defaultMethods,
         ['get', 'getAll', 'create', 'update', 'delete']
     )
-
-    if (selectedMethods.length === 0) {
-        interactor.error('At least one method is required')
-        return
-    }
 
     await new NewCommand(ctx).run(name, { methods: selectedMethods.join(',') })
 }
@@ -211,16 +192,13 @@ async function main() {
                 console.log('👋 Bye!'.gray)
                 break
 
-            default:
-                if (command) {
-                    interactor.error(`Unknown command: ${command}`)
-                }
-                console.log('Run with --help for usage information'.gray)
         }
     } catch (e: any) {
         interactor.error(e.message)
+        process.exit(1)
     } finally {
         interactor.close()
+        process.exit(0)
     }
 }
 

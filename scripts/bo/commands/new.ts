@@ -23,7 +23,7 @@ interface NewCommandOptions {
     skipErrors?: boolean
 }
 
-type Preset = 'Default (CRUD)' | 'ReadOnly' | 'Minimal' | 'Custom'
+type Preset = 'Default (CRUD)' | 'ReadOnly' | 'Minimal' | 'Empty (No methods)' | 'Custom'
 
 /**
  * Comando para crear nuevos Business Objects
@@ -49,8 +49,8 @@ export class NewCommand {
     async run(objectName: string, options: NewCommandOptions = {}) {
         try {
             let finalName = objectName
-            let methods = options.methods
-                ? options.methods.split(',').map((m) => m.trim())
+            let methods = options.methods !== undefined
+                ? options.methods.split(',').map((m) => m.trim()).filter(Boolean)
                 : ['get', 'getAll', 'create', 'update', 'delete']
             let skipTypes = options.skipTypes
             let skipMessages = options.skipMessages
@@ -69,6 +69,7 @@ export class NewCommand {
                     'Default (CRUD)',
                     'ReadOnly',
                     'Minimal',
+                    'Empty (No methods)',
                     'Custom',
                 ])) as Preset
 
@@ -81,6 +82,8 @@ export class NewCommand {
                     skipTypes = true
                     skipMessages = true
                     skipErrors = true
+                } else if (preset === 'Empty (No methods)') {
+                    methods = []
                 } else if (preset === 'Custom') {
                     methods = await this.ui.multiSelect(
                         'Select Methods',
@@ -104,13 +107,13 @@ export class NewCommand {
 
             // Generate contents
             const boContent = templateBO(finalName, methods)
-            const repoContent = templateRepository(cleanName)
-            const serviceContent = templateService(cleanName)
+            const repoContent = templateRepository(cleanName, methods)
+            const serviceContent = templateService(cleanName, methods)
             const schemasContent = templateSchemas(cleanName, methods)
-            const typesContent = templateTypes(cleanName)
-            const localesContent = templateMessages(cleanName)
+            const typesContent = templateTypes(cleanName, methods)
+            const localesContent = templateMessages(cleanName, methods)
             const errorsContent = templateErrors(cleanName)
-            const queriesContent = templateQueries(cleanName)
+            const queriesContent = templateQueries(cleanName, methods)
             const moduleContent = templateModule(cleanName)
 
             const dir = path.join(this.ctx.config.rootDir, 'BO', pascalName)

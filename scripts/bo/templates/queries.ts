@@ -1,10 +1,14 @@
 /**
  * Genera el archivo Queries
  */
-export function templateQueries(objectName: string) {
+export function templateQueries(objectName: string, methods: string[] = []) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
     const lowerName = cleanName.toLowerCase()
+
+    if (methods.length === 0) {
+        return `export const ${pascalName}Queries = {} as const\nexport type ${pascalName}QueryKey = keyof typeof ${pascalName}Queries\n`
+    }
 
     return `export const ${pascalName}Queries = {
     findAll: \`
