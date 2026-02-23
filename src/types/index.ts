@@ -66,3 +66,35 @@ export type {
     IMenuProvider,
     ISecurityContext,
 } from './core.js'
+
+// Tipos Excel
+export type {
+    ImportResult,
+    ImportError,
+    SheetSummary,
+    IPermissionMatrixWriter,
+    IPermissionMatrixReader,
+    ProfileRow,
+    UserRow,
+    SubsystemRow,
+    ObjectRow,
+    MethodRow,
+    MenuRow,
+    OptionRow,
+    PermissionRow,
+    AssignmentRow,
+} from './excel.js'
+
+export {
+    ProfileRowSchema,
+    UserRowSchema,
+    SubsystemRowSchema,
+    ObjectRowSchema,
+    MethodRowSchema,
+    MenuRowSchema,
+    OptionRowSchema,
+    PermissionRowSchema,
+    AssignmentRowSchema,
+    ObjectMethodSchema,
+    SHEET_DEFINITIONS,
+} from './excel.js'

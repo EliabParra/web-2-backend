@@ -1,14 +1,19 @@
 import type {
     IContainer,
+    IDatabase,
     II18nService,
     ILogger,
+    IValidator,
     ISecurityService,
     ITransactionMapper,
     ITransactionExecutor,
     IPermissionProvider,
     IMenuProvider,
+    ImportResult,
 } from '../types/index.js'
 import { MenuStructure } from '../types/security.js'
+import { PermissionMatrixWriter } from '../core/security/excel/PermissionMatrixWriter.js'
+import { PermissionMatrixReader } from '../core/security/excel/PermissionMatrixReader.js'
 
 /**
  * Servicio de seguridad y fachada principal del framework.
@@ -38,6 +43,8 @@ export class SecurityService implements ISecurityService {
     private guard: IPermissionProvider
     private executor: ITransactionExecutor
     private menuProvider: IMenuProvider
+    private db: IDatabase
+    private validator: IValidator
 
     private i18n: II18nService
     private log: ILogger
@@ -57,6 +64,8 @@ export class SecurityService implements ISecurityService {
         this.log = container.resolve<ILogger>('log').child({ category: 'Security' })
         this.i18n = container.resolve<II18nService>('i18n')
 
+        this.db = container.resolve<IDatabase>('db')
+        this.validator = container.resolve<IValidator>('validator')
         this.mapper = container.resolve<ITransactionMapper>('transactionMapper')
         this.executor = container.resolve<ITransactionExecutor>('transactionExecutor')
         this.guard = container.resolve<IPermissionProvider>('permissionGuard')
@@ -307,5 +316,53 @@ export class SecurityService implements ISecurityService {
      */
     async revokeOptionFromProfile(profileId: number, optionId: number) {
         return this.menuProvider.revokeOptionFromProfile(profileId, optionId)
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Excel — Importación / Exportación de matriz de permisos
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Importa una matriz de permisos desde un buffer Excel.
+     * Procesa las hojas en orden de dependencias (profiles → users → subsystems → etc).
+     *
+     * @param buffer - Buffer del archivo Excel (.xlsx)
+     * @returns Resultado con resumen por hoja y errores de validación
+     */
+    async importMatrix(buffer: Buffer): Promise<ImportResult> {
+        const reader = new PermissionMatrixReader(this.db, this.validator, this.log)
+        const result = await reader.import(buffer)
+
+        // Recargar cache en memoria tras la importación
+        if (result.success) {
+            this.log.info('Recargando cache de permisos y menús tras importación Excel')
+            await Promise.all([this.guard.load(), this.menuProvider.load()])
+        }
+
+        return result
+    }
+
+    /**
+     * Exporta toda la matriz de permisos actual a un buffer Excel.
+     * Incluye datos de todas las hojas con estilos y formato.
+     *
+     * @returns Buffer del archivo Excel (.xlsx)
+     */
+    async exportMatrix(): Promise<Buffer> {
+        this.log.info('Exportando matriz de permisos a Excel')
+        const writer = new PermissionMatrixWriter(this.db)
+        return writer.exportData()
+    }
+
+    /**
+     * Genera una plantilla Excel vacía con headers, estilos, instrucciones y
+     * validaciones dropdown basadas en los datos existentes en la base de datos.
+     *
+     * @returns Buffer del archivo Excel (.xlsx)
+     */
+    async generateTemplate(): Promise<Buffer> {
+        this.log.info('Generando plantilla Excel de matriz de permisos')
+        const writer = new PermissionMatrixWriter(this.db)
+        return writer.generateTemplate()
     }
 }

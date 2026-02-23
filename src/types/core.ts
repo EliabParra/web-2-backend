@@ -139,7 +139,6 @@ export interface IDatabase {
 export type { IAppConfig as IConfig } from './config.js'
 
 // Import para uso en interfaces locales
-import type { IAppConfig } from './config.js'
 import { SessionUserRow } from '../services/schemas/session.js'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -430,6 +429,34 @@ export interface ISecurityService {
      * @param methodName - Nombre del método
      */
     revokePermission(profileId: number, objectName: string, methodName: string): Promise<boolean>
+
+    // Excel — Importación / Exportación
+
+    /**
+     * Importa una matriz de permisos desde un buffer Excel.
+     *
+     * @param buffer - Buffer del archivo Excel (.xlsx)
+     * @returns Resultado con resumen por hoja y errores de validación
+     */
+    importMatrix(buffer: Buffer): Promise<{
+        success: boolean
+        summary: { sheet: string; processed: number; inserted: number; skipped: number }[]
+        errors: { sheet: string; row: number; column: string; message: string }[]
+    }>
+
+    /**
+     * Exporta toda la matriz de permisos a un buffer Excel.
+     *
+     * @returns Buffer del archivo Excel (.xlsx)
+     */
+    exportMatrix(): Promise<Buffer>
+
+    /**
+     * Genera una plantilla Excel vacía con headers, estilos y validaciones.
+     *
+     * @returns Buffer del archivo Excel (.xlsx)
+     */
+    generateTemplate(): Promise<Buffer>
 }
 
 /**
