@@ -1,6 +1,9 @@
 import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
 import { AuthService, AuthMessages, AuthSchemas, Inputs, registerAuth } from './AuthModule.js'
 
+/**
+ * Business Object para autenticación.
+ */
 export class AuthBO extends BaseBO {
     private service: AuthService
 

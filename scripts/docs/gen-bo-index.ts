@@ -10,23 +10,8 @@ const require = createRequire(import.meta.url)
  */
 async function main() {
     const rootDir = process.cwd()
-    const queriesPath = path.join(rootDir, 'src/config/queries.json')
     const boDir = path.join(rootDir, 'BO')
     const outputPath = path.join(rootDir, 'docs/05-Guides/BO_INDEX.md')
-
-    console.log(`🔍 Scanning queries from: ${queriesPath}`)
-
-    if (!fs.existsSync(queriesPath)) {
-        console.error('❌ src/config/queries.json not found!')
-        process.exit(1)
-    }
-
-    const queries = require(queriesPath)
-
-    // queries.json usually contains SQL queries, but in our architecture,
-    // we also rely on DB data for permissions.
-    // However, since we can't connect to DB here easily without credentials,
-    // we will scan the BO directory structure to list available objects.
 
     console.log(`📂 Scanning BO directory: ${boDir}`)
 
