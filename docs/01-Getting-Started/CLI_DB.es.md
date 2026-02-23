@@ -27,7 +27,8 @@ pnpm run db -- --help
 | `introspect` | `pnpm run db introspect` | Genera esquemas desde la BD existente         |
 | `seed`       | `pnpm run db seed`       | Crea perfiles, admin y registra BOs           |
 | `bo`         | `pnpm run db bo`         | Sincroniza métodos de BOs (detecta huérfanos) |
-| `reset`      | `pnpm run db reset`      | ⚠️ Elimina y recrea todas las tablas          |
+| `manage`     | `pnpm run db manage`     | Gestor interactivo de Seguridad (Excel)    |
+| `reset`      | `pnpm run db reset`      | Elimina y recrea todas las tablas          |
 | `print`      | `pnpm run db print`      | Muestra SQL sin ejecutar                      |
 
 ---
@@ -199,6 +200,20 @@ pnpm run db bo --prune --dry-run
 ```
 
 Muestra qué haría sin ejecutar cambios.
+
+---
+
+## Manage: Gestor de Seguridad y Excel
+
+```bash
+pnpm run db manage
+```
+
+Abre un menú interactivo especializado en la gestión de la Matriz de Seguridad:
+
+1. **🧩 BOs — Sincronizar objetos de negocio**: Muestra tablas comparativas entre el código y la DB, con auto-registro y limpieza de huérfanos.
+2. **📤 Exportar Matriz a Excel**: Genera un archivo `.xlsx` con todas las hojas de seguridad (Perfiles, Usuarios, Subsistemas, Objetos, Métodos, Menús, Opciones, Permisos, Asignaciones). Si la DB está vacía, genera un template listo para llenar.
+3. **📥 Importar Matriz desde Excel**: Lee el archivo `.xlsx`, valida estrictamente los datos usando el `IValidator` del framework y sincroniza la DB de forma segura transaccional.
 
 ---
 

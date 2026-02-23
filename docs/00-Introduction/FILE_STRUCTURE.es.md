@@ -59,6 +59,7 @@ El motor del framework. Se divide en áreas muy específicas:
 Aquí están las clases base que extienden los BOs.
 
 - `business-objects/`: `BaseBO`, `CrudBO`, `BOService`, `BOError`.
+- `security/excel/`: Lógica de exportación/importación masiva usando validación Zod para la Matriz de Seguridad.
 
 #### `src/services/` (Infraestructura y Utilidades)
 
@@ -73,7 +74,7 @@ Capa consolidada para todos los servicios técnicos (Base de datos, Email, Loggi
 
 #### `src/types/`
 
-- Archivos `.d.ts` y definiciones de TypeScript globales.
+- Definiciones de TypeScript globales.
 
 ---
 

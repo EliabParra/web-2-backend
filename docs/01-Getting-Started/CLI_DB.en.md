@@ -21,14 +21,15 @@ pnpm run db -- --help
 
 ## Available Actions
 
-| Action       | Command                  | Description                          |
-| :----------- | :----------------------- | :----------------------------------- |
-| `sync`       | `pnpm run db sync`       | Apply code schemas to DB             |
-| `introspect` | `pnpm run db introspect` | Generate schemas from existing DB    |
-| `seed`       | `pnpm run db seed`       | Create profiles, admin, register BOs |
-| `bo`         | `pnpm run db bo`         | Sync BO methods (detect orphans)     |
-| `reset`      | `pnpm run db reset`      | ⚠️ Drop and recreate all tables      |
-| `print`      | `pnpm run db print`      | Show SQL without executing           |
+| Action       | Command                  | Description                             |
+| :----------- | :----------------------- | :-------------------------------------- |
+| `sync`       | `pnpm run db sync`       | Apply code schemas to DB                |
+| `introspect` | `pnpm run db introspect` | Generate schemas from existing DB       |
+| `seed`       | `pnpm run db seed`       | Create profiles, admin, register BOs    |
+| `bo`         | `pnpm run db bo`         | Sync BO methods (detect orphans)        |
+| `manage`     | `pnpm run db manage`     | Interactive Security Manager (Excel) |
+| `reset`      | `pnpm run db reset`      | Drop and recreate all tables         |
+| `print`      | `pnpm run db print`      | Show SQL without executing              |
 
 ---
 
@@ -199,6 +200,20 @@ pnpm run db bo --prune --dry-run
 ```
 
 Shows what would happen without executing changes.
+
+---
+
+## Manage: Security & Excel Manager
+
+```bash
+pnpm run db manage
+```
+
+Opens an interactive menu specialized in managing the Security Matrix:
+
+1. **🧩 BOs — Sync business objects**: Shows comparison tables between code and DB, with auto-registration and orphan pruning.
+2. **📤 Export Matrix to Excel**: Generates an `.xlsx` file with all security sheets (Profiles, Users, Subsystems, Objects, Methods, Menus, Options, Permissions, Assignments). If the DB is empty, it generates a ready-to-fill template.
+3. **📥 Import Matrix from Excel**: Reads the `.xlsx` file, strictly validates data using the framework's `IValidator`, and safely syncs the DB transactionally.
 
 ---
 

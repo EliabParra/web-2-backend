@@ -58,6 +58,10 @@ security.profile_method (
 4.  **TransactionMapper** (The Map):
     - Translates `tx: 1001` -> `{ objectName: "Auth", methodName: "register" }`.
 
+5.  **Excel Integration** (`PermissionMatrixReader` / `Writer`):
+    - Allows bi-directional, bulk import/export of the security matrix (9 sheets, from Profiles down to Menu assignments).
+    - **Data Integrity**: All imports are strictly validated through the framework's `IValidator` using Zod schemas, guaranteeing consistency and i18n-normalized error messages.
+
 ---
 
 ## 3. Dynamic Permission Management (Dual Write)
@@ -146,10 +150,12 @@ await security.assignMenu(profileId, menuId)
 
 ## 8. Database Schema Reference
 
-| Table                     | Description                                    |
-| :------------------------ | :--------------------------------------------- |
-| `security.profiles`       | User roles (profile_id, profile_name)          |
-| `security.objects`        | Business Objects (object_id, object_name)      |
-| `security.methods`        | Methods (method_id, method_name, object_id)    |
-| `security.profile_method` | Permission assignments (profile_id, method_id) |
-| `security.user_profile`   | User-to-Role assignments (user_id, profile_id) |
+| Table                     | Description                                                         |
+| :------------------------ | :------------------------------------------------------------------ |
+| `security.profiles`       | User roles (profile_id, profile_name)                               |
+| `security.objects`        | Business Objects (object_id, object_name)                           |
+| `security.methods`        | Methods (method_id, method_name, object_id)                         |
+| `security.transactions`   | Links tx_id and methods (transaction_number, method_id, object_id)  |
+| `security.object_method`  | N:M relationship between Objects and Methods (object_id, method_id) |
+| `security.profile_method` | Permission assignments (profile_id, method_id)                      |
+| `security.user_profile`   | User-to-Role assignments (user_id, profile_id)                      |

@@ -59,6 +59,7 @@ The framework engine. Divided into very specific areas:
 Here are the base classes that BOs extend.
 
 - `business-objects/`: `BaseBO`, `CrudBO`, `BOService`, `BOError`.
+- `security/excel/`: Bulk export/import logic using Zod validation for the Security Matrix.
 
 #### `src/services/` (Infrastructure & Utilities)
 
@@ -73,7 +74,7 @@ Consolidated layer for all technical services (Database, Email, Logging, etc.).
 
 #### `src/types/`
 
-- `.d.ts` files and global TypeScript definitions.
+- Global TypeScript definitions.
 
 ---
 

@@ -58,6 +58,10 @@ security.profile_method (
 4.  **TransactionMapper** (El Mapa):
     - Traduce `tx: 1001` -> `{ objectName: "Auth", methodName: "register" }`.
 
+5.  **Integración Excel** (`PermissionMatrixReader` / `Writer`):
+    - Permite la importación y exportación bidireccional masiva de la matriz de seguridad (9 hojas, desde Perfiles hasta Asignaciones de menú).
+    - **Data Integrity**: La importación pasa estrictamente por el `IValidator` del framework usando schemas de Zod, garantizando consistencia y mensajes de error internacionalizados.
+
 ---
 
 ## 3. Gestión Dinámica de Permisos (Dual Write)
@@ -146,10 +150,12 @@ await security.assignMenu(profileId, menuId)
 
 ## 8. Referencia del Esquema de Base de Datos
 
-| Tabla                     | Descripción                                    |
-| :------------------------ | :--------------------------------------------- |
-| `security.profiles`       | Roles de usuario (profile_id, profile_name)    |
-| `security.objects`        | Business Objects (object_id, object_name)      |
-| `security.methods`        | Métodos (method_id, method_name, object_id)    |
-| `security.profile_method` | Asignación de permisos (profile_id, method_id) |
-| `security.user_profile`   | Asignación Usuario-Rol (user_id, profile_id)   |
+| Tabla                     | Descripción                                                            |
+| :------------------------ | :--------------------------------------------------------------------- |
+| `security.profiles`       | Roles de usuario (profile_id, profile_name)                            |
+| `security.objects`        | Business Objects (object_id, object_name)                              |
+| `security.methods`        | Métodos (method_id, method_name, object_id)                            |
+| `security.transactions`   | Enlace entre tx_id y método (transaction_number, method_id, object_id) |
+| `security.object_method`  | Relación N:M entre Objetos y Métodos (object_id, method_id)            |
+| `security.profile_method` | Asignación de permisos (profile_id, method_id)                         |
+| `security.user_profile`   | Asignación Usuario-Rol (user_id, profile_id)                           |

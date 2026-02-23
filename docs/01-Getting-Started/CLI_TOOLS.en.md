@@ -43,6 +43,16 @@ pnpm run docs:bo
 - **Output**: `docs/05-Guides/BO_INDEX.md`
 - **Usage**: Run after creating new BOs to keep documentation up to date.
 
+### Security & Excel Manager (`pnpm run db manage`)
+
+Interactive tool for syncing Business Objects and bulk importing/exporting the security permission matrix via Excel.
+
+```bash
+pnpm run db manage
+```
+
+- **Usage**: Initial setup or migration of user permissions, menus, and roles in a visual and secure way.
+
 ### Interactive Playground (`pnpm run playground`)
 
 Test your validation rules (Zod) interactively without Postman or starting the server.
