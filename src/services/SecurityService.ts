@@ -4,26 +4,23 @@ import { PermissionGuard } from '../core/security/PermissionGuard.js'
 import { MenuProvider } from '../core/security/MenuProvider.js'
 import { TransactionExecutor } from '../core/transaction/TransactionExecutor.js'
 import { MenuStructure } from '../types/security.js'
-import { TransactionOrchestrator } from '../core/transaction/TransactionOrchestrator.js'
-import { AuthorizationService } from '../core/security/AuthorizationService.js'
 
 /**
- * Servicio de seguridad y orquestador principal del framework.
+ * Servicio de seguridad y fachada principal del framework.
  *
- * Responsable de coordinar el flujo de transacción:
- * 1. Inicializa componentes (Mapper, Guard, Executor)
- * 2. Mapea códigos de transacción (tx) a métodos (TransactionMapper)
- * 3. Verifica permisos de acceso (PermissionGuard)
- * 4. Ejecuta la lógica de negocio (TransactionExecutor)
+ * Coordina los subsistemas de seguridad:
+ * - **TransactionMapper** — Resuelve códigos de transacción a rutas BO/método
+ * - **PermissionGuard** — Verifica permisos con cache en memoria (O(1))
+ * - **TransactionExecutor** — Ejecuta métodos de negocio
+ * - **MenuProvider** — Estructura de menús filtrada por perfil
  *
  * @example
  * ```typescript
- * const security = new SecurityService(container)
- * await security.init() // Carga permisos y mapeos
+ * const security = container.resolve<ISecurityService>('security')
+ * await security.init()
  *
- * // Uso típico en Dispatcher:
- * const route = security.getDataTx('TX_CODE')
- * if (security.getPermissions({ profile_id: 1, ...route })) {
+ * const route = security.getDataTx(txCode)
+ * if (route && security.getPermissions({ profileId, ...route })) {
  *   const result = await security.executeMethod({ ...route, params })
  * }
  * ```
@@ -33,15 +30,14 @@ export class SecurityService implements ISecurityService {
     private guard: PermissionGuard
     private executor: TransactionExecutor
     private menuProvider: MenuProvider
-    private orchestrator: TransactionOrchestrator
-    private auth: AuthorizationService
 
     private i18n: II18nService
     private log: ILogger
 
-    /** Indica si el sistema de seguridad ha cargado correctamente */
+    /** Indica si el sistema de seguridad ha cargado correctamente. */
     public isReady: boolean = false
-    /** Promesa que resuelve cuando la inicialización completa */
+
+    /** Promesa que resuelve cuando la inicialización completa. */
     public ready!: Promise<boolean>
 
     /**
@@ -53,21 +49,18 @@ export class SecurityService implements ISecurityService {
         this.log = container.resolve<ILogger>('log').child({ category: 'Security' })
         this.i18n = container.resolve<II18nService>('i18n')
 
-        // Resolve dependencies explicitly from the DI container (IoC)
-        this.orchestrator = container.resolve<TransactionOrchestrator>('orchestrator')
         this.mapper = container.resolve<TransactionMapper>('transactionMapper')
         this.executor = container.resolve<TransactionExecutor>('transactionExecutor')
         this.guard = container.resolve<PermissionGuard>('permissionGuard')
         this.menuProvider = container.resolve<MenuProvider>('menuProvider')
-        this.auth = container.resolve<AuthorizationService>('authorization')
     }
 
     /**
-     * Inicializa los subsistemas de seguridad (Mapper y Guard).
-     * Carga permisos y mapeos desde la base de datos.
+     * Inicializa los subsistemas de seguridad.
+     * Carga permisos, mapeos de transacciones y estructura de menús desde la base de datos.
      *
-     * @returns {Promise<boolean>} True si la inicialización fue exitosa
-     * @throws {Error} Si falla la carga de datos iniciales
+     * @returns `true` si la inicialización fue exitosa
+     * @throws Error si falla la carga de datos iniciales
      */
     async init(): Promise<boolean> {
         if (this.ready) return this.ready
@@ -90,10 +83,10 @@ export class SecurityService implements ISecurityService {
     }
 
     /**
-     * Resuelve un código de transacción a su ruta de ejecución (BO y método).
+     * Resuelve un código de transacción a su ruta de ejecución.
      *
-     * @param tx - Código de transacción (e.g., "AUTH_LOGIN")
-     * @returns {{ objectName: string; methodName: string } | false} Objeto con ruta o false si no existe
+     * @param tx - Código numérico de transacción
+     * @returns Objeto `{ objectName, methodName }` o `false` si no existe
      */
     getDataTx(tx: unknown): { objectName: string; methodName: string } | false {
         const route = this.mapper.resolve(tx)
@@ -101,13 +94,13 @@ export class SecurityService implements ISecurityService {
     }
 
     /**
-     * Verifica si un perfil tiene permisos para ejecutar un método.
+     * Verifica si un perfil tiene permisos para ejecutar un método de un BO.
      *
-     * @param jsonData - Datos para verificación
-     * @param jsonData.profileId - ID del perfil del usuario (was profile_id)
-     * @param jsonData.methodName - Nombre del método (was method_na)
-     * @param jsonData.objectName - Nombre del Business Object (was object_na)
-     * @returns {boolean} True si tiene permiso, False en caso contrario
+     * @param jsonData - Datos de verificación
+     * @param jsonData.profileId - ID del perfil del usuario
+     * @param jsonData.methodName - Nombre del método a verificar
+     * @param jsonData.objectName - Nombre del Business Object
+     * @returns `true` si tiene permiso
      */
     getPermissions(jsonData: {
         profileId: number
@@ -118,13 +111,13 @@ export class SecurityService implements ISecurityService {
     }
 
     /**
-     * Ejecuta un método de negocio a través del Executor.
+     * Ejecuta un método de negocio a través del TransactionExecutor.
      *
      * @param jsonData - Datos de ejecución
      * @param jsonData.objectName - Nombre del Business Object
      * @param jsonData.methodName - Nombre del método
      * @param jsonData.params - Parámetros para la función
-     * @returns Resultado de la ejecución
+     * @returns Respuesta estándar con `code` y `msg`
      */
     async executeMethod(jsonData: {
         objectName: string
@@ -150,8 +143,12 @@ export class SecurityService implements ISecurityService {
     }
 
     /**
-     * Otorga un permiso dinámicamente (Dual Write).
-     * Delegado al PermissionGuard para consistencia DB-Memoria.
+     * Otorga un permiso dinámicamente (Dual Write: DB + memoria).
+     *
+     * @param profileId - ID del perfil
+     * @param objectName - Nombre del Business Object
+     * @param methodName - Nombre del método
+     * @returns `true` si el permiso se otorgó correctamente
      */
     async grantPermission(
         profileId: number,
@@ -162,8 +159,12 @@ export class SecurityService implements ISecurityService {
     }
 
     /**
-     * Revoca un permiso dinámicamente (Dual Write).
-     * Delegado al PermissionGuard para consistencia DB-Memoria.
+     * Revoca un permiso dinámicamente (Dual Write: DB + memoria).
+     *
+     * @param profileId - ID del perfil
+     * @param objectName - Nombre del Business Object
+     * @param methodName - Nombre del método
+     * @returns `true` si el permiso se revocó correctamente
      */
     async revokePermission(
         profileId: number,
@@ -173,138 +174,130 @@ export class SecurityService implements ISecurityService {
         return this.guard.revoke(profileId, objectName, methodName)
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // Gestión de estructura de menús
+    // ═══════════════════════════════════════════════════════════════════
+
     /**
-     * Construye y retorna la estructura de menús accesible para el perfil.
-     * Filtra opciones según permisos.
+     * Construye la estructura de menús accesible para un perfil.
+     * Filtra subsistemas, menús y opciones según asignaciones.
+     *
+     * @param profileId - ID del perfil del usuario
+     * @returns Árbol de menús filtrado por visibilidad del perfil
      */
     async getMenuStructure(profileId: number): Promise<MenuStructure> {
         return this.menuProvider.getStructure(profileId)
     }
 
-    // --- Security Structure Management API ---
-
     /**
-     * Crea un subsistema.
+     * Crea un subsistema en el esquema de seguridad.
+     *
+     * @param name - Nombre único del subsistema
+     * @returns El subsistema creado con su ID asignado
      */
     async createSubsystem(name: string) {
         return this.menuProvider.createSubsystem(name)
     }
 
     /**
-     * Elimina un subsistema.
+     * Elimina un subsistema y sus asignaciones relacionadas.
+     *
+     * @param id - ID del subsistema a eliminar
+     * @returns `true` si se eliminó correctamente
      */
     async deleteSubsystem(id: number) {
         return this.menuProvider.deleteSubsystem(id)
     }
 
     /**
-     * Asigna un subsistema a un perfil.
+     * Asigna un subsistema a un perfil (visibilidad).
+     *
+     * @param profileId - ID del perfil
+     * @param subsystemId - ID del subsistema
      */
     async assignSubsystem(profileId: number, subsystemId: number) {
         return this.menuProvider.assignSubsystem(profileId, subsystemId)
     }
 
     /**
-     * Revoca un subsistema a un perfil.
+     * Revoca la asignación de un subsistema a un perfil.
+     *
+     * @param profileId - ID del perfil
+     * @param subsystemId - ID del subsistema
      */
     async revokeSubsystem(profileId: number, subsystemId: number) {
         return this.menuProvider.revokeSubsystem(profileId, subsystemId)
     }
 
     /**
-     * Crea un menú.
+     * Crea un menú dentro de un subsistema.
+     *
+     * @param name - Nombre del menú
+     * @param subsystemId - ID del subsistema padre
+     * @returns El menú creado con su ID asignado
      */
     async createMenu(name: string, subsystemId: number) {
         return this.menuProvider.createMenu(name, subsystemId)
     }
 
     /**
-     * Asigna un menú a un perfil.
+     * Asigna un menú a un perfil (visibilidad).
+     *
+     * @param profileId - ID del perfil
+     * @param menuId - ID del menú
      */
     async assignMenu(profileId: number, menuId: number) {
         return this.menuProvider.assignMenu(profileId, menuId)
     }
 
     /**
-     * Revoca un menú a un perfil.
+     * Revoca la asignación de un menú a un perfil.
+     *
+     * @param profileId - ID del perfil
+     * @param menuId - ID del menú
      */
     async revokeMenu(profileId: number, menuId: number) {
         return this.menuProvider.revokeMenu(profileId, menuId)
     }
 
     /**
-     * Crea una opción.
+     * Crea una opción de menú, opcionalmente enlazada a un método.
+     *
+     * @param name - Nombre de la opción
+     * @param methodId - ID del método asociado (opcional)
+     * @returns La opción creada con su ID asignado
      */
     async createOption(name: string, methodId?: number) {
         return this.menuProvider.createOption(name, methodId)
     }
 
     /**
-     * Asigna una opción a un menú.
+     * Enlaza una opción a un menú.
+     *
+     * @param menuId - ID del menú
+     * @param optionId - ID de la opción
      */
     async assignOptionToMenu(menuId: number, optionId: number) {
         return this.menuProvider.assignOptionToMenu(menuId, optionId)
     }
 
     /**
-     * Asigna una opción a un perfil.
+     * Asigna una opción a un perfil (visibilidad).
+     *
+     * @param profileId - ID del perfil
+     * @param optionId - ID de la opción
      */
     async assignOptionToProfile(profileId: number, optionId: number) {
         return this.menuProvider.assignOptionToProfile(profileId, optionId)
     }
 
     /**
-     * Revoca una opción a un perfil.
+     * Revoca la asignación de una opción a un perfil.
+     *
+     * @param profileId - ID del perfil
+     * @param optionId - ID de la opción
      */
     async revokeOptionFromProfile(profileId: number, optionId: number) {
         return this.menuProvider.revokeOptionFromProfile(profileId, optionId)
-    }
-
-    /**
-     * Devuelve la instancia interna del PermissionGuard.
-     * Útil para inyectar en otros servicios (e.g. AuthorizationService).
-     */
-    getGuard(): PermissionGuard {
-        return this.guard
-    }
-
-    /**
-     * Devuelve la instancia interna del TransactionMapper.
-     * Útil para inyectar en TransactionOrchestrator.
-     */
-    getMapper(): TransactionMapper {
-        return this.mapper
-    }
-
-    /**
-     * Devuelve la instancia interna del MenuProvider.
-     * Útil para inyectar en otros servicios.
-     */
-    getMenuProvider(): MenuProvider {
-        return this.menuProvider
-    }
-
-    /**
-     * Devuelve la instancia interna del TransactionExecutor.
-     * Útil para inyectar en otros servicios.
-     */
-    getExecutor(): TransactionExecutor {
-        return this.executor
-    }
-
-    /**
-     * Devuelve la instancia interna del TransactionOrchestrator.
-     * Útil para inyectar en otros servicios.
-     */
-    getOrchestrator(): TransactionOrchestrator {
-        return this.orchestrator
-    }
-
-    /**
-     * Devuelve la instancia interna del AuthorizationService.
-     * Útil para inyectar en otros servicios.
-     */
-    getAuth(): AuthorizationService {
-        return this.auth
     }
 }
