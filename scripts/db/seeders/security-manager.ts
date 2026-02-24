@@ -184,9 +184,9 @@ export class SecurityManager {
             const passwordHash = await bcrypt.hash(password as string, 10)
 
             const result = await this.db.exeRaw(
-                `INSERT INTO security.users (username, user_password, profile_id)
-                 VALUES ($1, $2, $3)
-                 ON CONFLICT (username) DO UPDATE SET user_password = EXCLUDED.user_password
+                `INSERT INTO security.users (username, user_password, profile_id, user_email_verified_at)
+                 VALUES ($1, $2, $3, NOW())
+                 ON CONFLICT (username) DO UPDATE SET user_password = EXCLUDED.user_password, user_email_verified_at = NOW()
                  RETURNING user_id`,
                 [username, passwordHash, profileId]
             )

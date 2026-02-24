@@ -17,9 +17,10 @@
         "@deprecated",
         "@throws",
         "@module",
-        "@extends"
+        "@extends",
+        "@description"
     ],
-    "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/dist/**", "**/test/**"],
+    "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/dist/**", "**/test/**", "**/node_modules/**", "**/*.md"],
     "validation": {
         "notExported": false,
         "invalidLink": true,
