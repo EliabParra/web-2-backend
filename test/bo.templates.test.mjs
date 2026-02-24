@@ -35,7 +35,7 @@ test('templateSchemas genera schemas con mensajes (nuevos imports)', () => {
 })
 
 test('templateRepository genera repo con tipos (nuevos imports)', () => {
-    const out = templateRepository('Product')
+    const out = templateRepository('Product', ['get', 'create', 'update', 'delete', 'getAll'])
     assert.match(out, /import \{ ProductQueries, Types \} from '\.\/ProductModule\.js'/)
     assert.match(out, /class ProductRepository/)
     assert.match(out, /findAll.*ProductSummary\[\]/)
@@ -43,14 +43,14 @@ test('templateRepository genera repo con tipos (nuevos imports)', () => {
 })
 
 test('templateService genera service con errores (nuevos imports)', () => {
-    const out = templateService('Product')
+    const out = templateService('Product', ['get', 'create', 'update', 'delete', 'getAll'])
     assert.match(out, /import \{ ProductRepository, Errors, Types \} from '\.\/ProductModule\.js'/)
     assert.match(out, /class ProductService extends BOService implements Types\.IProductService/)
     assert.match(out, /throw new Errors\.ProductNotFoundError/)
 })
 
 test('templateTypes genera types', () => {
-    const out = templateTypes('Product')
+    const out = templateTypes('Product', ['get', 'create', 'update', 'delete', 'getAll'])
     assert.match(out, /export namespace Product/)
     assert.match(out, /export type Entity = \{/)
     assert.match(out, /export type Summary = \{/)
@@ -60,7 +60,7 @@ test('templateTypes genera types', () => {
 })
 
 test('templateMessages genera TS object', () => {
-    const out = templateMessages('Product')
+    const out = templateMessages('Product', ['get', 'create', 'update', 'delete', 'getAll'])
     assert.match(out, /export const ProductMessages = \{/)
     assert.match(out, /es: \{/)
     assert.match(out, /en: \{/)
