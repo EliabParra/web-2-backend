@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const PORT = 5173
+const PORT = 4200
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const MIME_TYPES = {
