@@ -167,7 +167,7 @@ export class NotificationBO extends BaseBO {
             params,
             NotificationSchemas.joinRoom,
             async (data) => {
-                this.log.debug('joinRoom', { userId: data.userId, roomName: data.roomName })
+                this.log.debug('joinRoom', { userId: data.userId, roomName: data.roomName, namespace: data.namespace })
                 this.ws.addUserToRoom(data.userId.toString(), data.roomName, data.namespace)
 
                 return this.success(
@@ -205,7 +205,7 @@ export class NotificationBO extends BaseBO {
             params,
             NotificationSchemas.emitRoom,
             async (data) => {
-                this.log.debug('emitRoom', { roomName: data.roomName, event: NotificationEvents.ROOM_MESSAGE })
+                this.log.debug('emitRoom', { roomName: data.roomName, event: NotificationEvents.ROOM_MESSAGE, namespace: data.namespace })
 
                 this.ws.emitToRoom(
                     data.roomName,
@@ -219,7 +219,7 @@ export class NotificationBO extends BaseBO {
                 )
 
                 return this.success(
-                    { emitted: true, roomName: data.roomName },
+                    { emitted: true, roomName: data.roomName, namespace: data.namespace },
                     this.notificationMessages.emitRoom
                 )
             }

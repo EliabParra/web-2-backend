@@ -105,10 +105,10 @@ export class WebSocketService implements IWebSocketService {
      * @param payload - Datos del evento
      */
     emitToRoom(roomName: string, event: string, payload: any, namespace?: string): void {
-        this.requireIO()
-            .of(namespace || '/')
-            .to(roomName)
-            .emit(event, payload)
+        const targetNs = namespace || '/'
+        const _namespace = this.requireIO().of(targetNs)
+        this.log.debug(`emitToRoom: emitiendo evento "${event}" a sala "${roomName}" en namespace "${targetNs}"`)
+        _namespace.to(roomName).emit(event, payload)
     }
 
     /**
@@ -117,15 +117,16 @@ export class WebSocketService implements IWebSocketService {
      * @param userId - Identificador del usuario
      * @param roomName - Nombre de la sala
      */
-    addUserToRoom(userId: string, roomName: string, namespace?: string): void {
-        const sockets = this.localConnections.get(userId)
-        if (!sockets) return
+    async addUserToRoom(userId: string, roomName: string, namespace?: string): Promise<void> {
+        const targetNs = namespace || '/'
+        const _namespace = this.requireIO().of(targetNs)
+        const userRoom = `user_${userId}`
 
-        const _namespace = this.requireIO().of(namespace || '/')
-        for (const socketId of sockets) {
-            const socket = _namespace.sockets.get(socketId)
-            socket?.join(roomName)
-        }
+        const socketsInRoom = await _namespace.in(userRoom).fetchSockets()
+        this.log.debug(`addUserToRoom: namespace="${targetNs}" userRoom="${userRoom}" socketsEncontrados=${socketsInRoom.length}`)
+
+        _namespace.in(userRoom).socketsJoin(roomName)
+        this.log.debug(`addUserToRoom: socketsJoin("${roomName}") ejecutado`)
     }
 
     /**
@@ -135,14 +136,9 @@ export class WebSocketService implements IWebSocketService {
      * @param roomName - Nombre de la sala
      */
     removeUserFromRoom(userId: string, roomName: string, namespace?: string): void {
-        const sockets = this.localConnections.get(userId)
-        if (!sockets) return
-
         const _namespace = this.requireIO().of(namespace || '/')
-        for (const socketId of sockets) {
-            const socket = _namespace.sockets.get(socketId)
-            socket?.leave(roomName)
-        }
+        const userRoom = `user_${userId}`
+        _namespace.in(userRoom).socketsLeave(roomName)
     }
 
     /**
@@ -211,7 +207,17 @@ export class WebSocketService implements IWebSocketService {
 
         // Protect any dynamically created or secondary namespaces
         this.requireIO().on('new_namespace', (namespace) => {
+            this.log.debug(`new_namespace creado: "${namespace.name}"`)
             namespace.use(requireAuth)
+
+            namespace.on('connection', (socket) => {
+                const userId = this.extractUserId(socket)
+                this.log.debug(`Namespace "${namespace.name}" conexión: socketId=${socket.id} userId=${userId}`)
+                if (userId) {
+                    socket.join(`user_${userId}`)
+                    this.log.debug(`Namespace "${namespace.name}": socket ${socket.id} unido a sala user_${userId}`)
+                }
+            })
         })
     }
 

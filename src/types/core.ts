@@ -340,7 +340,7 @@ export interface IWebSocketService {
      * @param userId - Identificador del usuario
      * @param roomName - Nombre de la sala a unir
      */
-    addUserToRoom(userId: string, roomName: string, namespace?: string): void
+    addUserToRoom(userId: string, roomName: string, namespace?: string): void | Promise<void>
 
     /**
      * Remueve todas las conexiones de un usuario de una sala.

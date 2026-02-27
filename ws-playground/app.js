@@ -215,8 +215,17 @@ const app = (() => {
     }
 
     function connectToNamespace(namespace) {
-        if (!namespace || namespace === '/') return socket
-        if (nspSockets[namespace]) return nspSockets[namespace]
+        if (!namespace || namespace === '/') return Promise.resolve(socket)
+        if (nspSockets[namespace]?.connected) return Promise.resolve(nspSockets[namespace])
+
+        // If socket exists but is reconnecting, wait for it
+        if (nspSockets[namespace]) {
+            return new Promise((resolve) => {
+                const s = nspSockets[namespace]
+                if (s.connected) { resolve(s); return }
+                s.once('connect', () => resolve(s))
+            })
+        }
 
         const url = getBackendUrl()
         const nspUrl = `${url}${namespace.startsWith('/') ? '' : '/'}${namespace}`
@@ -231,17 +240,22 @@ const app = (() => {
             reconnectionDelay: 2000,
         })
 
-        newSocket.on('connect', () => {
-            logEvent('system', `✅ Conectado a namespace: ${namespace}`)
+        nspSockets[namespace] = newSocket
+
+        const connectPromise = new Promise((resolve, reject) => {
+            newSocket.once('connect', () => {
+                logEvent('system', `✅ Conectado a namespace: ${namespace}`)
+                resolve(newSocket)
+            })
+            newSocket.once('connect_error', (err) => {
+                logEvent('error', `❌ Error en namespace ${namespace}: ${err.message}`)
+                reject(err)
+            })
         })
 
         newSocket.on('disconnect', (reason) => {
             logEvent('system', `⛔ Desconectado de namespace ${namespace}: ${reason}`)
             delete nspSockets[namespace]
-        })
-
-        newSocket.on('connect_error', (err) => {
-            logEvent('error', `❌ Error en namespace ${namespace}: ${err.message}`)
         })
 
         newSocket.onAny((eventName, ...args) => {
@@ -262,8 +276,7 @@ const app = (() => {
             showToast(title, message, type)
         })
 
-        nspSockets[namespace] = newSocket
-        return newSocket
+        return connectPromise
     }
 
     function disconnect() {
@@ -457,7 +470,12 @@ const app = (() => {
         const tagKey = namespace ? `${namespace}:${roomName}` : roomName
 
         if (namespace) {
-            connectToNamespace(namespace)
+            try {
+                await connectToNamespace(namespace)
+            } catch {
+                logEvent('error', `No se pudo conectar al namespace ${namespace}`)
+                return
+            }
         }
 
         try {

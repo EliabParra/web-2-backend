@@ -37,7 +37,7 @@ export class AuthController {
             const result = await this.session.authenticate(req)
 
             if (result.status === 'success') {
-                res.status(result.msg.code).send(result.msg)
+                res.status(result.msg.code).send(result)
                 return
             }
 
