@@ -23,7 +23,8 @@ import { TransactionExecutor } from '../../src/core/transaction/TransactionExecu
 import { TransactionOrchestrator } from '../../src/core/transaction/TransactionOrchestrator.js'
 import { SecurityService } from '../../src/services/SecurityService.js'
 import { createMockContainer } from '../_helpers/mock-container.js'
-import type { IContainer, AppRequest, II18nService } from '../../src/types/core.js'
+import type { IContainer } from '../../src/types/core.js'
+import type { AppRequest } from '../../src/types/index.js'
 
 // ─── Tipos internos ──────────────────────────────────────────────────────────
 
@@ -195,11 +196,11 @@ function createDeps() {
     const audit = { log: async () => {} }
 
     const sessionService = {
-        sessionExists: (req: AppRequest) => !!(req.session as Record<string, unknown>)?.userId,
+        sessionExists: (req: AppRequest) => !!(req.session as unknown as Record<string, unknown>)?.userId,
         authenticate: async (req: AppRequest) => {
             const body = req.body as { loginId?: string; password?: string }
             if (body.loginId === 'test@example.com' && body.password === 'password') {
-                const session = req.session as Record<string, unknown>
+                const session = req.session as unknown as Record<string, unknown>
                 session.userId = 1
                 session.profileId = 1
                 return {
@@ -214,7 +215,7 @@ function createDeps() {
             }
         },
         destroySession: (req: AppRequest) => {
-            (req.session as { destroy: () => void }).destroy()
+            (req.session as unknown as { destroy: (cb?: (err?: unknown) => void) => void }).destroy()
         },
     }
 
@@ -228,7 +229,7 @@ function createDeps() {
             if (sql.includes('profile_method')) {
                 const rows: Array<{ profile_id: number; object_name: string; method_name: string }> = []
                 for (const [pid, perms] of Object.entries(MOCK_PROFILE_PERMISSIONS)) {
-                    for (const [obj, methods] of Object.entries(perms)) {
+                for (const [obj, methods] of Object.entries(perms) as [string, string[]][]) {
                         for (const m of methods) {
                             rows.push({ profile_id: Number(pid), object_name: obj, method_name: m })
                         }
