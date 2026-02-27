@@ -213,17 +213,28 @@ export function mockDb(queryResult: Record<string, unknown>[] = []): IDatabase {
 }
 
 /**
- * Crea un validador mock para pruebas.
+ * Crea un validador que delega a Zod `safeParse`.
  *
- * @param valid - Si la validación debe pasar (`true`) o fallar (`false`)
- * @returns Validador mock
+ * A diferencia de un stub que siempre retorna `valid: true`,
+ * este validador ejecuta el esquema real para detectar inputs inválidos.
+ *
+ * @returns Validador compatible con `IValidator`
  */
-export function mockValidator(valid = true) {
+export function zodValidator() {
     return {
-        validate: <T>(data: unknown) =>
-            valid
-                ? { valid: true as const, data: data as T }
-                : { valid: false as const, errors: [{ path: 'field', message: 'Invalid' }] },
+        validate: <T>(data: unknown, schema: unknown) => {
+            const zodSchema = schema as { safeParse: (d: unknown) => { success: boolean; data?: T; error?: { issues: { path: (string | number)[]; message: string; code: string }[] } } }
+            const result = zodSchema.safeParse(data)
+            if (result.success) {
+                return { valid: true as const, data: result.data as T }
+            }
+            const errors = (result.error?.issues ?? []).map((issue) => ({
+                path: issue.path.join('.') || 'root',
+                message: issue.message,
+                code: issue.code,
+            }))
+            return { valid: false as const, errors }
+        },
     }
 }
 
@@ -251,7 +262,7 @@ export function createTestContainer(overrides: Record<string, unknown> = {}): IC
         db: mockDb(),
         i18n: mockI18n(),
         email: mockEmail(),
-        validator: mockValidator(),
+        validator: zodValidator(),
         ...overrides,
     })
 }
