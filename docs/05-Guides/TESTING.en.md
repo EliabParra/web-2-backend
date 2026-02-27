@@ -1,58 +1,125 @@
-# Testing Guide: Native Tests
+# Testing Guide
 
-We use the native **Node.js Test Runner** (`node:test`). It's fast, simple, and doesn't require installing Jest or Mocha.
+## Framework
 
-## Test Structure
+We use the native **Node.js Test Runner** (`node:test`) with `tsx` for TypeScript execution. No Jest or Vitest.
 
-Create a file `BO/Coupons/test/CouponsService.test.ts`.
+## Directory Structure
+
+```
+test/
+├── setup.ts                        # Bootstrap (env vars)
+├── _helpers/
+│   ├── test-utils.ts               # Mock factories (container, logger, db, i18n, email)
+│   ├── mock-container.ts           # IContainer mock implementing DI
+│   └── global-state.ts             # Global state isolation utilities
+├── __fixtures__/
+│   └── auth.fixtures.ts            # Centralized test data for Auth
+├── bo/
+│   └── Auth/
+│       ├── AuthBO.test.ts          # Unit tests for AuthBO
+│       └── AuthService.test.ts     # Unit tests for AuthService
+└── integration/
+    └── auth.http.test.ts           # HTTP integration tests
+```
+
+## Conventions
+
+### Naming
+
+- Files: `[Module].test.ts`
+- Tests: `should [expected behavior] when [state/condition]`
+
+### Pattern: AAA (Arrange, Act, Assert)
 
 ```typescript
-import { describe, it, before, mock } from 'node:test' // Native!
+it('should return 201 when registration data is valid', async () => {
+    // Arrange
+    const params = { ...VALID_REGISTER_INPUT }
+
+    // Act
+    const result = await bo.register(params)
+
+    // Assert
+    assert.equal(result.code, 201)
+})
+```
+
+### Rules
+
+- **No `any`** — use `Partial<T>`, `Record<string, unknown>`, or custom interfaces
+- **No magic strings** — centralize test data in `test/__fixtures__/`
+- **No real I/O** — mock `db`, `email`, `i18n` via `createTestContainer()`
+- **TypeDoc in Spanish** — all test helpers must have TSDoc comments
+
+## Writing a Unit Test
+
+### 1. Import utilities
+
+```typescript
+import { describe, it, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { createTestContainer, createMockFn } from '../../_helpers/test-utils.js'
+```
 
-import { CouponsService } from '../CouponsService'
+### 2. Create mock dependencies
 
-describe('Coupons Logic', () => {
-    let service: CouponsService
-    let mockRepo: any
+```typescript
+function createBOWithMocks() {
+    const service = {
+        myMethod: createMockFn(async () => expectedResult),
+    }
+    const container = createTestContainer({ MyService: service })
+    return { bo: new MyBO(container), service }
+}
+```
 
-    before(() => {
-        // 1. Create Mock (Simulation) of Repository
-        // We don't want to touch real DB
-        mockRepo = {
-            findByCode: mock.fn(),
-            create: mock.fn(),
-        }
+### 3. Write tests with AAA
 
-        const mockLog = { info: () => {} }
-        const mockConfig = {}
-        const mockDb = {}
+```typescript
+describe('MyBO', () => {
+    let bo: MyBO
+    let service: MockService
 
-        service = new CouponsService(mockRepo, mockLog as any, mockConfig as any, mockDb as any)
+    beforeEach(() => {
+        const mocks = createBOWithMocks()
+        bo = mocks.bo
+        service = mocks.service
     })
 
-    it('should reject duplicate coupons', async () => {
-        // Simulate findByCode returning something (exists)
-        mockRepo.findByCode.mock.mockImplementation(() => Promise.resolve({ id: 1 }))
+    it('should succeed when input is valid', async () => {
+        // Arrange
+        const params = { ...VALID_INPUT }
 
-        await assert.rejects(async () => await service.create({ code: 'TEST' }), {
-            message: 'Coupon already exists',
-        })
-    })
+        // Act
+        const result = await bo.myMethod(params)
 
-    it('should create if not exists', async () => {
-        // Simulate not existing (null)
-        mockRepo.findByCode.mock.mockImplementation(() => Promise.resolve(null))
-        mockRepo.create.mock.mockImplementation(() => Promise.resolve({ id: 99 }))
-
-        const res = await service.create({ code: 'NEW' })
-        assert.equal(res.id, 99)
+        // Assert
+        assert.equal(result.code, 200)
+        assert.equal(service.myMethod.callCount, 1)
     })
 })
 ```
 
+## Key Utilities
+
+| Utility                          | Purpose                                                     |
+| -------------------------------- | ----------------------------------------------------------- |
+| `createTestContainer(overrides)` | Creates `IContainer` with all standard mocks pre-registered |
+| `silentLogger()`                 | Logger that produces no output                              |
+| `mockConfig(overrides)`          | Full `IAppConfig` with test defaults                        |
+| `mockI18n()`                     | I18n stub returning keys as-is                              |
+| `mockEmail()`                    | Email stub resolving without sending                        |
+| `mockDb(rows)`                   | Database stub returning specified rows                      |
+| `zodValidator()`                 | Validator using real Zod `safeParse`                        |
+| `createMockFn(impl)`             | Function with call tracking (`.calls`, `.callCount`)        |
+
 ## Commands
 
-- **All tests**: `pnpm test`
-- **Single file**: `node --import tsx --test BO/Coupons/test/CouponsService.test.ts`
-- **With Coverage**: `pnpm run test:coverage` (tells you % of code tested).
+| Command                                                                         | Description                       |
+| ------------------------------------------------------------------------------- | --------------------------------- |
+| `pnpm test`                                                                     | Run all tests                     |
+| `pnpm run test:watch`                                                           | Watch mode                        |
+| `pnpm run test:coverage`                                                        | With c8 coverage report           |
+| `pnpm run verify`                                                               | Typecheck + build + smoke + tests |
+| `node --import tsx --import ./test/setup.ts --test test/bo/Auth/AuthBO.test.ts` | Single file                       |
