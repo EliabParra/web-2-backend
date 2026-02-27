@@ -309,7 +309,7 @@ describe('Auth Module Integration (HTTP)', async () => {
             console.error('Body:', JSON.stringify(res.body, null, 2))
         }
         assert.equal(res.status, 200)
-        assert.equal(res.body.msg, 'Login OK')
+        assert.equal(res.body.msg.msg, 'Login OK')
 
         // Store agent for logout test?
     })
