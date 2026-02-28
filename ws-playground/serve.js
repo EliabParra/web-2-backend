@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
     })
 })
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 WebSocket Playground corriendo en http://localhost:${PORT}`)
     console.log(`   Backend esperado en http://localhost:3000\n`)
 })
