@@ -59,7 +59,7 @@ export class Introspector {
     /**
      * Generates a CREATE TABLE statement from column info.
      */
-    private generateCreateTable(schema: string, table: string, columns: ColumnInfo[], primaryKeys: string[] = []): string {
+    private generateCreateTable(schema: string, table: string, columns: ColumnInfo[], primaryKeys: string[] = [], foreignKeys: string[] = []): string {
         const colDefs = columns
             .map((col) => {
                 const isPk = primaryKeys.includes(col.column_name)
@@ -80,6 +80,11 @@ export class Introspector {
             })
             .join(',\n')
 
+        const tableConstraints = [...foreignKeys]
+        if (tableConstraints.length > 0) {
+            return `create table if not exists ${schema}.${table} (\n${colDefs},\n        ${tableConstraints.join(',\n        ')}\n    );`
+        }
+
         return `create table if not exists ${schema}.${table} (\n${colDefs}\n    );`
     }
 
@@ -90,6 +95,58 @@ export class Introspector {
      * Introspects the entire database and generates schema files.
      * Skips tables that are already defined in local files.
      */
+    /**
+     * Obtiene el índice topológico de las tablas basándose en sus dependencias foráneas.
+     */
+    async calculateTopology(tables: TableInfo[]): Promise<Map<string, number>> {
+        const topology = new Map<string, number>()
+        const unassigned = new Set(tables.map(t => `${t.table_schema}.${t.table_name}`))
+        
+        // Cargar todas las dependencias
+        const dependencies = new Map<string, string[]>()
+        
+        for (const t of tables) {
+            const tableName = `${t.table_schema}.${t.table_name}`
+            const rawFks = await this.getForeignKeys(t.table_schema, t.table_name)
+            
+            const refs = rawFks.map(fk => {
+                const match = fk.match(/references\s+([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)/i)
+                return match ? match[1] : null
+            }).filter(ref => ref !== null && ref !== tableName) as string[]
+            
+            dependencies.set(tableName, refs)
+        }
+
+        // Resolución de Niveles Iterativa DAG
+        let currentLevel = 0
+        let hasChanges = true
+
+        while (unassigned.size > 0 && hasChanges) {
+            hasChanges = false
+            const currentPass = Array.from(unassigned)
+
+            for (const table of currentPass) {
+                const reqs = dependencies.get(table) || []
+                const allDependenciesMet = reqs.every(req => topology.has(req))
+
+                if (allDependenciesMet) {
+                    topology.set(table, currentLevel)
+                    unassigned.delete(table)
+                    hasChanges = true
+                }
+            }
+            if (hasChanges) currentLevel++
+        }
+
+        // Fallback: Si quedan grupos por cyclicos o no encontrados, asignar un peso maximo
+        unassigned.forEach(table => {
+            console.warn(`⚠️  Warning: Circular or unbound dependency detected on ${table}`)
+            topology.set(table, currentLevel)
+        });
+
+        return topology
+    }
+
     /**
      * Scans the output directory for existing table definitions in .ts files.
      * Returns a Map of "schema.table" -> "filename".
@@ -135,9 +192,21 @@ export class Introspector {
         console.log(`📊 Found ${tables.length} tables in DB.`.gray)
         console.log(`📂 Found ${existingTables.size} tables already defined in code.`.gray)
 
+        const topology = await this.calculateTopology(tables)
         const generatedFiles: string[] = []
+        
+        // Sorting tables topologically, then alphabetically
+        const sortedTables = [...tables].sort((a, b) => {
+            const keyA = `${a.table_schema}.${a.table_name}`
+            const keyB = `${b.table_schema}.${b.table_name}`
+            const levelA = topology.get(keyA) || 0
+            const levelB = topology.get(keyB) || 0
+            
+            if (levelA !== levelB) return levelA - levelB
+            return keyA.localeCompare(keyB)
+        })
 
-        for (const table of tables) {
+        for (const table of sortedTables) {
             if (table.table_schema === 'security') {
                 console.log(
                     `   ⏭️  Ignoring Security table: ${table.table_schema}.${table.table_name}`
@@ -199,6 +268,7 @@ export class Introspector {
 
             const columns = await this.getColumns(table.table_schema, table.table_name)
             const primaryKeys = await this.getPrimaryKey(table.table_schema, table.table_name)
+            const foreignKeys = await this.getForeignKeys(table.table_schema, table.table_name)
             let indexes: string[] = []
 
             indexes = await this.getIndexes(table.table_schema, table.table_name)
@@ -232,11 +302,14 @@ export class Introspector {
                 columns,
                 indexes,
                 [], // Ensure we NEVER inject data into the DDL file anymore
-                primaryKeys
+                primaryKeys,
+                foreignKeys
             )
 
             // Determine filename: Use existing if available, else new standardized name
-            const filename = existingFile || `80_${table.table_schema}_${table.table_name}.ts`
+            const topLevel = topology.get(`${table.table_schema}.${table.table_name}`) || 0
+            const prefixTopological = 80 + topLevel // 80, 81, 82 ...
+            const filename = existingFile || `${prefixTopological}_${table.table_schema}_${table.table_name}.ts`
             const filepath = path.join(this.ddlDir, filename)
 
             await fs.writeFile(filepath, content, 'utf-8')
@@ -322,6 +395,37 @@ export class Introspector {
     }
 
     /**
+     * Gets foreign key constraints for a table.
+     */
+    async getForeignKeys(schema: string, table: string): Promise<string[]> {
+        const result = await this.db.exeRaw(
+            `
+            SELECT
+                kcu.column_name,
+                ccu.table_schema AS foreign_schema,
+                ccu.table_name AS foreign_table,
+                ccu.column_name AS foreign_column
+            FROM
+                information_schema.table_constraints AS tc
+            JOIN information_schema.key_column_usage AS kcu
+                ON tc.constraint_name = kcu.constraint_name
+                AND tc.table_schema = kcu.table_schema
+            JOIN information_schema.constraint_column_usage AS ccu
+                ON ccu.constraint_name = tc.constraint_name
+                AND ccu.table_schema = tc.table_schema
+            WHERE tc.constraint_type = 'FOREIGN KEY' 
+              AND tc.table_schema = $1
+              AND tc.table_name = $2;
+            `,
+            [schema, table]
+        )
+        
+        return result.rows.map(
+            (r: any) => `foreign key (${r.column_name}) references ${r.foreign_schema}.${r.foreign_table} (${r.foreign_column})`
+        )
+    }
+
+    /**
      * Formats a JS value into a SQL literal.
      * Use with caution, strictly for introspection purposes.
      */
@@ -347,9 +451,10 @@ export class Introspector {
         columns: ColumnInfo[],
         indexes: string[] = [],
         data: string[] = [],
-        primaryKeys: string[] = []
+        primaryKeys: string[] = [],
+        foreignKeys: string[] = []
     ): string {
-        const createSql = this.generateCreateTable(schema, table, columns, primaryKeys)
+        const createSql = this.generateCreateTable(schema, table, columns, primaryKeys, foreignKeys)
         const constName = `${table.toUpperCase()}_SCHEMA`
 
         const parts = ['    // Table Definition', `    \`${createSql}\`,`]

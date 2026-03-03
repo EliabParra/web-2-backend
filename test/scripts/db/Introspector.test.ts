@@ -148,4 +148,41 @@ describe('Introspector', () => {
         assert.ok(!content.includes('value integer primary key'),
             'value column should NOT have primary key')
     })
+
+    it('should include foreign keys inline at the end of the table definition', () => {
+        const introspector = new Introspector(mockDb as any, '/tmp', '/tmp')
+        const columns = [
+            {
+                column_name: 'category_id',
+                data_type: 'integer',
+                is_nullable: 'NO',
+                column_default: "nextval('business.category_category_id_seq'::regclass)",
+            },
+            {
+                column_name: 'category_description',
+                data_type: 'text',
+                is_nullable: 'NO',
+                column_default: null,
+            },
+            {
+                column_name: 'category_type_id',
+                data_type: 'integer',
+                is_nullable: 'NO',
+                column_default: null,
+            },
+        ]
+        
+        const foreignKeys = [
+            'foreign key (category_type_id) references business.category_type (category_type_id)'
+        ]
+
+        const content = introspector.generateSchemaFile(
+            'business', 'category', columns, [], [], ['category_id'], foreignKeys
+        )
+
+        assert.ok(content.includes('category_type_id integer not null,'),
+            `Expected trailing comma after last column but got: ${content}`)
+        assert.ok(content.includes('foreign key (category_type_id) references business.category_type (category_type_id)'),
+            `Expected foreign key constraint but got: ${content}`)
+    })
 })
