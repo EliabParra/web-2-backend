@@ -6,7 +6,7 @@ export const PROPERTY_SCHEMA = [
     // Table Definition
     `create table if not exists business.property (
         property_id integer not null default nextval('business.property_property_id_seq'::regclass),
-        property_description character varying not null,
+        property_description text not null,
         property_value integer not null
     );`,
 

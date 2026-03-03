@@ -59,12 +59,23 @@ export class Introspector {
     /**
      * Generates a CREATE TABLE statement from column info.
      */
-    private generateCreateTable(schema: string, table: string, columns: ColumnInfo[]): string {
+    private generateCreateTable(schema: string, table: string, columns: ColumnInfo[], primaryKeys: string[] = []): string {
         const colDefs = columns
             .map((col) => {
+                const isPk = primaryKeys.includes(col.column_name)
+
+                // Detectar SERIAL: nextval(...) en column_default indica pseudo-tipo SERIAL
+                if (col.column_default?.includes('nextval(')) {
+                    const serialType = col.data_type === 'bigint' ? 'bigserial' : 'serial'
+                    let def = `        ${col.column_name} ${serialType}`
+                    if (isPk) def += ' primary key'
+                    return def
+                }
+
                 let def = `        ${col.column_name} ${col.data_type}`
                 if (col.is_nullable === 'NO') def += ' not null'
                 if (col.column_default) def += ` default ${col.column_default}`
+                if (isPk) def += ' primary key'
                 return def
             })
             .join(',\n')
@@ -178,9 +189,13 @@ export class Introspector {
             if (!shouldProcess) continue
 
             const columns = await this.getColumns(table.table_schema, table.table_name)
+            const primaryKeys = await this.getPrimaryKey(table.table_schema, table.table_name)
             let indexes: string[] = []
 
             indexes = await this.getIndexes(table.table_schema, table.table_name)
+
+            // Filtrar índices de PK que ya se declaran inline en el CREATE TABLE
+            indexes = indexes.filter(idx => !idx.includes('_pkey'))
 
             // When writing a new file, we ALSO need to handle data extraction to DML
             if (options.withData) {
@@ -207,7 +222,8 @@ export class Introspector {
                 table.table_name,
                 columns,
                 indexes,
-                [] // Ensure we NEVER inject data into the DDL file anymore
+                [], // Ensure we NEVER inject data into the DDL file anymore
+                primaryKeys
             )
 
             // Determine filename: Use existing if available, else new standardized name
@@ -321,9 +337,10 @@ export class Introspector {
         table: string,
         columns: ColumnInfo[],
         indexes: string[] = [],
-        data: string[] = []
+        data: string[] = [],
+        primaryKeys: string[] = []
     ): string {
-        const createSql = this.generateCreateTable(schema, table, columns)
+        const createSql = this.generateCreateTable(schema, table, columns, primaryKeys)
         const constName = `${table.toUpperCase()}_SCHEMA`
 
         const parts = ['    // Table Definition', `    \`${createSql}\`,`]
