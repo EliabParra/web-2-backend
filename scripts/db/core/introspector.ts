@@ -146,6 +146,15 @@ export class Introspector {
                 continue
             }
 
+            // Excluir tabla de infraestructura interna del CLI
+            if (table.table_name === '_migration_history') {
+                console.log(
+                    `   ⏭️  Ignoring CLI infrastructure: ${table.table_schema}.${table.table_name}`
+                        .yellow
+                )
+                continue
+            }
+
             const key = `${table.table_schema}.${table.table_name}`.toLowerCase()
             const existingFile = existingTables.get(key)
             let shouldProcess = true
