@@ -39,8 +39,8 @@ describe('CLI Parser', () => {
     })
 
     it('should parse --authLoginId', () => {
-        const result = parseCliArgs(['--authLoginId', 'username'])
-        assert.strictEqual(result.auth?.loginId, 'username')
+        const result = parseCliArgs(['--authLoginId', 'user_na'])
+        assert.strictEqual(result.auth?.loginId, 'user_na')
     })
 
     it('should parse --seedAdmin flag', () => {

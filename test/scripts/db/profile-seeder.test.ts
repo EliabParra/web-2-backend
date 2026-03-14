@@ -24,10 +24,10 @@ describe('ProfileSeeder', () => {
         // Verify both profiles were created
         assert.strictEqual(mockDb.exeRaw.mock.calls.length, 2)
 
-        // Verify new schema columns used (profile_id, profile_name)
+        // Verify new schema columns used (profile_id, profile_na)
         const firstCall = mockDb.exeRaw.mock.calls[0].arguments[0] as string
         assert.ok(firstCall.includes('profile_id'), 'Should use profile_id column')
-        assert.ok(firstCall.includes('profile_name'), 'Should use profile_name column')
+        assert.ok(firstCall.includes('profile_na'), 'Should use profile_na column')
     })
 
     it('should seed admin profile when provided', async () => {

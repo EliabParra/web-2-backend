@@ -82,16 +82,16 @@ test('Security.init loads permissions + tx map and sets isReady', async () => {
                 query: async (sql) => {
                     // Check for permissions query
                     if (sql.includes('profile_method')) {
-                        return { rows: [{ profile_id: 1, method_name: 'm', object_name: 'o' }] }
+                        return { rows: [{ profile_id: 1, method_na: 'm', object_na: 'o' }] }
                     }
                     // Check for tx/methods query
-                    if (sql.includes('security.methods')) {
+                    if (sql.includes('security.transaction')) {
                         return {
                             rows: [
                                 {
                                     tx_nu: 100,
-                                    object_name: 'Order',
-                                    method_name: 'createOrder',
+                                    object_na: 'Order',
+                                    method_na: 'createOrder',
                                     tx: 100,
                                 },
                             ],
@@ -128,7 +128,7 @@ test('Security.init loads permissions + tx map and sets isReady', async () => {
                 load: async () => {},
                 isReady: true,
                 hasPermission: () => true,
-                check: (profileId) => profileId === 1,
+                check: (profileIds) => Array.isArray(profileIds) && profileIds.includes(1),
             }
             globalThis.menuProvider = { load: async () => {} }
             globalThis.authorization = {}
@@ -139,11 +139,11 @@ test('Security.init loads permissions + tx map and sets isReady', async () => {
             assert.equal(security.isReady, true)
 
             assert.equal(
-                security.getPermissions({ profileId: 1, methodName: 'm', objectName: 'o' }),
+                security.getPermissions({ profileIds: [1], methodName: 'm', objectName: 'o' }),
                 true
             )
             assert.equal(
-                security.getPermissions({ profileId: 2, methodName: 'm', objectName: 'o' }),
+                security.getPermissions({ profileIds: [2], methodName: 'm', objectName: 'o' }),
                 false
             )
 
@@ -189,7 +189,7 @@ test('Security.init captures initError and rejects ready when DB fails', async (
             globalThis.db = {
                 query: async (sql) => {
                     if (sql.includes('profile_method')) throw new Error('db down')
-                    if (sql.includes('security.methods')) return { rows: [] }
+                    if (sql.includes('security.transaction')) return { rows: [] }
                     return { rows: [] }
                 },
             }
@@ -238,6 +238,72 @@ test('Security.init captures initError and rejects ready when DB fails', async (
             assert.ok(err)
             assert.equal(security.isReady, false)
             assert.ok(logs.some((l) => String(l?.msg ?? '').includes('SecurityService.init')))
+        }
+    )
+})
+
+test('Security.init retries successfully after a transient failure', async () => {
+    await withGlobals(
+        ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator', 'email'],
+        async () => {
+            globalThis.config = { app: { lang: 'en' }, bo: { path: '../../BO/' } }
+            globalThis.i18n = createMockI18n()
+
+            globalThis.log = {
+                trace: () => {},
+                debug: () => {},
+                info: () => {},
+                warn: () => {},
+                error: () => {},
+                critical: () => {},
+                child: () => ({
+                    trace: () => {},
+                    debug: () => {},
+                    info: () => {},
+                    warn: () => {},
+                    error: () => {},
+                    critical: () => {},
+                }),
+            }
+
+            globalThis.db = { query: async () => ({ rows: [] }) }
+            globalThis.audit = { log: async () => {} }
+            globalThis.session = {
+                sessionExists: () => false,
+                createSession: async () => {},
+                destroySession: () => {},
+            }
+            globalThis.validator = { validate: () => ({ valid: true, data: {} }) }
+            globalThis.email = {
+                send: async () => ({ ok: true }),
+                sendTemplate: async () => ({ ok: true }),
+                maskEmail: (e) => e,
+            }
+
+            let shouldFail = true
+            globalThis.permissionGuard = {
+                load: async () => {
+                    if (shouldFail) throw new Error('temporary failure')
+                },
+                check: () => true,
+            }
+            globalThis.transactionMapper = {
+                load: async () => {},
+                resolve: () => false,
+            }
+            globalThis.menuProvider = { load: async () => {} }
+            globalThis.transactionExecutor = {}
+            globalThis.orchestrator = { execute: async () => {} }
+            globalThis.authorization = {}
+
+            const security = new SecurityService(createMockContainer(globalThis))
+
+            await assert.rejects(async () => security.init(), /temporary failure/)
+            assert.equal(security.isReady, false)
+
+            shouldFail = false
+            await security.init()
+            assert.equal(security.isReady, true)
         }
     )
 })

@@ -13,8 +13,8 @@ describe('Transaction Core Components', () => {
             const mockDb = {
                 query: async () => ({
                     rows: [
-                        { tx: 100, object_name: 'Auth', method_name: 'login' },
-                        { tx: '200', object_name: 'Order', method_name: 'create' },
+                        { tx: 100, object_na: 'Auth', method_na: 'login' },
+                        { tx: '200', object_na: 'Order', method_na: 'create' },
                     ],
                 }),
             }
@@ -73,6 +73,27 @@ describe('Transaction Core Components', () => {
                 async () => await executor.execute('..', 'test', {}),
                 /Access Denied/
             )
+        })
+
+        it('execute() reuses one BO instance across methods of same object', async () => {
+            const container = createMockContainer({ config: mockConfig, log: mockLog })
+            const executor = new TransactionExecutor(container)
+
+            let ctorCalls = 0
+            const fakeInstance = {
+                ping: async () => ({ code: 200, msg: 'ok' }),
+                pong: async () => ({ code: 200, msg: 'ok2' }),
+            }
+
+            executor.loadBO = async () => {
+                ctorCalls += 1
+                return { instance: fakeInstance }
+            }
+
+            await executor.execute('Auth', 'ping', {})
+            await executor.execute('Auth', 'pong', {})
+
+            assert.equal(ctorCalls, 1)
         })
     })
 })

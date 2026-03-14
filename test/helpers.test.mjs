@@ -31,10 +31,10 @@ test('redactSecretsInString handles empty string', () => {
 
 // --- redactSecrets tests ---
 test('redactSecrets redacts password field', () => {
-    const input = { username: 'admin', password: 'secret123' }
+    const input = { user_na: 'admin', password: 'secret123' }
     const result = redactSecrets(input)
     assert.equal(result.password, '[REDACTED]')
-    assert.equal(result.username, 'admin')
+    assert.equal(result.user_na, 'admin')
 })
 
 test('redactSecrets redacts token field', () => {

@@ -76,25 +76,27 @@ function createMockLogger() {
 
 function createMockDb(overrides = {}) {
     const queryResults = {
+        // TODO(REVERT_NAMING): Revert object_na→object_name, method_na→method_name
         profile_method: {
             rows: [
-                { profile_id: 1, object_name: 'Auth', method_name: 'register' },
-                { profile_id: 1, object_name: 'Auth', method_name: 'verifyEmail' },
-                { profile_id: 1, object_name: 'Auth', method_name: 'requestPasswordReset' },
-                { profile_id: 2, object_name: 'Auth', method_name: 'register' }, // Different profile
+                { profile_id: 1, object_na: 'Auth', method_na: 'register' },
+                { profile_id: 1, object_na: 'Auth', method_na: 'verifyEmail' },
+                { profile_id: 1, object_na: 'Auth', method_na: 'requestPasswordReset' },
+                { profile_id: 2, object_na: 'Auth', method_na: 'register' }, // Different profile
             ],
         },
-        transactions: {
+        // TODO(REVERT_NAMING): Revert tx to transaction_number, object_na→object_name, method_na→method_name
+        'security.transaction': {
             rows: [
-                { tx: 1, object_name: 'Auth', method_name: 'register' },
-                { tx: 2, object_name: 'Auth', method_name: 'verifyEmail' },
-                { tx: 3, object_name: 'Auth', method_name: 'requestPasswordReset' },
+                { tx: 1, object_na: 'Auth', method_na: 'register' },
+                { tx: 2, object_na: 'Auth', method_na: 'verifyEmail' },
+                { tx: 3, object_na: 'Auth', method_na: 'requestPasswordReset' },
             ],
         },
         'security.methods': {
             rows: [
-                { tx: 1, object_name: 'Auth', method_name: 'register' },
-                { tx: 2, object_name: 'Auth', method_name: 'verifyEmail' },
+                { tx: 1, object_na: 'Auth', method_na: 'register' },
+                { tx: 2, object_na: 'Auth', method_na: 'verifyEmail' },
             ],
         },
         ...overrides,
@@ -161,7 +163,7 @@ test('SecurityService: getPermissions returns true for authorized profile', asyn
             await security.init()
 
             const result = security.getPermissions({
-                profileId: 1,
+                profileIds: [1],
                 objectName: 'Auth',
                 methodName: 'register',
             })
@@ -181,7 +183,7 @@ test('SecurityService: getPermissions returns false for unauthorized profile', a
             await security.init()
 
             const result = security.getPermissions({
-                profileId: 999, // Non-existent profile
+                profileIds: [999], // Non-existent profile
                 objectName: 'Auth',
                 methodName: 'register',
             })
@@ -201,7 +203,7 @@ test('SecurityService: getPermissions returns false for unauthorized method', as
             await security.init()
 
             const result = security.getPermissions({
-                profileId: 1,
+                profileIds: [1],
                 objectName: 'Auth',
                 methodName: 'nonExistentMethod', // Method not in permissions
             })
@@ -280,7 +282,7 @@ test('SecurityService: grantPermission adds permission to profile', async () => 
 
             // Initially profile 3 has no permissions
             const beforeGrant = security.getPermissions({
-                profileId: 3,
+                profileIds: [3],
                 objectName: 'Auth',
                 methodName: 'verifyEmail',
             })
@@ -292,7 +294,7 @@ test('SecurityService: grantPermission adds permission to profile', async () => 
 
             // Now profile 3 should have permission (in memory cache)
             const afterGrant = security.getPermissions({
-                profileId: 3,
+                profileIds: [3],
                 objectName: 'Auth',
                 methodName: 'verifyEmail',
             })
@@ -320,7 +322,7 @@ test('SecurityService: revokePermission removes permission from profile', async 
 
             // Profile 1 has permission for Auth.register initially
             const beforeRevoke = security.getPermissions({
-                profileId: 1,
+                profileIds: [1],
                 objectName: 'Auth',
                 methodName: 'register',
             })
@@ -332,7 +334,7 @@ test('SecurityService: revokePermission removes permission from profile', async 
 
             // Now profile 1 should NOT have permission (removed from memory cache)
             const afterRevoke = security.getPermissions({
-                profileId: 1,
+                profileIds: [1],
                 objectName: 'Auth',
                 methodName: 'register',
             })
@@ -360,12 +362,12 @@ test('SecurityService: multiple profiles can have same permission', async () => 
 
             // Both profile 1 and 2 have Auth.register permission
             const profile1 = security.getPermissions({
-                profileId: 1,
+                profileIds: [1],
                 objectName: 'Auth',
                 methodName: 'register',
             })
             const profile2 = security.getPermissions({
-                profileId: 2,
+                profileIds: [2],
                 objectName: 'Auth',
                 methodName: 'register',
             })
@@ -377,12 +379,12 @@ test('SecurityService: multiple profiles can have same permission', async () => 
             await security.revokePermission(1, 'Auth', 'register')
 
             const profile1After = security.getPermissions({
-                profileId: 1,
+                profileIds: [1],
                 objectName: 'Auth',
                 methodName: 'register',
             })
             const profile2After = security.getPermissions({
-                profileId: 2,
+                profileIds: [2],
                 objectName: 'Auth',
                 methodName: 'register',
             })
@@ -525,7 +527,7 @@ test('SecurityService: handles empty permissions gracefully', async () => {
             await security.init()
 
             const result = security.getPermissions({
-                profileId: 1,
+                profileIds: [1],
                 objectName: 'Auth',
                 methodName: 'register',
             })
@@ -540,7 +542,7 @@ test('SecurityService: handles empty transactions gracefully', async () => {
         ['config', 'i18n', 'log', 'db', 'audit', 'session', 'validator'],
         async () => {
             const deps = createMockDeps({
-                dbOverrides: { 'security.methods': { rows: [] }, transactions: { rows: [] } },
+                dbOverrides: { 'security.transaction': { rows: [] } },
             })
             Object.assign(globalThis, deps)
 

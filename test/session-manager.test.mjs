@@ -197,7 +197,8 @@ test('createSession uses getUserByUsername for non-email identifier', async () =
     const result = await sm.authenticate(req)
 
     // Check for new schema column name or query logic
-    assert.ok(sqlCalled.includes('u.username = $1'), 'Should use username lookup query')
+    // TODO(REVERT_NAMING): Revert u.user_na to u.username
+    assert.ok(sqlCalled.includes('u.user_na = $1'), 'Should use username lookup query')
 })
 
 test('createSession uses getUserByEmail for email identifier', async () => {
@@ -220,7 +221,8 @@ test('createSession uses getUserByEmail for email identifier', async () => {
     await sm.authenticate(req)
 
     // Check for new schema column name
-    assert.ok(sqlCalled.includes('u.user_email = $1'), 'Should use email lookup query')
+    // TODO(REVERT_NAMING): Revert u.user_em to u.user_email
+    assert.ok(sqlCalled.includes('u.user_em = $1'), 'Should use email lookup query')
 })
 
 test('createSession handles error gracefully and logs', async () => {

@@ -9,10 +9,10 @@ const createMockDb = () => {
         calls,
         exeRaw: async (sql: string, params?: any[]) => {
             calls.push({ sql, params: params || [] })
-            if (sql.includes('INSERT INTO security.profiles')) {
+            if (sql.includes('INSERT INTO security.profile')) {
                 return { rows: [], rowCount: 1 }
             }
-            if (sql.includes('INSERT INTO security.users')) {
+            if (sql.includes('INSERT INTO security."user"')) {
                 return { rows: [{ user_id: 42 }], rowCount: 1 }
             }
             if (sql.includes('INSERT INTO security.user_profile')) {
@@ -29,7 +29,7 @@ describe('AdminSeeder', () => {
         const seeder = new AdminSeeder(mockDb as any)
 
         const result = await seeder.seed({
-            username: 'admin',
+            user_na: 'admin',
             password: 'secret123',
             profileId: 1,
         })
@@ -37,18 +37,18 @@ describe('AdminSeeder', () => {
         assert.strictEqual(result.userId, 42)
         assert.strictEqual(result.profileId, 1)
 
-        // Verify profile was created (using NEW schema: profile_id, profile_name)
+        // Verify profile was created (using NEW schema: profile_id, profile_na)
         const profileCall = mockDb.calls.find((c) =>
-            c.sql.includes('INSERT INTO security.profiles')
+            c.sql.includes('INSERT INTO security.profile')
         )
         assert.ok(profileCall, 'Profile insert call should exist')
         assert.ok(profileCall.sql.includes('profile_id'), 'Should use profile_id column')
 
         // Verify user was created with hashed password (not plain text)
-        // Using NEW schema: user_password instead of password_hash
-        const userCall = mockDb.calls.find((c) => c.sql.includes('INSERT INTO security.users'))
+        // Using NEW schema: user_pw instead of password_hash
+        const userCall = mockDb.calls.find((c) => c.sql.includes('INSERT INTO security."user"'))
         assert.ok(userCall, 'User insert call should exist')
-        assert.ok(userCall.sql.includes('user_password'), 'Should use user_password column')
+        assert.ok(userCall.sql.includes('user_pw'), 'Should use user_pw column')
         const passwordParam = userCall.params[1]
         assert.ok(
             passwordParam.startsWith('$2b$') || passwordParam.startsWith('$2a$'),

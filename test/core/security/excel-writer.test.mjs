@@ -11,28 +11,28 @@ import { SHEET_DEFINITIONS } from '../../../src/types/excel.js'
 function createMockDB(data = {}) {
     return {
         async query(sql) {
-            if (sql.includes('profile_name') && sql.includes('profiles'))
-                return { rows: data.profiles ?? [{ profile_name: 'Admin' }] }
+            if (sql.includes('profile_na') && sql.includes('security.profile'))
+                return { rows: data.profiles ?? [{ profile_na: 'Admin' }] }
             if (sql.includes('subsystem_name') && sql.includes('subsystems') && !sql.includes('menu'))
                 return { rows: data.subsystems ?? [{ subsystem_name: 'Core' }] }
-            if (sql.includes('object_name') && sql.includes('objects') && !sql.includes('object_method'))
-                return { rows: data.objects ?? [{ object_name: 'Auth' }] }
-            if (sql.includes('object_name') && sql.includes('method_name'))
-                return { rows: data.methods ?? [{ object_name: 'Auth', method_name: 'login' }] }
-            if (sql.includes('menu_name') && sql.includes('subsystem_name'))
-                return { rows: data.menus ?? [{ menu_name: 'Dashboard', subsystem_name: 'Core' }] }
-            if (sql.includes('menu_name') && !sql.includes('subsystem'))
-                return { rows: data.menuNames ?? [{ menu_name: 'Dashboard' }] }
-            if (sql.includes('option_name'))
-                return { rows: data.options ?? [{ option_name: 'Ver', object_method: 'Auth.login', menu_name: 'Dashboard' }] }
+            if (sql.includes('object_na') && sql.includes('security.object') && !sql.includes('object_method'))
+                return { rows: data.objects ?? [{ object_na: 'Auth' }] }
+            if (sql.includes('object_na') && sql.includes('method_na'))
+                return { rows: data.methods ?? [{ object_na: 'Auth', method_na: 'login' }] }
+            if (sql.includes('menu_na') && sql.includes('subsystem_name'))
+                return { rows: data.menus ?? [{ menu_na: 'Dashboard', subsystem_name: 'Core' }] }
+            if (sql.includes('menu_na') && !sql.includes('subsystem'))
+                return { rows: data.menuNames ?? [{ menu_na: 'Dashboard' }] }
+            if (sql.includes('option_na'))
+                return { rows: data.options ?? [{ option_na: 'Ver', object_method: 'Auth.login', menu_na: 'Dashboard' }] }
             if (sql.includes('object_method') && !sql.includes('option'))
                 return { rows: data.objectMethods ?? [{ object_method: 'Auth.login' }] }
-            if (sql.includes('profile_method') && sql.includes('profile_name'))
-                return { rows: data.permissions ?? [{ profile_name: 'Admin', object_method: 'Auth.login' }] }
-            if (sql.includes('username'))
-                return { rows: data.users ?? [{ username: 'admin', password: 'hashed', profile_name: 'Admin' }] }
-            if (sql.includes('profile_name') && sql.includes('subsystem_name') && sql.includes('menu_name'))
-                return { rows: data.assignments ?? [{ profile_name: 'Admin', subsystem_name: 'Core', menu_name: 'Dashboard', option_name: 'Ver' }] }
+            if (sql.includes('profile_method') && sql.includes('profile_na'))
+                return { rows: data.permissions ?? [{ profile_na: 'Admin', object_method: 'Auth.login' }] }
+            if (sql.includes('user_na'))
+                return { rows: data.users ?? [{ user_na: 'admin', user_pw: 'hashed', profile_na: 'Admin' }] }
+            if (sql.includes('profile_na') && sql.includes('subsystem_name') && sql.includes('menu_na'))
+                return { rows: data.assignments ?? [{ profile_na: 'Admin', subsystem_name: 'Core', menu_na: 'Dashboard', option_na: 'Ver' }] }
             return { rows: [] }
         },
     }
@@ -79,7 +79,7 @@ test('generateTemplate incluye hoja Objetos con columna correcta', async () => {
     assert.ok(sheet, 'Hoja Objetos debe existir')
 
     const header = sheet.getRow(1)
-    assert.equal(header.getCell(1).value, 'object_name')
+    assert.equal(header.getCell(1).value, 'object_na')
 })
 
 test('generateTemplate incluye hoja Métodos con columnas correctas', async () => {
@@ -91,8 +91,8 @@ test('generateTemplate incluye hoja Métodos con columnas correctas', async () =
     assert.ok(sheet, 'Hoja Métodos debe existir')
 
     const header = sheet.getRow(1)
-    assert.equal(header.getCell(1).value, 'object_name')
-    assert.equal(header.getCell(2).value, 'method_name')
+    assert.equal(header.getCell(1).value, 'object_na')
+    assert.equal(header.getCell(2).value, 'method_na')
 })
 
 test('generateTemplate aplica estilos de header', async () => {
@@ -113,8 +113,8 @@ test('generateTemplate aplica estilos de header', async () => {
 
 test('exportData incluye datos de la DB en las hojas', async () => {
     const writer = new PermissionMatrixWriter(createMockDB({
-        profiles: [{ profile_name: 'Admin' }, { profile_name: 'User' }],
-        objects: [{ object_name: 'Auth' }, { object_name: 'Products' }],
+        profiles: [{ profile_na: 'Admin' }, { profile_na: 'User' }],
+        objects: [{ object_na: 'Auth' }, { object_na: 'Products' }],
     }))
 
     const buffer = await writer.exportData()
@@ -133,8 +133,8 @@ test('exportData incluye datos de la DB en las hojas', async () => {
 test('exportData incluye datos de Métodos', async () => {
     const writer = new PermissionMatrixWriter(createMockDB({
         methods: [
-            { object_name: 'Auth', method_name: 'login' },
-            { object_name: 'Auth', method_name: 'logout' },
+            { object_na: 'Auth', method_na: 'login' },
+            { object_na: 'Auth', method_na: 'logout' },
         ],
     }))
 

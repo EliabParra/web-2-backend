@@ -21,13 +21,13 @@ describe('Security & Orchestration Core', () => {
                 critical: () => {},
                 child: () => mockLog,
             }
-            const mockGuard = { check: (p, o, m) => p === 1 }
+            const mockGuard = { check: (profileIds, o, m) => Array.isArray(profileIds) && profileIds.includes(1) }
 
             const container = createMockContainer({ permissionGuard: mockGuard, log: mockLog })
             const service = new AuthorizationService(container)
 
-            assert.equal(service.isAuthorized(1, 'Obj', 'Method'), true)
-            assert.equal(service.isAuthorized(99, 'Obj', 'Method'), false)
+            assert.equal(service.isAuthorized([1], 'Obj', 'Method'), true)
+            assert.equal(service.isAuthorized([99], 'Obj', 'Method'), false)
         })
     })
 
@@ -47,7 +47,7 @@ describe('Security & Orchestration Core', () => {
             errorKey: (k) => ({ code: 500, msg: k }),
         }
 
-        const context = { userId: 1, profileId: 10, username: 'test' }
+        const context = { userId: 1, profileIds: [10], username: 'test' }
 
         it('execute() blocks invalid paths (Path Traversal/Injection)', async () => {
             const mockMapper = { resolve: () => ({ objectName: '../Etc', methodName: 'exec' }) }

@@ -174,3 +174,38 @@ test('applyCorsIfEnabled handles missing origins', () => {
 
     assert.equal(middlewareAdded, true)
 })
+
+test('applyCorsIfEnabled allows wildcard origins', async () => {
+    let capturedMiddleware = null
+    const mockApp = {
+        use: (mw) => {
+            capturedMiddleware = mw
+        },
+    }
+    const config = {
+        app: { env: 'production' },
+        cors: {
+            enabled: true,
+            origins: ['*'],
+            credentials: true,
+        },
+    }
+
+    applyCorsIfEnabled(mockApp, config)
+    assert.ok(typeof capturedMiddleware === 'function')
+
+    const req = {
+        method: 'GET',
+        headers: { origin: 'https://example.com' },
+    }
+    const res = {
+        getHeader: () => undefined,
+        setHeader: () => {},
+        end: () => {},
+        headersSent: false,
+    }
+
+    await new Promise((resolve) => {
+        capturedMiddleware(req, res, () => resolve(undefined))
+    })
+})

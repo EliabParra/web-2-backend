@@ -15,19 +15,19 @@ function createMockDB(initialMethods: any[] = []) {
         async exeRaw(query: string, params: any[] = []) {
             state.queries.push({ query, params })
 
-            if (query.includes('MAX(tx)')) {
+            if (query.includes('MAX(transaction_nu')) {
                 return { rows: [{ next_tx: state.nextTx }] }
             }
-            if (query.includes('security.profiles')) {
+            if (query.includes('security.profile')) {
                 return { rows: [{}], rowCount: 1 }
             }
-            if (query.includes('security.objects') && query.includes('INSERT')) {
+            if (query.includes('security.object') && query.includes('INSERT')) {
                 return { rows: [{ object_id: 42 }] }
             }
-            if (query.includes('INSERT INTO security.methods')) {
+            if (query.includes('INSERT INTO security.method')) {
                 return { rows: [{ method_id: 1, tx: state.nextTx }] }
             }
-            if (query.includes('FROM security.methods m')) {
+            if (query.includes('FROM security.method m')) {
                 return { rows: state.dbMethods }
             }
             if (query.includes('DELETE')) {
@@ -58,7 +58,7 @@ describe('BORegistrar syncMethods', () => {
 
     it('should detect orphaned methods in DB', async () => {
         const mockDb = createMockDB([
-            { method_id: 1, object_name: 'TestBO', method_name: 'oldMethod', tx: 10 },
+            { method_id: 1, object_na: 'TestBO', method_na: 'oldMethod', tx: 10 },
         ])
         const registrar = new BORegistrar(mockDb as any, './non-existent-folder')
 
@@ -73,7 +73,7 @@ describe('BORegistrar syncMethods', () => {
 
     it('should not delete when prune=false', async () => {
         const mockDb = createMockDB([
-            { method_id: 1, object_name: 'TestBO', method_name: 'oldMethod', tx: 10 },
+            { method_id: 1, object_na: 'TestBO', method_na: 'oldMethod', tx: 10 },
         ])
         const registrar = new BORegistrar(mockDb as any, './non-existent-folder')
 
@@ -89,7 +89,7 @@ describe('BORegistrar syncMethods', () => {
 
     it('should delete orphans when prune=true', async () => {
         const mockDb = createMockDB([
-            { method_id: 1, object_name: 'TestBO', method_name: 'oldMethod', tx: 10 },
+            { method_id: 1, object_na: 'TestBO', method_na: 'oldMethod', tx: 10 },
         ])
         const registrar = new BORegistrar(mockDb as any, './non-existent-folder')
 
@@ -109,7 +109,7 @@ describe('BORegistrar syncMethods', () => {
 
     it('should not delete when dryRun=true even if prune=true', async () => {
         const mockDb = createMockDB([
-            { method_id: 1, object_name: 'TestBO', method_name: 'oldMethod', tx: 10 },
+            { method_id: 1, object_na: 'TestBO', method_na: 'oldMethod', tx: 10 },
         ])
         const registrar = new BORegistrar(mockDb as any, './non-existent-folder')
 

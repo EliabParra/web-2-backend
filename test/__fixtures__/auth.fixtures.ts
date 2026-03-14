@@ -35,16 +35,16 @@ export const EMAIL_VERIFICATION_PURPOSE = 'email_verification'
  */
 export const VALID_USER_ROW = {
     user_id: 1,
-    username: 'testuser',
-    user_email: 'test@example.com',
-    user_password: HASHED_PASSWORD,
-    user_email_verified_at: new Date('2025-01-01T00:00:00Z'),
-    user_is_active: true,
+    user_na: 'testuser',
+    user_em: 'test@example.com',
+    user_pw: HASHED_PASSWORD,
+    user_em_verified_dt: new Date('2025-01-01T00:00:00Z'),
+    user_act: true,
     profile_id: 1,
-    user_created_at: new Date('2025-01-01T00:00:00Z'),
-    user_updated_at: new Date('2025-01-01T00:00:00Z'),
-    user_last_login_at: null,
-    user_solvent: false,
+    user_created_dt: new Date('2025-01-01T00:00:00Z'),
+    user_updated_dt: new Date('2025-01-01T00:00:00Z'),
+    user_last_login_dt: null,
+    user_sol: false,
     person_id: null,
 } as const
 
@@ -54,9 +54,9 @@ export const VALID_USER_ROW = {
 export const UNVERIFIED_USER_ROW = {
     ...VALID_USER_ROW,
     user_id: 2,
-    username: 'unverified',
-    user_email: 'unverified@example.com',
-    user_email_verified_at: null,
+    user_na: 'unverified',
+    user_em: 'unverified@example.com',
+    user_em_verified_dt: null,
 } as const
 
 // ─── Inputs ──────────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ export const VALID_RESET_PASSWORD_INPUT = {
 } as const
 
 /**
- * Input de solicitud de username.
+ * Input de solicitud de user_na.
  */
 export const VALID_REQUEST_USERNAME_INPUT = {
     email: 'test@example.com',

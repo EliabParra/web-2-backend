@@ -10,8 +10,8 @@ test('PermissionGuard Unit Tests', async (t) => {
                 assert.ok(sql.includes('SELECT'), 'Should execute SELECT query')
                 return {
                     rows: [
-                        { profile_id: 1, object_name: 'Auth', method_name: 'login' },
-                        { profile_id: 2, object_name: 'Order', method_name: 'create' },
+                        { profile_id: 1, object_na: 'Auth', method_na: 'login' },
+                        { profile_id: 2, object_na: 'Order', method_na: 'create' },
                     ],
                 }
             },
@@ -30,9 +30,9 @@ test('PermissionGuard Unit Tests', async (t) => {
         const guard = new PermissionGuard(container)
         await guard.load()
 
-        assert.equal(guard.check(1, 'Auth', 'login'), true)
-        assert.equal(guard.check(2, 'Order', 'create'), true)
-        assert.equal(guard.check(1, 'Order', 'create'), false)
+        assert.equal(guard.check([1], 'Auth', 'login'), true)
+        assert.equal(guard.check([2], 'Order', 'create'), true)
+        assert.equal(guard.check([1], 'Order', 'create'), false)
     })
 
     await t.test('check() should return false for invalid inputs', async () => {
@@ -49,9 +49,9 @@ test('PermissionGuard Unit Tests', async (t) => {
         const guard = new PermissionGuard(container)
         // Pre-load empty to avoid error if load called
         // In this case we test check directly knowing internal set is empty
-        assert.equal(guard.check(null, 'Auth', 'login'), false)
-        assert.equal(guard.check(1, null, 'login'), false)
-        assert.equal(guard.check(1, 'Auth', null), false)
+        assert.equal(guard.check([], 'Auth', 'login'), false)
+        assert.equal(guard.check([1], null, 'login'), false)
+        assert.equal(guard.check([1], 'Auth', null), false)
     })
 
     await t.test('load() handles DB errors', async () => {
@@ -78,5 +78,47 @@ test('PermissionGuard Unit Tests', async (t) => {
 
         await assert.rejects(async () => await guard.load(), /DB Connection Failed/)
         assert.ok(loggedError.msg.includes('Fallo al cargar permisos'))
+    })
+
+    await t.test('load() keeps previous permissions until reload completes', async () => {
+        let call = 0
+        let resolveSecond
+        const secondLoadPromise = new Promise((resolve) => {
+            resolveSecond = resolve
+        })
+
+        const mockDb = {
+            query: async () => {
+                call += 1
+                if (call === 1) {
+                    return {
+                        rows: [{ profile_id: 1, object_na: 'Auth', method_na: 'login' }],
+                    }
+                }
+                return await secondLoadPromise
+            },
+        }
+        const mockLog = {
+            trace: () => {},
+            debug: () => {},
+            info: () => {},
+            warn: () => {},
+            error: () => {},
+            critical: () => {},
+            child: () => mockLog,
+        }
+
+        const container = createMockContainer({ db: mockDb, log: mockLog })
+        const guard = new PermissionGuard(container)
+
+        await guard.load()
+        assert.equal(guard.check([1], 'Auth', 'login'), true)
+
+        const inFlightReload = guard.load()
+        assert.equal(guard.check([1], 'Auth', 'login'), true)
+
+        resolveSecond({ rows: [] })
+        await inFlightReload
+        assert.equal(guard.check([1], 'Auth', 'login'), false)
     })
 })

@@ -9,12 +9,12 @@ const mockDb = {
     query: async (sql, params) => {
         if (sql.includes('profile_method'))
             return {
-                rows: [{ profile_id: 1, method_name: 'testMethod', object_name: 'TestObject' }],
+                rows: [{ profile_id: 1, method_na: 'testMethod', object_na: 'TestObject' }],
             }
         if (sql.includes('security.methods'))
             return {
                 rows: [
-                    { tx_nu: 100, object_name: 'TestObject', method_name: 'testMethod', tx: 100 },
+                    { tx_nu: 100, object_na: 'TestObject', method_na: 'testMethod', tx: 100 },
                 ],
             }
         return { rows: [] }
@@ -69,7 +69,8 @@ describe('SecurityService Integration', async () => {
                 },
                 permissionGuard: {
                     load: async () => {},
-                    check: (profileId, objectName, methodName) => profileId === 1,
+                    check: (profileIds, objectName, methodName) =>
+                        Array.isArray(profileIds) && profileIds.includes(1),
                 },
                 transactionMapper: {
                     load: async () => {},
@@ -88,7 +89,7 @@ describe('SecurityService Integration', async () => {
         assert.strictEqual(security.getDataTx(100).methodName, 'testMethod')
         assert.strictEqual(
             security.getPermissions({
-                profileId: 1,
+                profileIds: [1],
                 objectName: 'TestObject',
                 methodName: 'testMethod',
             }),
@@ -99,7 +100,7 @@ describe('SecurityService Integration', async () => {
     it('should fail permission check for unknown profile', () => {
         assert.strictEqual(
             security.getPermissions({
-                profileId: 999,
+                profileIds: [999],
                 objectName: 'TestObject',
                 methodName: 'testMethod',
             }),

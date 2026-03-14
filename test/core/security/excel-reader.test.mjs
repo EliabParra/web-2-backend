@@ -78,11 +78,11 @@ function createMockDB(opts = {}) {
             queries.push({ sql, params })
 
             // INSERT profile → retorna profile_id
-            if (sql.includes('INSERT') && sql.includes('profiles')) {
+            if (sql.includes('INSERT') && sql.includes('security.profile')) {
                 return { rows: opts.profileInsertFail ? [] : [{ profile_id: 1 }] }
             }
             // INSERT user
-            if (sql.includes('INSERT') && sql.includes('users')) {
+            if (sql.includes('INSERT') && sql.includes('security."user"')) {
                 return { rows: [{ user_id: 1 }] }
             }
             // INSERT subsystem
@@ -90,11 +90,11 @@ function createMockDB(opts = {}) {
                 return { rows: [{ subsystem_id: 1 }] }
             }
             // INSERT object
-            if (sql.includes('INSERT') && sql.includes('objects') && !sql.includes('object_method')) {
+            if (sql.includes('INSERT') && sql.includes('security.object') && !sql.includes('object_method')) {
                 return { rows: [{ object_id: 1 }] }
             }
             // INSERT method
-            if (sql.includes('INSERT') && sql.includes('methods') && !sql.includes('object_method') && !sql.includes('profile_method')) {
+            if (sql.includes('INSERT') && sql.includes('security.method') && !sql.includes('object_method') && !sql.includes('profile_method')) {
                 return { rows: [{ method_id: 1 }] }
             }
             // INSERT object_method
@@ -102,15 +102,15 @@ function createMockDB(opts = {}) {
                 return { rows: [] }
             }
             // INSERT transaction
-            if (sql.includes('INSERT') && sql.includes('transactions')) {
+            if (sql.includes('INSERT') && sql.includes('security.transaction')) {
                 return { rows: [] }
             }
             // INSERT menu
-            if (sql.includes('INSERT') && sql.includes('menus')) {
+            if (sql.includes('INSERT') && sql.includes('security.menu')) {
                 return { rows: [{ menu_id: 1 }] }
             }
             // INSERT option
-            if (sql.includes('INSERT') && sql.includes('options') && !sql.includes('menu_option')) {
+            if (sql.includes('INSERT') && sql.includes('security.option') && !sql.includes('menu_option')) {
                 return { rows: [{ option_id: 1 }] }
             }
             // INSERT menu_option
@@ -134,7 +134,7 @@ function createMockDB(opts = {}) {
                 return { rows: [] }
             }
             // FIND profile by name
-            if (sql.includes('profile_id') && sql.includes('profile_name') && sql.includes('WHERE')) {
+            if (sql.includes('profile_id') && sql.includes('profile_na') && sql.includes('WHERE')) {
                 return { rows: opts.profileNotFound ? [] : [{ profile_id: 1 }] }
             }
             // FIND subsystem by name
@@ -146,19 +146,19 @@ function createMockDB(opts = {}) {
                 return { rows: [{ menu_id: 1 }] }
             }
             // FIND method by object_method
-            if (sql.includes('method_id') && sql.includes('object_name') && sql.includes('method_name') && !sql.includes('INSERT')) {
+            if (sql.includes('method_id') && sql.includes('object_na') && sql.includes('method_na') && !sql.includes('INSERT')) {
                 return { rows: opts.methodNotFound ? [] : [{ method_id: 1 }] }
             }
             // FIND object by name
-            if (sql.includes('object_id') && sql.includes('object_name') && sql.includes('WHERE') && !sql.includes('INSERT')) {
+            if (sql.includes('object_id') && sql.includes('object_na') && sql.includes('WHERE') && !sql.includes('INSERT')) {
                 return { rows: opts.objectNotFound ? [] : [{ object_id: 1 }] }
             }
             // FIND method by name
-            if (sql.includes('method_id') && sql.includes('method_name') && sql.includes('WHERE') && !sql.includes('INSERT') && !sql.includes('object_name')) {
+            if (sql.includes('method_id') && sql.includes('method_na') && sql.includes('WHERE') && !sql.includes('INSERT') && !sql.includes('object_na')) {
                 return { rows: [{ method_id: 1 }] }
             }
             // SELECT next_tx
-            if (sql.includes('MAX') && sql.includes('transaction_number')) {
+            if (sql.includes('MAX') && sql.includes('transaction_nu')) {
                 return { rows: [{ next_tx: 100 }] }
             }
             return { rows: [] }
@@ -173,7 +173,7 @@ function createMockDB(opts = {}) {
 test('Reader import procesa un Excel mínimo con solo Perfiles', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
+            columns: ['profile_na'],
             rows: [['Admin'], ['User']],
         },
     })
@@ -192,11 +192,11 @@ test('Reader import procesa un Excel mínimo con solo Perfiles', async () => {
 test('Reader import procesa Objetos y Métodos correctamente', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.OBJECTS.name]: {
-            columns: ['object_name'],
+            columns: ['object_na'],
             rows: [['Auth'], ['Products']],
         },
         [SHEET_DEFINITIONS.METHODS.name]: {
-            columns: ['object_name', 'method_name'],
+            columns: ['object_na', 'method_na'],
             rows: [['Auth', 'login'], ['Auth', 'logout'], ['Products', 'list']],
         },
     })
@@ -219,7 +219,7 @@ test('Reader import procesa Objetos y Métodos correctamente', async () => {
 test('Reader import retorna errores para filas inválidas', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
+            columns: ['profile_na'],
             rows: [['X'.repeat(101)], ['ValidProfile']],
         },
     })
@@ -247,7 +247,7 @@ test('Reader import salta hojas que no existen en el workbook', async () => {
 test('Reader import ignora filas completamente vacías', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
+            columns: ['profile_na'],
             rows: [['Admin'], [''], ['User']],
         },
     })
@@ -265,10 +265,10 @@ test('Reader import ignora filas completamente vacías', async () => {
 // Validación de Objetos
 // ═══════════════════════════════════════════════════════════════════
 
-test('Reader rechaza object_name con caracteres inválidos', async () => {
+test('Reader rechaza object_na con caracteres inválidos', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.OBJECTS.name]: {
-            columns: ['object_name'],
+            columns: ['object_na'],
             rows: [['Invalid Object!']],
         },
     })
@@ -288,7 +288,7 @@ test('Reader rechaza object_name con caracteres inválidos', async () => {
 test('Reader reporta error cuando object no existe para un método', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.METHODS.name]: {
-            columns: ['object_name', 'method_name'],
+            columns: ['object_na', 'method_na'],
             rows: [['NonExistent', 'method1']],
         },
     })
@@ -308,7 +308,8 @@ test('Reader reporta error cuando object no existe para un método', async () =>
 test('Reader reporta error cuando perfil no existe para un usuario', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.USERS.name]: {
-            columns: ['username', 'password', 'profile_name'],
+            // TODO(REVERT_NAMING): Revert user_na→username, user_pw→password
+            columns: ['user_na', 'user_pw', 'profile_na'],
             rows: [['john', 'secret123', 'FakePerfil']],
         },
     })
@@ -328,7 +329,7 @@ test('Reader reporta error cuando perfil no existe para un usuario', async () =>
 test('Reader reporta error cuando subsistema no existe para un menú', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.MENUS.name]: {
-            columns: ['menu_name', 'subsystem_name'],
+            columns: ['menu_na', 'subsystem_name'],
             rows: [['Dashboard', 'FakeSub']],
         },
     })
@@ -348,7 +349,7 @@ test('Reader reporta error cuando subsistema no existe para un menú', async () 
 test('Reader reporta error cuando object_method no se resuelve', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.OPTIONS.name]: {
-            columns: ['option_name', 'object_method', 'menu_name'],
+            columns: ['option_na', 'object_method', 'menu_na'],
             rows: [['Ver', 'NonExist.method', '']],
         },
     })
@@ -367,7 +368,7 @@ test('Reader reporta error cuando object_method no se resuelve', async () => {
 test('Reader loguea inicio de importación con trace', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
+            columns: ['profile_na'],
             rows: [['X']],
         },
     })
@@ -385,7 +386,7 @@ test('Reader loguea inicio de importación con trace', async () => {
 test('Reader loguea warn cuando hay errores', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
+            columns: ['profile_na'],
             rows: [['X'.repeat(101)]],
         },
     })
@@ -404,7 +405,7 @@ test('Reader loguea warn cuando hay errores', async () => {
 test('Reader loguea trace exitoso cuando no hay errores', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
+            columns: ['profile_na'],
             rows: [['Admin']],
         },
     })
@@ -427,8 +428,8 @@ test('Reader loguea trace exitoso cuando no hay errores', async () => {
 test('Reader usa queries parametrizadas (no concatena valores)', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
-            rows: [["Robert'; DROP TABLE security.profiles; --"]],
+            columns: ['profile_na'],
+            rows: [["Robert'; DROP TABLE security.profile; --"]],
         },
     })
 
@@ -437,7 +438,9 @@ test('Reader usa queries parametrizadas (no concatena valores)', async () => {
     await reader.import(buffer)
 
     // Verificar que el valor malicioso se pasó como parámetro, no concatenado
-    const insertQuery = db.queries.find((q) => q.sql.includes('INSERT') && q.sql.includes('profiles'))
+    const insertQuery = db.queries.find(
+        (q) => q.sql.includes('INSERT') && q.sql.includes('security.profile')
+    )
     assert.ok(insertQuery, 'Debe ejecutar INSERT parametrizado')
     assert.ok(insertQuery.params.length > 0, 'Debe usar parámetros')
     assert.ok(insertQuery.sql.includes('$1'), 'Query debe usar placeholder $1')
@@ -451,7 +454,7 @@ test('Reader usa queries parametrizadas (no concatena valores)', async () => {
 test('ImportResult tiene estructura correcta', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
+            columns: ['profile_na'],
             rows: [['Admin']],
         },
     })
@@ -479,11 +482,12 @@ test('ImportResult tiene estructura correcta', async () => {
 test('Reader procesa todas las 9 hojas en orden correcto', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.PROFILES.name]: {
-            columns: ['profile_name'],
+            columns: ['profile_na'],
             rows: [['Admin']],
         },
         [SHEET_DEFINITIONS.USERS.name]: {
-            columns: ['username', 'password', 'profile_name'],
+            // TODO(REVERT_NAMING): Revert user_na→username, user_pw→password
+            columns: ['user_na', 'user_pw', 'profile_na'],
             rows: [['admin', 'secret123', 'Admin']],
         },
         [SHEET_DEFINITIONS.SUBSYSTEMS.name]: {
@@ -491,27 +495,27 @@ test('Reader procesa todas las 9 hojas en orden correcto', async () => {
             rows: [['Core']],
         },
         [SHEET_DEFINITIONS.OBJECTS.name]: {
-            columns: ['object_name'],
+            columns: ['object_na'],
             rows: [['Auth']],
         },
         [SHEET_DEFINITIONS.METHODS.name]: {
-            columns: ['object_name', 'method_name'],
+            columns: ['object_na', 'method_na'],
             rows: [['Auth', 'login']],
         },
         [SHEET_DEFINITIONS.MENUS.name]: {
-            columns: ['menu_name', 'subsystem_name'],
+            columns: ['menu_na', 'subsystem_name'],
             rows: [['Dashboard', 'Core']],
         },
         [SHEET_DEFINITIONS.OPTIONS.name]: {
-            columns: ['option_name', 'object_method', 'menu_name'],
+            columns: ['option_na', 'object_method', 'menu_na'],
             rows: [['Ver', 'Auth.login', 'Dashboard']],
         },
         [SHEET_DEFINITIONS.PERMISSIONS.name]: {
-            columns: ['profile_name', 'object_method'],
+            columns: ['profile_na', 'object_method'],
             rows: [['Admin', 'Auth.login']],
         },
         [SHEET_DEFINITIONS.ASSIGNMENTS.name]: {
-            columns: ['profile_name', 'subsystem_name', 'menu_name', 'option_name'],
+            columns: ['profile_na', 'subsystem_name', 'menu_na', 'option_na'],
             rows: [['Admin', 'Core', 'Dashboard', 'Ver']],
         },
     })

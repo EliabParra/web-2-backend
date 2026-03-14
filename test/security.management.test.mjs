@@ -28,7 +28,8 @@ function createMockDB() {
         query: async (sql, params = []) => {
             // --- LOAD Queries (SELECT) ---
             if (sql.includes('SELECT subsystem_id')) return { rows: tables.subsystems }
-            if (sql.includes('SELECT menu_id, menu_name, subsystem_id'))
+            // TODO(REVERT_NAMING): Revert menu_na to menu_name
+            if (sql.includes('SELECT menu_id, menu_na, subsystem_id'))
                 return { rows: tables.menus }
             if (sql.includes('SELECT option_id')) {
                 if (sql.includes('profile_option')) return { rows: tables.profile_option }
@@ -52,11 +53,12 @@ function createMockDB() {
             }
 
             // Menu Create
-            if (sql.includes('INSERT INTO security.menus')) {
+            if (sql.includes('INSERT INTO security.menu')) {
                 const [name, subId] = params
+                // TODO(REVERT_NAMING): Revert menu_na to menu_name
                 const newRow = {
                     menu_id: ++idCounter,
-                    menu_name: name,
+                    menu_na: name,
                     subsystem_id: subId,
                     options: [],
                 }
@@ -65,9 +67,10 @@ function createMockDB() {
             }
 
             // Option Create
-            if (sql.includes('INSERT INTO security.options')) {
+            if (sql.includes('INSERT INTO security.option')) {
                 const [name, methodId] = params
-                const newRow = { option_id: ++idCounter, option_name: name, method_id: methodId }
+                // TODO(REVERT_NAMING): Revert option_na to option_name
+                const newRow = { option_id: ++idCounter, option_na: name, method_id: methodId }
                 tables.options.push(newRow)
                 return { rows: [newRow] }
             }
@@ -101,7 +104,7 @@ function createMockDB() {
             }
 
             // Fallback for other queries (permissions etc)
-            if (sql.includes('security.methods')) return { rows: [] }
+            if (sql.includes('security.method')) return { rows: [] }
 
             return { rows: [] }
         },
@@ -164,7 +167,7 @@ test('Security Management API: Full Lifecycle', async () => {
 
             // 2. Verify Visibility (Default: Hidden)
             const profileId = 1
-            let structure = await security.getMenuStructure(profileId)
+            let structure = await security.getMenuStructure([profileId])
             assert.equal(
                 structure.length,
                 0,
@@ -177,16 +180,17 @@ test('Security Management API: Full Lifecycle', async () => {
             await security.assignOptionToProfile(profileId, opt.option_id)
 
             // 4. Verify Visibility (Visible)
-            structure = await security.getMenuStructure(profileId)
+            structure = await security.getMenuStructure([profileId])
             assert.equal(structure.length, 1, 'Structure should have 1 subsystem')
             assert.equal(structure[0].subsystem_name, 'Sales')
             assert.equal(structure[0].menus.length, 1, 'Subsystem should have 1 menu')
-            assert.equal(structure[0].menus[0].menu_name, 'Orders')
+            // TODO(REVERT_NAMING): Revert menu_na to menu_name
+            assert.equal(structure[0].menus[0].menu_na, 'Orders')
             assert.equal(structure[0].menus[0].options.length, 1, 'Menu should have 1 option')
 
             // 5. Revoke Subsystem
             await security.revokeSubsystem(profileId, sub.subsystem_id)
-            structure = await security.getMenuStructure(profileId)
+            structure = await security.getMenuStructure([profileId])
             assert.equal(structure.length, 0, 'Structure should be empty after revoking subsystem')
         }
     )

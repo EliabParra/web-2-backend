@@ -202,10 +202,10 @@ function createDeps() {
             if (body.loginId === 'test@example.com' && body.password === 'password') {
                 const session = req.session as unknown as Record<string, unknown>
                 session.userId = 1
-                session.profileId = 1
+                session.profileIds = [1]
                 return {
                     status: 'success' as const,
-                    user: { id: 1, username: 'TestUser', email: body.loginId, profile_id: 1 },
+                    user: { user_id: 1, user_na: 'TestUser', user_em: body.loginId, profile_ids: [1] },
                     msg: { code: 200, msg: 'Login OK' },
                 }
             }
@@ -227,11 +227,12 @@ function createDeps() {
 
             // Permisos de perfil
             if (sql.includes('profile_method')) {
-                const rows: Array<{ profile_id: number; object_name: string; method_name: string }> = []
+                // TODO(REVERT_NAMING): Revert object_na→object_name, method_na→method_name
+                const rows: Array<{ profile_id: number; object_na: string; method_na: string }> = []
                 for (const [pid, perms] of Object.entries(MOCK_PROFILE_PERMISSIONS)) {
                 for (const [obj, methods] of Object.entries(perms) as [string, string[]][]) {
                         for (const m of methods) {
-                            rows.push({ profile_id: Number(pid), object_name: obj, method_name: m })
+                            rows.push({ profile_id: Number(pid), object_na: obj, method_na: m })
                         }
                     }
                 }
@@ -239,22 +240,24 @@ function createDeps() {
             }
 
             // Mapeo de transacciones
-            if (sql.includes('security.methods')) {
+            // TODO(REVERT_NAMING): Revert tx to transaction_nu, object_na→object_name, method_na→method_name
+            if (sql.includes('security.transaction')) {
                 return {
                     rows: [
-                        { tx: 101, object_name: 'Auth', method_name: 'register' },
-                        { tx: 102, object_name: 'Auth', method_name: 'verifyEmail' },
+                        { tx: 101, object_na: 'Auth', method_na: 'register' },
+                        { tx: 102, object_na: 'Auth', method_na: 'verifyEmail' },
                     ],
                 }
             }
 
             // Auth queries
-            if (sql.includes('WHERE u.user_email = $1')) {
+            // TODO(REVERT_NAMING): Revert user_em to user_email
+            if (sql.includes('WHERE u.user_em = $1')) {
                 const p = params as string[]
                 if (p[0] === 'test@example.com') return { rows: [MOCK_USER] }
                 return { rows: [] }
             }
-            if (sql.includes('INSERT INTO security.users')) return { rows: [{ user_id: 2 }] }
+            if (sql.includes('INSERT INTO security."user"')) return { rows: [{ user_id: 2 }] }
             if (sql.includes('INSERT INTO security.user_profile')) return { rows: [] }
             if (sql.includes('INSERT INTO security.one_time_codes')) return { rows: [{ id: 1 }] }
 

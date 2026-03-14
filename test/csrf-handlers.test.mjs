@@ -116,36 +116,50 @@ test('createCsrfTokenHandler returns error if no session', () => {
 // --- createCsrfProtection tests ---
 const mockConfig = { app: { env: 'production' } }
 
-test('createCsrfProtection allows request without session for /toProccess', () => {
+test('createCsrfProtection rejects request without valid token for /toProccess', () => {
     const i18n = createMockI18n()
     const middleware = createCsrfProtection(i18n, mockConfig)
 
-    const req = { path: '/toProccess', session: {} }
-    let nextCalled = false
-    const next = () => {
-        nextCalled = true
+    const req = {
+        path: '/toProccess',
+        session: {},
+        get: () => undefined,
     }
-    const res = {}
+    let statusCode = null
+    const res = {
+        status: (code) => {
+            statusCode = code
+            return res
+        },
+        send: () => res,
+    }
 
-    middleware(req, res, next)
+    middleware(req, res, () => {})
 
-    assert.equal(nextCalled, true)
+    assert.equal(statusCode, 403)
 })
 
-test('createCsrfProtection allows request without session for /logout', () => {
+test('createCsrfProtection rejects request without valid token for /logout', () => {
     const i18n = createMockI18n()
     const middleware = createCsrfProtection(i18n, mockConfig)
 
-    const req = { path: '/logout', session: {} }
-    let nextCalled = false
-    const next = () => {
-        nextCalled = true
+    const req = {
+        path: '/logout',
+        session: {},
+        get: () => undefined,
     }
-    const res = {}
+    let statusCode = null
+    const res = {
+        status: (code) => {
+            statusCode = code
+            return res
+        },
+        send: () => res,
+    }
 
-    middleware(req, res, next)
+    middleware(req, res, () => {})
 
-    assert.equal(nextCalled, true)
+    assert.equal(statusCode, 403)
 })
 
 test('createCsrfProtection rejects when no expected token', () => {
@@ -214,7 +228,7 @@ test('createCsrfProtection allows when token matches', () => {
     assert.equal(nextCalled, true)
 })
 
-test('createCsrfProtection flexibilizes token mismatch in development for local networks', () => {
+test('createCsrfProtection does not flexibilize token mismatch for private network origins', () => {
     const i18n = createMockI18n()
     const devConfig = { app: { env: 'development' } }
     const middleware = createCsrfProtection(i18n, devConfig)
@@ -223,6 +237,30 @@ test('createCsrfProtection flexibilizes token mismatch in development for local 
         path: '/api/action',
         session: { userId: 1, csrfToken: 'expected-token' },
         get: (header) => (header === 'Origin' ? 'http://192.168.1.5:3000' : 'wrong-token'),
+    }
+    let statusCode = null
+    const res = {
+        status: (code) => {
+            statusCode = code
+            return res
+        },
+        send: () => res,
+    }
+
+    middleware(req, res, () => {})
+
+    assert.equal(statusCode, 403)
+})
+
+test('createCsrfProtection allows mismatch only for localhost origin in development', () => {
+    const i18n = createMockI18n()
+    const devConfig = { app: { env: 'development' } }
+    const middleware = createCsrfProtection(i18n, devConfig)
+
+    const req = {
+        path: '/api/action',
+        session: { userId: 1, csrfToken: 'expected-token' },
+        get: (header) => (header === 'Origin' ? 'http://localhost:3000' : 'wrong-token'),
     }
     let nextCalled = false
     const next = () => {

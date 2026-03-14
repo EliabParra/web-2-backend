@@ -19,18 +19,18 @@ import {
 // ═══════════════════════════════════════════════════════════════════
 
 test('ProfileRowSchema acepta nombre válido', () => {
-    const result = ProfileRowSchema.safeParse({ profile_name: 'Admin' })
+    const result = ProfileRowSchema.safeParse({ profile_na: 'Admin' })
     assert.ok(result.success)
-    assert.equal(result.data.profile_name, 'Admin')
+    assert.equal(result.data.profile_na, 'Admin')
 })
 
 test('ProfileRowSchema rechaza nombre vacío', () => {
-    const result = ProfileRowSchema.safeParse({ profile_name: '' })
+    const result = ProfileRowSchema.safeParse({ profile_na: '' })
     assert.ok(!result.success)
 })
 
 test('ProfileRowSchema rechaza nombre mayor a 100 caracteres', () => {
-    const result = ProfileRowSchema.safeParse({ profile_name: 'X'.repeat(101) })
+    const result = ProfileRowSchema.safeParse({ profile_na: 'X'.repeat(101) })
     assert.ok(!result.success)
 })
 
@@ -40,28 +40,28 @@ test('ProfileRowSchema rechaza nombre mayor a 100 caracteres', () => {
 
 test('UserRowSchema acepta datos válidos', () => {
     const result = UserRowSchema.safeParse({
-        username: 'john',
-        password: 'secret123',
-        profile_name: 'Admin',
+        user_na: 'john',
+        user_pw: 'secret123',
+        profile_na: 'Admin',
     })
     assert.ok(result.success)
-    assert.equal(result.data.username, 'john')
+    assert.equal(result.data.user_na, 'john')
 })
 
 test('UserRowSchema rechaza password vacío', () => {
     const result = UserRowSchema.safeParse({
-        username: 'john',
-        password: '',
-        profile_name: 'Admin',
+        user_na: 'john',
+        user_pw: '',
+        profile_na: 'Admin',
     })
     assert.ok(!result.success)
 })
 
-test('UserRowSchema rechaza username vacío', () => {
+test('UserRowSchema rechaza user_na vacío', () => {
     const result = UserRowSchema.safeParse({
-        username: '',
-        password: 'secret123',
-        profile_name: 'Admin',
+        user_na: '',
+        user_pw: 'secret123',
+        profile_na: 'Admin',
     })
     assert.ok(!result.success)
 })
@@ -85,32 +85,32 @@ test('SubsystemRowSchema rechaza vacío', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 test('ObjectRowSchema acepta nombre alfanumérico', () => {
-    const result = ObjectRowSchema.safeParse({ object_name: 'Auth' })
+    const result = ObjectRowSchema.safeParse({ object_na: 'Auth' })
     assert.ok(result.success)
 })
 
 test('ObjectRowSchema acepta guiones bajos', () => {
-    const result = ObjectRowSchema.safeParse({ object_name: 'My_Object' })
+    const result = ObjectRowSchema.safeParse({ object_na: 'My_Object' })
     assert.ok(result.success)
 })
 
 test('ObjectRowSchema rechaza nombre con espacios', () => {
-    const result = ObjectRowSchema.safeParse({ object_name: 'My Object' })
+    const result = ObjectRowSchema.safeParse({ object_na: 'My Object' })
     assert.ok(!result.success)
 })
 
 test('ObjectRowSchema rechaza nombre que empieza con número', () => {
-    const result = ObjectRowSchema.safeParse({ object_name: '1Object' })
+    const result = ObjectRowSchema.safeParse({ object_na: '1Object' })
     assert.ok(!result.success)
 })
 
 test('ObjectRowSchema rechaza nombre con caracteres especiales', () => {
-    const result = ObjectRowSchema.safeParse({ object_name: 'Auth-BO' })
+    const result = ObjectRowSchema.safeParse({ object_na: 'Auth-BO' })
     assert.ok(!result.success)
 })
 
 test('ObjectRowSchema rechaza vacío', () => {
-    const result = ObjectRowSchema.safeParse({ object_name: '' })
+    const result = ObjectRowSchema.safeParse({ object_na: '' })
     assert.ok(!result.success)
 })
 
@@ -119,22 +119,22 @@ test('ObjectRowSchema rechaza vacío', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 test('MethodRowSchema acepta par objeto-método válido', () => {
-    const result = MethodRowSchema.safeParse({ object_name: 'Auth', method_name: 'login' })
+    const result = MethodRowSchema.safeParse({ object_na: 'Auth', method_na: 'login' })
     assert.ok(result.success)
 })
 
-test('MethodRowSchema rechaza method_name con puntos', () => {
-    const result = MethodRowSchema.safeParse({ object_name: 'Auth', method_name: 'do.login' })
+test('MethodRowSchema rechaza method_na con puntos', () => {
+    const result = MethodRowSchema.safeParse({ object_na: 'Auth', method_na: 'do.login' })
     assert.ok(!result.success)
 })
 
-test('MethodRowSchema rechaza method_name vacío', () => {
-    const result = MethodRowSchema.safeParse({ object_name: 'Auth', method_name: '' })
+test('MethodRowSchema rechaza method_na vacío', () => {
+    const result = MethodRowSchema.safeParse({ object_na: 'Auth', method_na: '' })
     assert.ok(!result.success)
 })
 
-test('MethodRowSchema rechaza object_name vacío', () => {
-    const result = MethodRowSchema.safeParse({ object_name: '', method_name: 'login' })
+test('MethodRowSchema rechaza object_na vacío', () => {
+    const result = MethodRowSchema.safeParse({ object_na: '', method_na: 'login' })
     assert.ok(!result.success)
 })
 
@@ -143,12 +143,12 @@ test('MethodRowSchema rechaza object_name vacío', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 test('MenuRowSchema acepta datos válidos', () => {
-    const result = MenuRowSchema.safeParse({ menu_name: 'Dashboard', subsystem_name: 'Core' })
+    const result = MenuRowSchema.safeParse({ menu_na: 'Dashboard', subsystem_name: 'Core' })
     assert.ok(result.success)
 })
 
-test('MenuRowSchema rechaza menu_name vacío', () => {
-    const result = MenuRowSchema.safeParse({ menu_name: '', subsystem_name: 'Core' })
+test('MenuRowSchema rechaza menu_na vacío', () => {
+    const result = MenuRowSchema.safeParse({ menu_na: '', subsystem_name: 'Core' })
     assert.ok(!result.success)
 })
 
@@ -158,18 +158,18 @@ test('MenuRowSchema rechaza menu_name vacío', () => {
 
 test('OptionRowSchema acepta datos con object_method', () => {
     const result = OptionRowSchema.safeParse({
-        option_name: 'Ver listado',
+        option_na: 'Ver listado',
         object_method: 'Products.list',
-        menu_name: 'Productos',
+        menu_na: 'Productos',
     })
     assert.ok(result.success)
 })
 
 test('OptionRowSchema acepta datos sin object_method (vacío)', () => {
     const result = OptionRowSchema.safeParse({
-        option_name: 'Ver listado',
+        option_na: 'Ver listado',
         object_method: '',
-        menu_name: '',
+        menu_na: '',
     })
     assert.ok(result.success)
 })
@@ -180,7 +180,7 @@ test('OptionRowSchema acepta datos sin object_method (vacío)', () => {
 
 test('PermissionRowSchema acepta datos válidos', () => {
     const result = PermissionRowSchema.safeParse({
-        profile_name: 'Admin',
+        profile_na: 'Admin',
         object_method: 'Auth.login',
     })
     assert.ok(result.success)
@@ -188,7 +188,7 @@ test('PermissionRowSchema acepta datos válidos', () => {
 
 test('PermissionRowSchema rechaza object_method sin punto', () => {
     const result = PermissionRowSchema.safeParse({
-        profile_name: 'Admin',
+        profile_na: 'Admin',
         object_method: 'AuthLogin',
     })
     assert.ok(!result.success)
@@ -200,22 +200,22 @@ test('PermissionRowSchema rechaza object_method sin punto', () => {
 
 test('AssignmentRowSchema acepta datos completos', () => {
     const result = AssignmentRowSchema.safeParse({
-        profile_name: 'Admin',
+        profile_na: 'Admin',
         subsystem_name: 'Core',
-        menu_name: 'Dashboard',
-        option_name: 'Ver',
+        menu_na: 'Dashboard',
+        option_na: 'Ver',
     })
     assert.ok(result.success)
 })
 
-test('AssignmentRowSchema aplica default vacío a menu_name y option_name', () => {
+test('AssignmentRowSchema aplica default vacío a menu_na y option_na', () => {
     const result = AssignmentRowSchema.safeParse({
-        profile_name: 'Admin',
+        profile_na: 'Admin',
         subsystem_name: 'Core',
     })
     assert.ok(result.success)
-    assert.equal(result.data.menu_name, '')
-    assert.equal(result.data.option_name, '')
+    assert.equal(result.data.menu_na, '')
+    assert.equal(result.data.option_na, '')
 })
 
 // ═══════════════════════════════════════════════════════════════════
@@ -266,8 +266,8 @@ test('SHEET_DEFINITIONS incluye OBJECTS y METHODS', () => {
     assert.ok(SHEET_DEFINITIONS.METHODS)
     assert.equal(SHEET_DEFINITIONS.OBJECTS.name, 'Objetos')
     assert.equal(SHEET_DEFINITIONS.METHODS.name, 'Métodos')
-    assert.deepEqual([...SHEET_DEFINITIONS.OBJECTS.columns], ['object_name'])
-    assert.deepEqual([...SHEET_DEFINITIONS.METHODS.columns], ['object_name', 'method_name'])
+    assert.deepEqual([...SHEET_DEFINITIONS.OBJECTS.columns], ['object_na'])
+    assert.deepEqual([...SHEET_DEFINITIONS.METHODS.columns], ['object_na', 'method_na'])
 })
 
 test('SHEET_DEFINITIONS mantiene orden de dependencias', () => {

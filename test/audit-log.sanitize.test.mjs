@@ -46,9 +46,9 @@ test('AuditService.log redacts secrets in details before insert', async () => {
     assert.equal(calls.length, 1)
     const [schema, query, params] = calls[0]
     assert.equal(schema, 'security')
-    assert.match(query, /INSERT INTO security.audit_logs/)
+    assert.match(query, /INSERT INTO security.audit\b/)
 
-    const metaJson = params[7]
+    const metaJson = params[6]
     const meta = JSON.parse(metaJson)
 
     assert.equal(meta.token, '[REDACTED]')

@@ -20,14 +20,15 @@ function buildSecurityContainer(deps) {
     return container
 }
 
+// TODO(REVERT_NAMING): Revert user_na→username, user_em→user_email, user_pw→user_password, user_em_verified_dt→user_email_verified_at, user_act→user_is_active
 const MOCK_USER = {
     user_id: 1,
-    username: 'TestUser',
-    user_email: 'test@example.com',
-    user_password: 'hash',
-    user_email_verified_at: new Date(),
-    profile_id: 1,
-    user_is_active: true,
+    user_na: 'TestUser',
+    user_em: 'test@example.com',
+    user_pw: 'hash',
+    user_em_verified_dt: new Date(),
+    profile_ids: [1],
+    user_act: true,
 }
 
 // Minimal deps
@@ -85,26 +86,25 @@ function createDeps() {
                 console.log('SQL Executed:', sql)
 
                 // Permission mocking
+                // TODO(REVERT_NAMING): Revert object_na→object_name, method_na→method_name
                 if (sql.includes('profile_method')) {
                     return {
                         rows: [
-                            { profile_id: 2, object_name: 'Auth', method_name: 'requestUsername' },
+                            { profile_id: 2, object_na: 'Auth', method_na: 'requestUsername' },
                         ],
                     }
                 }
 
                 // Method mapping mocking
-                if (sql.includes('security.methods')) {
+                // TODO(REVERT_NAMING): Revert tx to transaction_number, object_na→object_name, method_na→method_name
+                if (sql.includes('security.transaction')) {
                     return {
-                        rows: [{ tx: 101, object_name: 'Auth', method_name: 'requestUsername' }],
+                        rows: [{ tx: 101, object_na: 'Auth', method_na: 'requestUsername' }],
                     }
                 }
 
-                if (
-                    sql.includes('SELECT user_id, username, user_email') &&
-                    sql.includes('FROM security.users') &&
-                    sql.includes('user_email = $1')
-                ) {
+                // TODO(REVERT_NAMING): Revert user_na→username, user_em→user_email
+                if (sql.includes('FROM security."user" u') && sql.includes('WHERE u.user_em = $1')) {
                     if (p[0] === 'test@example.com') return { rows: [MOCK_USER] }
                     return { rows: [] }
                 }
@@ -176,18 +176,21 @@ describe('Auth Username Recovery', async () => {
         const emailLog = testDeps.logs.find((l) => l.type === 'EMAIL')
         assert.ok(emailLog, 'Email should be sent')
         assert.equal(emailLog.to, 'test@example.com')
+        // TODO(REVERT_NAMING): Revert user_na to username
         assert.equal(emailLog.data.username, 'TestUser')
     })
 
     it('Should return success even if email not found (Silent Success)', async () => {
         const agent = request.agent(app)
+        const r1 = await agent.get('/csrf')
+        const token = r1.body.csrfToken
 
         const payload = {
             tx: 101,
             params: { email: 'unknown@example.com' },
         }
 
-        const res = await agent.post('/toProccess').set('X-CSRF-Token', csrfToken).send(payload)
+        const res = await agent.post('/toProccess').set('X-CSRF-Token', token).send(payload)
 
         assert.equal(res.status, 200)
 

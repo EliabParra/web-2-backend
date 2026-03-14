@@ -330,6 +330,23 @@ describe('AuthService', () => {
                 }
             )
         })
+
+        it('should throw AuthTokenInvalidError when reset token is expired', async () => {
+            // Arrange
+            repo.getPasswordResetByTokenHash = createMockFn(async () => ({
+                ...VALID_PASSWORD_RESET_ROW,
+                expires_at: new Date(Date.now() - 60_000),
+            }))
+
+            // Act & Assert
+            await assert.rejects(
+                () => service.resetPassword('a'.repeat(64), 'NewPassword123'),
+                (error: unknown) => {
+                    assert.ok(error instanceof AuthTokenInvalidError)
+                    return true
+                }
+            )
+        })
     })
 
     // ── verifyPasswordResetToken ─────────────────────────────────────────
@@ -358,12 +375,29 @@ describe('AuthService', () => {
                 }
             )
         })
+
+        it('should throw AuthTokenInvalidError when token is expired', async () => {
+            // Arrange
+            repo.getPasswordResetByTokenHash = createMockFn(async () => ({
+                ...VALID_PASSWORD_RESET_ROW,
+                expires_at: new Date(Date.now() - 60_000),
+            }))
+
+            // Act & Assert
+            await assert.rejects(
+                () => service.verifyPasswordResetToken('a'.repeat(64)),
+                (error: unknown) => {
+                    assert.ok(error instanceof AuthTokenInvalidError)
+                    return true
+                }
+            )
+        })
     })
 
     // ── requestUsername ───────────────────────────────────────────────────
 
     describe('requestUsername', () => {
-        it('should send username recovery email when user exists', async () => {
+        it('should send user_na recovery email when user exists', async () => {
             // Arrange
             repo.getUserBaseByEmail = createMockFn(async () => ({ ...VALID_USER_ROW }))
 
@@ -385,11 +419,11 @@ describe('AuthService', () => {
             assert.equal(email.sendTemplate.callCount, 0)
         })
 
-        it('should silently return when user has no username', async () => {
+        it('should silently return when user has no user_na', async () => {
             // Arrange
             repo.getUserBaseByEmail = createMockFn(async () => ({
                 ...VALID_USER_ROW,
-                username: '',
+                user_na: '',
             }))
 
             // Act
