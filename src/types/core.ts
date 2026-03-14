@@ -399,7 +399,8 @@ export interface ISecurityService {
      *
      * @param data - Datos de verificación
      */
-    getPermissions(data: { profileId: number; methodName: string; objectName: string }): boolean
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+    getPermissions(data: { profileIds: number[]; methodName: string; objectName: string }): boolean
 
     /**
      * Ejecuta un método de negocio.
@@ -465,8 +466,10 @@ export interface ISecurityService {
  */
 export interface ISecurityContext {
     readonly userId: number | null
-    readonly profileId: number | null
-    readonly username: string
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+    readonly profileIds: number[]
+    // TODO(REVERT_NAMING): Revert user_na to username
+    readonly username: string // kept as 'username' in session context for compatibility
 }
 
 /**
@@ -486,7 +489,8 @@ export interface IPermissionProvider {
      * @param objectName - Nombre del objeto
      * @param methodName - Nombre del método
      */
-    check(profileId: number | null, objectName: string, methodName: string): boolean
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+    check(profileIds: number[], objectName: string, methodName: string): boolean
 
     /**
      * Otorga un permiso dinámicamente (Dual Write: DB + memoria).
@@ -523,7 +527,8 @@ export interface IMenuProvider {
      * @param profileId - ID del perfil
      * @returns Árbol de menús con subsistemas, menús y opciones visibles
      */
-    getStructure(profileId: number): Promise<MenuStructure>
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+    getStructure(profileIds: number[]): Promise<MenuStructure>
 
     /** Crea un subsistema. */
     createSubsystem(name: string): Promise<SecuritySubsystem>
@@ -652,10 +657,12 @@ export interface ITransactionExecutor {
  * Resultado de inicio de sesión.
  * Tipo discriminado por `status`: `'success'`, `'error'`, o `'validation_error'`.
  */
+// TODO(REVERT_NAMING): Revert user_na to username, user_em to user_email
 export type SessionResult =
     | {
           status: 'success'
-          user: { user_id: number; username: string; user_email: string; profile_id: number }
+          // TODO(REVERT_NAMING): Singular tables & N:M profiles
+          user: { user_id: number; user_na: string; user_em: string; profile_ids: number[] }
           msg: { code: number; msg: string }
       }
     | { status: 'error'; error: { code: number; msg: string } }

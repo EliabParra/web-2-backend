@@ -27,7 +27,8 @@ export interface DbConfig {
 export interface AuthConfig {
     enabled?: boolean
     usernameSupported?: boolean
-    loginId?: 'email' | 'username'
+    // TODO(REVERT_NAMING): Revert user_na to username
+    loginId?: 'email' | 'user_na'
     login2StepNewDevice?: boolean
     publicProfileId?: number
     sessionProfileId?: number

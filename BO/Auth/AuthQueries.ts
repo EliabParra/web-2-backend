@@ -1,37 +1,74 @@
+// TODO(REVERT_NAMING): Revert all column names: user_na→username, user_em→user_email, user_pw→user_password, user_em_verified_dt→user_email_verified_at, user_act→user_is_active, user_created_dt→user_created_at, user_last_login_dt→user_last_login_at, user_sol→user_solvent, user_updated_dt→user_updated_at
 export const AuthQueries = {
     // --- Users
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     getUserByEmail: `
-        SELECT u.user_id as id, u.username, u.user_email as email, u.user_email_verified_at as email_verified_at, u.user_password as password_hash, p.profile_id
-        FROM security.users u
+        SELECT
+            u.user_id as id,
+            u.user_na,
+            u.user_em as email,
+            u.user_em_verified_dt as email_verified_at,
+            u.user_pw as password_hash,
+            COALESCE(array_agg(p.profile_id) FILTER (WHERE p.profile_id IS NOT NULL), '{}') as profile_ids
+        FROM security."user" u
         LEFT JOIN security.user_profile p ON u.user_id = p.user_id
-        WHERE u.user_email = $1
+        WHERE u.user_em = $1
+        GROUP BY u.user_id, u.user_na, u.user_em, u.user_em_verified_dt, u.user_pw
     `,
-    // NOTE: Aliasing above to maintain temporary compatibility or should I return raw new names?
-    // AuthRepository.ts will be refactored to read new names.
-    // AuthTypes.ts UserRow uses new names.
-    // So I should NOT use aliases like 'as id'. I should return 'user_id'.
 
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     getUserByEmailRaw: `
-        SELECT u.user_id, u.username, u.user_email, u.user_email_verified_at, u.user_password, p.profile_id, u.user_is_active, u.user_created_at, u.user_last_login_at, u.user_solvent, u.person_id
-        FROM security.users u
+        SELECT
+            u.user_id,
+            u.user_na,
+            u.user_em,
+            u.user_em_verified_dt,
+            u.user_pw,
+            COALESCE(array_agg(p.profile_id) FILTER (WHERE p.profile_id IS NOT NULL), '{}') as profile_ids,
+            u.user_act,
+            u.user_created_dt,
+            u.user_last_login_dt,
+            u.user_sol,
+            u.person_id
+        FROM security."user" u
         LEFT JOIN security.user_profile p ON u.user_id = p.user_id
-        WHERE u.user_email = $1
+        WHERE u.user_em = $1
+        GROUP BY u.user_id, u.user_na, u.user_em, u.user_em_verified_dt, u.user_pw, u.user_act, u.user_created_dt, u.user_last_login_dt, u.user_sol, u.person_id
     `,
 
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     getUserByUsername: `
-        SELECT user_id, username, user_email, user_password, user_email_verified_at 
-        FROM security.users 
-        WHERE username = $1
+        SELECT
+            u.user_id,
+            u.user_na,
+            u.user_em,
+            u.user_pw,
+            u.user_em_verified_dt,
+            COALESCE(array_agg(p.profile_id) FILTER (WHERE p.profile_id IS NOT NULL), '{}') as profile_ids
+        FROM security."user" u
+        LEFT JOIN security.user_profile p ON u.user_id = p.user_id
+        WHERE user_na = $1
+        GROUP BY u.user_id, u.user_na, u.user_em, u.user_pw, u.user_em_verified_dt
     `,
 
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     getUserBaseByEmail: `
-        SELECT user_id, username, user_email, user_password, user_email_verified_at 
-        FROM security.users 
-        WHERE user_email = $1
+        SELECT
+            u.user_id,
+            u.user_na,
+            u.user_em,
+            u.user_pw,
+            u.user_em_verified_dt,
+            COALESCE(array_agg(p.profile_id) FILTER (WHERE p.profile_id IS NOT NULL), '{}') as profile_ids
+        FROM security."user" u
+        LEFT JOIN security.user_profile p ON u.user_id = p.user_id
+        WHERE u.user_em = $1
+        GROUP BY u.user_id, u.user_na, u.user_em, u.user_pw, u.user_em_verified_dt
     `,
 
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     insertUser: `
-        INSERT INTO security.users (username, user_email, user_password)
+        INSERT INTO security."user" (user_na, user_em, user_pw)
         VALUES ($1, $2, $3)
         RETURNING user_id
     `,
@@ -42,15 +79,17 @@ export const AuthQueries = {
         ON CONFLICT (user_id, profile_id) DO UPDATE SET assigned_at = NOW()
     `,
 
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     setUserEmailVerified: `
-        UPDATE security.users
-        SET user_email_verified_at = NOW()
+        UPDATE security."user"
+        SET user_em_verified_dt = NOW()
         WHERE user_id = $1
     `,
 
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     updateUserPassword: `
-        UPDATE security.users
-        SET user_password = $2
+        UPDATE security."user"
+        SET user_pw = $2
         WHERE user_id = $1
     `,
 
@@ -96,9 +135,9 @@ export const AuthQueries = {
     // Fix query usage of jsonb operator
     getActiveOneTimeCodeForPurposeAndTokenHash: `
         SELECT * FROM security.one_time_codes
-        WHERE purpose = $1 
+        WHERE purpose = $1
         AND (meta->>'tokenHash') = $2
-        AND consumed_at IS NULL 
+        AND consumed_at IS NULL
         AND expires_at > NOW()
         ORDER BY created_at DESC LIMIT 1
     `,

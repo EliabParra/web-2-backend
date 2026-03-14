@@ -26,7 +26,8 @@ export const DEFAULT_DB_CONFIG: DbConfig = {
 export const DEFAULT_AUTH_CONFIG: AuthConfig = {
     enabled: process.env.AUTH_ENABLE === 'true' || false,
     usernameSupported: process.env.AUTH_USERNAME !== 'false',
-    loginId: (process.env.AUTH_LOGIN_ID as 'email' | 'username') || 'email',
+    // TODO(REVERT_NAMING): Revert user_na to username
+    loginId: (process.env.AUTH_LOGIN_ID as 'email' | 'user_na') || 'email',
     login2StepNewDevice: process.env.AUTH_LOGIN_2STEP_NEW_DEVICE === 'true' || false,
     publicProfileId: Number(process.env.AUTH_PUBLIC_PROFILE_ID) || 2,
     sessionProfileId: Number(process.env.AUTH_SESSION_PROFILE_ID) || 1,

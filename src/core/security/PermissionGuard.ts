@@ -36,24 +36,27 @@ export class PermissionGuard implements IPermissionProvider {
     async load(): Promise<void> {
         try {
             // Updated to use SecurityQueries.loadPermissions (new schema)
+            // TODO(REVERT_NAMING): Revert object_na to object_name, method_na to method_name
             const res = await this.db.query<{
                 profile_id: number
-                object_name: string
-                method_name: string
+                object_na: string
+                method_na: string
             }>(SecurityQueries.loadPermissions)
 
-            this.permissions.clear()
+            const nextPermissions = new Set<string>()
 
             if (res && res.rows) {
                 for (const row of res.rows) {
                     const key = this.buildKey(
                         Number(row.profile_id),
-                        String(row.object_name),
-                        String(row.method_name)
+                        String(row.object_na), // TODO(REVERT_NAMING): Revert to row.object_name
+                        String(row.method_na) // TODO(REVERT_NAMING): Revert to row.method_name
                     )
-                    this.permissions.add(key)
+                    nextPermissions.add(key)
                 }
             }
+
+            this.permissions = nextPermissions
 
             this.log.info(`PermissionGuard: Cargados ${this.permissions.size} permisos en memoria`)
         } catch (err: unknown) {
@@ -64,21 +67,26 @@ export class PermissionGuard implements IPermissionProvider {
     }
 
     /**
-     * Verifica si un perfil tiene permiso de ejecución sobre un método específico.
+     * Verifica si al menos uno de los perfiles tiene permiso de ejecución.
      *
-     * @param profileId - Identificador numérico del perfil de usuario
+     * @param profileIds - Lista de perfiles asociados al usuario
      * @param objectName - Nombre del Business Object (ej. 'Auth')
      * @param methodName - Nombre del método (ej. 'login')
-     * @returns {boolean} true si el permiso existe, false en caso contrario
+     * @returns {boolean} true si existe permiso para cualquier perfil del arreglo
      */
-    check(profileId: number | null, objectName: string, methodName: string): boolean {
-        // Validación básica de inputs
-        if (!objectName || !methodName || profileId === null || !Number.isInteger(profileId)) {
+    check(profileIds: number[], objectName: string, methodName: string): boolean {
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        if (!objectName || !methodName || !Array.isArray(profileIds) || profileIds.length === 0) {
             return false
         }
 
-        const key = this.buildKey(profileId, objectName, methodName)
-        return this.permissions.has(key)
+        for (const profileId of profileIds) {
+            if (!Number.isInteger(profileId)) continue
+            const key = this.buildKey(profileId, objectName, methodName)
+            if (this.permissions.has(key)) return true
+        }
+
+        return false
     }
 
     /**

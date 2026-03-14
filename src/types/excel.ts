@@ -11,15 +11,17 @@ import { z } from 'zod'
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Schema de validación para filas de la hoja Perfiles. */
+// TODO(REVERT_NAMING): Revert profile_na to profile_name
 export const ProfileRowSchema = z.object({
-    profile_name: z.string().min(1, 'profile_name es requerido').max(100),
+    profile_na: z.string().min(1, 'profile_na es requerido').max(100),
 })
 
 /** Schema de validación para filas de la hoja Usuarios. */
+// TODO(REVERT_NAMING): Revert user_na to username, profile_na to profile_name, user_pw to password
 export const UserRowSchema = z.object({
-    username: z.string().min(1, 'username es requerido').max(100),
-    password: z.string().min(1, 'password es requerido').max(200),
-    profile_name: z.string().min(1, 'profile_name es requerido').max(100),
+    user_na: z.string().min(1, 'user_na es requerido').max(100),
+    user_pw: z.string().min(1, 'user_pw es requerido').max(200),
+    profile_na: z.string().min(1, 'profile_na es requerido').max(100),
 })
 
 /** Schema de validación para filas de la hoja Subsistemas. */
@@ -28,29 +30,33 @@ export const SubsystemRowSchema = z.object({
 })
 
 /** Schema de validación para filas de la hoja Menús. */
+// TODO(REVERT_NAMING): Revert menu_na to menu_name
 export const MenuRowSchema = z.object({
-    menu_name: z.string().min(1, 'menu_name es requerido').max(100),
+    menu_na: z.string().min(1, 'menu_na es requerido').max(100),
     subsystem_name: z.string().min(1, 'subsystem_name es requerido').max(100),
 })
 
 /** Schema de validación para filas de la hoja Objetos. */
+// TODO(REVERT_NAMING): Revert object_na to object_name
 export const ObjectRowSchema = z.object({
-    object_name: z.string().min(1, 'object_name es requerido').max(100)
+    object_na: z.string().min(1, 'object_na es requerido').max(100)
         .regex(/^[A-Za-z_]\w*$/, 'Solo alfanuméricos y guiones bajos'),
 })
 
 /** Schema de validación para filas de la hoja Métodos. */
+// TODO(REVERT_NAMING): Revert object_na to object_name, method_na to method_name
 export const MethodRowSchema = z.object({
-    object_name: z.string().min(1, 'object_name es requerido').max(100),
-    method_name: z.string().min(1, 'method_name es requerido').max(100)
+    object_na: z.string().min(1, 'object_na es requerido').max(100),
+    method_na: z.string().min(1, 'method_na es requerido').max(100)
         .regex(/^[A-Za-z_]\w*$/, 'Solo alfanuméricos y guiones bajos'),
 })
 
 /** Schema de validación para filas de la hoja Opciones. */
+// TODO(REVERT_NAMING): Revert option_na to option_name, menu_na to menu_name
 export const OptionRowSchema = z.object({
-    option_name: z.string().min(1, 'option_name es requerido').max(100),
+    option_na: z.string().min(1, 'option_na es requerido').max(100),
     object_method: z.string().max(200).default(''),
-    menu_name: z.string().max(100).default(''),
+    menu_na: z.string().max(100).default(''),
 })
 
 /**
@@ -62,17 +68,19 @@ export const ObjectMethodSchema = z
     .regex(/^[A-Za-z_]\w*\.[A-Za-z_]\w*$/, 'Formato inválido: use "Objeto.metodo"')
 
 /** Schema de validación para filas de la hoja Permisos. */
+// TODO(REVERT_NAMING): Revert profile_na to profile_name
 export const PermissionRowSchema = z.object({
-    profile_name: z.string().min(1, 'profile_name es requerido').max(100),
+    profile_na: z.string().min(1, 'profile_na es requerido').max(100),
     object_method: ObjectMethodSchema,
 })
 
 /** Schema de validación para filas de la hoja Asignaciones. */
+// TODO(REVERT_NAMING): Revert profile_na, menu_na, option_na to originals
 export const AssignmentRowSchema = z.object({
-    profile_name: z.string().min(1, 'profile_name es requerido').max(100),
+    profile_na: z.string().min(1, 'profile_na es requerido').max(100),
     subsystem_name: z.string().min(1, 'subsystem_name es requerido').max(100),
-    menu_name: z.string().max(100).default(''),
-    option_name: z.string().max(100).default(''),
+    menu_na: z.string().max(100).default(''),
+    option_na: z.string().max(100).default(''),
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -178,18 +186,19 @@ export interface IPermissionMatrixReader {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Definición de las hojas disponibles para el Excel. */
+// TODO(REVERT_NAMING): Revert all _na suffixes to _name
 export const SHEET_DEFINITIONS = {
-    PROFILES: { name: 'Perfiles', columns: ['profile_name'] },
-    USERS: { name: 'Usuarios', columns: ['username', 'password', 'profile_name'] },
+    PROFILES: { name: 'Perfiles', columns: ['profile_na'] },
+    USERS: { name: 'Usuarios', columns: ['user_na', 'user_pw', 'profile_na'] },
     SUBSYSTEMS: { name: 'Subsistemas', columns: ['subsystem_name'] },
-    OBJECTS: { name: 'Objetos', columns: ['object_name'] },
-    METHODS: { name: 'Métodos', columns: ['object_name', 'method_name'] },
-    MENUS: { name: 'Menús', columns: ['menu_name', 'subsystem_name'] },
-    OPTIONS: { name: 'Opciones', columns: ['option_name', 'object_method', 'menu_name'] },
-    PERMISSIONS: { name: 'Permisos', columns: ['profile_name', 'object_method'] },
+    OBJECTS: { name: 'Objetos', columns: ['object_na'] },
+    METHODS: { name: 'Métodos', columns: ['object_na', 'method_na'] },
+    MENUS: { name: 'Menús', columns: ['menu_na', 'subsystem_name'] },
+    OPTIONS: { name: 'Opciones', columns: ['option_na', 'object_method', 'menu_na'] },
+    PERMISSIONS: { name: 'Permisos', columns: ['profile_na', 'object_method'] },
     ASSIGNMENTS: {
         name: 'Asignaciones',
-        columns: ['profile_name', 'subsystem_name', 'menu_name', 'option_name'],
+        columns: ['profile_na', 'subsystem_name', 'menu_na', 'option_na'],
     },
 } as const
 
@@ -198,37 +207,28 @@ export const SHEET_DEFINITIONS = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Fila con profile_name devuelta por queries. */
-export interface ProfileNameRow { [key: string]: unknown; profile_name: string }
+// TODO(REVERT_NAMING): Revert profile_na→profile_name, menu_na→menu_name, object_na→object_name, method_na→method_name, option_na→option_name, user_na→username
+export interface ProfileNameRow { [key: string]: unknown; profile_na: string }
 
-/** Fila con subsystem_name devuelta por queries. */
 export interface SubsystemNameRow { [key: string]: unknown; subsystem_name: string }
 
-/** Fila con menu_name devuelta por queries. */
-export interface MenuNameRow { [key: string]: unknown; menu_name: string }
+export interface MenuNameRow { [key: string]: unknown; menu_na: string }
 
-/** Fila con object_method devuelta por queries. */
 export interface ObjectMethodRow { [key: string]: unknown; object_method: string }
 
-/** Fila de usuario exportada con profile_name. */
-export interface UserExportRow { [key: string]: unknown; username: string; password: string; profile_name: string }
+export interface UserExportRow { [key: string]: unknown; user_na: string; password: string; profile_na: string }
 
-/** Fila de menú exportada con subsystem_name. */
-export interface MenuExportRow { [key: string]: unknown; menu_name: string; subsystem_name: string }
+export interface MenuExportRow { [key: string]: unknown; menu_na: string; subsystem_name: string }
 
-/** Fila de opción exportada con object_method y menu_name. */
-export interface OptionExportRow { [key: string]: unknown; option_name: string; object_method: string; menu_name: string }
+export interface OptionExportRow { [key: string]: unknown; option_na: string; object_method: string; menu_na: string }
 
-/** Fila de permiso exportada. */
-export interface PermissionExportRow { [key: string]: unknown; profile_name: string; object_method: string }
+export interface PermissionExportRow { [key: string]: unknown; profile_na: string; object_method: string }
 
-/** Fila de asignación exportada. */
-export interface AssignmentExportRow { [key: string]: unknown; profile_name: string; subsystem_name: string; menu_name: string; option_name: string }
+export interface AssignmentExportRow { [key: string]: unknown; profile_na: string; subsystem_name: string; menu_na: string; option_na: string }
 
-/** Fila de objeto exportada. */
-export interface ObjectNameExportRow { [key: string]: unknown; object_name: string }
+export interface ObjectNameExportRow { [key: string]: unknown; object_na: string }
 
-/** Fila de método exportada con object_name. */
-export interface MethodExportRow { [key: string]: unknown; object_name: string; method_name: string }
+export interface MethodExportRow { [key: string]: unknown; object_na: string; method_na: string }
 
 /** Fila con object_id. */
 export interface ObjectIdRow { [key: string]: unknown; object_id: number }

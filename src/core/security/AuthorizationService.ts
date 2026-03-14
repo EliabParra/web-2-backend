@@ -33,21 +33,22 @@ export class AuthorizationService {
     }
 
     /**
-     * Verifica si un perfil está autorizado para ejecutar un método de un objeto.
+     * Verifica si alguno de los perfiles está autorizado para ejecutar un método de un objeto.
      * Registra intentos denegados para auditoría (vía log por ahora, audit service futuro).
      *
-     * @param profileId - ID del perfil del usuario
+     * @param profileIds - IDs de perfiles del usuario
      * @param objectName - Nombre del recurso/objeto
      * @param methodName - Acción/Método a ejecutar
      * @returns {boolean} true si está autorizado, false si no
      */
-    isAuthorized(profileId: number | null, objectName: string, methodName: string): boolean {
-        const authorized = this.guard.check(profileId, objectName, methodName)
+    isAuthorized(profileIds: number[], objectName: string, methodName: string): boolean {
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        const authorized = this.guard.check(profileIds, objectName, methodName)
 
         if (!authorized) {
             this.log.warn(
-                `AUTHZ: Access Denied for Profile ${profileId} on ${objectName}.${methodName}`,
-                { profileId, objectName, methodName }
+                `AUTHZ: Access Denied for Profiles [${profileIds.join(',')}] on ${objectName}.${methodName}`,
+                { profileIds, objectName, methodName }
             )
         }
 

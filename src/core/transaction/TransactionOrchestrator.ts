@@ -74,7 +74,8 @@ export class TransactionOrchestrator {
         }
 
         // 3. Autorización
-        if (!this.auth.isAuthorized(context.profileId, objectName, methodName)) {
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        if (!this.auth.isAuthorized(context.profileIds, objectName, methodName)) {
             await this.auditLog(context, 'ACCESS_DENIED', route)
             return this.errorResponse('auth.noPrivileges', 403)
         }
@@ -126,7 +127,8 @@ export class TransactionOrchestrator {
                 // Mock Request para audit compatible
                 action,
                 user_id: context.userId,
-                profile_id: context.profileId,
+                // TODO(REVERT_NAMING): Singular tables & N:M profiles
+                profile_id: context.profileIds[0] ?? null,
                 objectName: route.objectName,
                 methodName: route.methodName,
                 details,

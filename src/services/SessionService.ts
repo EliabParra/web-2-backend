@@ -149,7 +149,8 @@ export class SessionManager implements ISessionService {
             const user = await this.findUserByIdentifier(identifier)
 
             // Updated to check user_password instead of password_hash
-            if (!user || !(await this.passwordsMatch(password, user.user_password))) {
+            // TODO(REVERT_NAMING): Revert user_pw to user_password
+            if (!user || !(await this.passwordsMatch(password, user.user_pw))) {
                 return {
                     status: 'error',
                     error: this.i18n.messages.errors.client.usernameOrPasswordIncorrect,
@@ -201,16 +202,19 @@ export class SessionManager implements ISessionService {
         return bcrypt.compare(provided, storedHash)
     }
 
+    // TODO(REVERT_NAMING): Revert user_em_verified_dt to user_email_verified_at
     private isEmailVerificationPending(user: SessionUserRow): boolean {
-        return this.requireEmailVerification && !user.user_email_verified_at
+        return this.requireEmailVerification && !user.user_em_verified_dt
     }
 
+    // TODO(REVERT_NAMING): Revert user_na to username, user_em to user_email
     private initializeUserSession(req: AppRequest, user: SessionUserRow): void {
         if (req.session) {
             req.session.userId = user.user_id
-            req.session.username = user.username
-            req.session.profileId = user.profile_id
-            req.session.email = user.user_email
+            req.session.username = user.user_na
+            // TODO(REVERT_NAMING): Singular tables & N:M profiles
+            req.session.profileIds = Array.isArray(user.profile_ids) ? user.profile_ids : []
+            req.session.email = user.user_em
         }
     }
 
@@ -222,12 +226,14 @@ export class SessionManager implements ISessionService {
         }
     }
 
+    // TODO(REVERT_NAMING): Revert user_na to username
     private async auditLoginSuccess(req: AppRequest, user: SessionUserRow): Promise<void> {
         await this.audit.log(req, {
             action: 'login',
             user_id: user.user_id,
-            profile_id: user.profile_id,
-            details: { username: user.username },
+            // TODO(REVERT_NAMING): Singular tables & N:M profiles
+            profile_id: Array.isArray(user.profile_ids) ? (user.profile_ids[0] ?? null) : null,
+            details: { username: user.user_na },
         })
     }
 

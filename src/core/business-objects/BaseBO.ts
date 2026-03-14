@@ -371,7 +371,8 @@ export abstract class BaseBO {
      * Valida permisos de acceso usando SecurityService si está disponible.
      */
     protected requirePermission(data: {
-        profileId: number
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        profileIds: number[]
         objectName: string
         methodName: string
     }): void {

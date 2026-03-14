@@ -15,7 +15,7 @@ export class ProfileSeeder {
 
     /**
      * Creates profiles if they don't exist.
-     * Uses NEW schema: profile_id, profile_name (not id, name)
+     * Uses NEW schema: profile_id, profile_na (not id, name)
      */
     async seed(options: ProfileSeedOptions): Promise<{ created: number }> {
         const { publicProfileId, sessionProfileId, adminProfileId } = options
@@ -27,9 +27,9 @@ export class ProfileSeeder {
         // Public profile (for anonymous/unauthenticated users)
         if (publicProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profiles (profile_id, profile_name) 
+                `INSERT INTO security.profile (profile_id, profile_na) 
                  VALUES ($1, 'public') 
-                 ON CONFLICT (profile_id) DO UPDATE SET profile_name = COALESCE(security.profiles.profile_name, 'public')
+                 ON CONFLICT (profile_id) DO UPDATE SET profile_na = COALESCE(security.profile.profile_na, 'public')
                  RETURNING profile_id`,
                 [publicProfileId]
             )
@@ -40,9 +40,9 @@ export class ProfileSeeder {
         // Session profile (for logged-in users)
         if (sessionProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profiles (profile_id, profile_name) 
+                `INSERT INTO security.profile (profile_id, profile_na) 
                  VALUES ($1, 'session') 
-                 ON CONFLICT (profile_id) DO UPDATE SET profile_name = COALESCE(security.profiles.profile_name, 'session')
+                 ON CONFLICT (profile_id) DO UPDATE SET profile_na = COALESCE(security.profile.profile_na, 'session')
                  RETURNING profile_id`,
                 [sessionProfileId]
             )
@@ -53,9 +53,9 @@ export class ProfileSeeder {
         // Admin profile (optional, for super users)
         if (adminProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profiles (profile_id, profile_name) 
+                `INSERT INTO security.profile (profile_id, profile_na) 
                  VALUES ($1, 'admin') 
-                 ON CONFLICT (profile_id) DO UPDATE SET profile_name = COALESCE(security.profiles.profile_name, 'admin')
+                 ON CONFLICT (profile_id) DO UPDATE SET profile_na = COALESCE(security.profile.profile_na, 'admin')
                  RETURNING profile_id`,
                 [adminProfileId]
             )

@@ -42,18 +42,19 @@ async function main() {
     const guard = new PermissionGuard(container)
 
     try {
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
         // Setup test data
         console.log('1. Setting up test data...')
         await pool.query(
-            "INSERT INTO security.profiles (profile_name) VALUES ('dual_write_test') ON CONFLICT DO NOTHING"
+            "INSERT INTO security.profile (profile_na) VALUES ('dual_write_test') ON CONFLICT DO NOTHING"
         )
         await pool.query(
-            "INSERT INTO security.objects (object_name) VALUES ('DWTestObj') ON CONFLICT DO NOTHING"
+            "INSERT INTO security.object (object_na) VALUES ('DWTestObj') ON CONFLICT DO NOTHING"
         )
 
         // Check schema for methods.object_id
         const colCheck = await pool.query(
-            "SELECT column_name FROM information_schema.columns WHERE table_schema='security' AND table_name='methods'"
+            "SELECT column_name FROM information_schema.columns WHERE table_schema='security' AND table_name='method'"
         )
         const cols = colCheck.rows.map((r: any) => r.column_name)
         console.log(`   Methods columns: ${cols.join(', ')}`)
@@ -62,23 +63,23 @@ async function main() {
 
         if (hasObjectId) {
             const objRes = await pool.query(
-                "SELECT object_id FROM security.objects WHERE object_name = 'DWTestObj'"
+                "SELECT object_id FROM security.object WHERE object_na = 'DWTestObj'"
             )
             const oid = objRes.rows[0].object_id
             await pool.query(
-                "INSERT INTO security.methods (method_name, object_id) VALUES ('dw_test_method', $1) ON CONFLICT DO NOTHING",
+                "INSERT INTO security.method (method_na, object_id) VALUES ('dw_test_method', $1) ON CONFLICT DO NOTHING",
                 [oid]
             )
         } else {
             await pool.query(
-                "INSERT INTO security.methods (method_name) VALUES ('dw_test_method') ON CONFLICT (method_name) DO NOTHING"
+                "INSERT INTO security.method (method_na) VALUES ('dw_test_method') ON CONFLICT (method_na) DO NOTHING"
             )
             // Link via object_method
             const objRes = await pool.query(
-                "SELECT object_id FROM security.objects WHERE object_name = 'DWTestObj'"
+                "SELECT object_id FROM security.object WHERE object_na = 'DWTestObj'"
             )
             const methRes = await pool.query(
-                "SELECT method_id FROM security.methods WHERE method_name = 'dw_test_method'"
+                "SELECT method_id FROM security.method WHERE method_na = 'dw_test_method'"
             )
             if (objRes.rows.length && methRes.rows.length) {
                 await pool.query(
@@ -89,7 +90,7 @@ async function main() {
         }
 
         const profRes = await pool.query(
-            "SELECT profile_id FROM security.profiles WHERE profile_name = 'dual_write_test'"
+            "SELECT profile_id FROM security.profile WHERE profile_na = 'dual_write_test'"
         )
         const profileId = profRes.rows[0].profile_id as number
         console.log(`   Profile ID: ${profileId}`)
@@ -100,7 +101,7 @@ async function main() {
 
         // Check permission (should be false)
         console.log('\n3. Checking permission BEFORE grant...')
-        const before = guard.check(profileId, 'DWTestObj', 'dw_test_method')
+        const before = guard.check([profileId], 'DWTestObj', 'dw_test_method')
         console.log(`   Permission exists: ${before}`)
 
         // Grant permission (dual write)
@@ -110,7 +111,7 @@ async function main() {
 
         // Check permission (should be true - in memory)
         console.log('\n5. Checking permission AFTER grant (memory)...')
-        const afterGrant = guard.check(profileId, 'DWTestObj', 'dw_test_method')
+        const afterGrant = guard.check([profileId], 'DWTestObj', 'dw_test_method')
         console.log(`   Permission exists: ${afterGrant}`)
 
         // Verify DB write
@@ -118,8 +119,8 @@ async function main() {
         const dbVerify = await pool.query(
             `
             SELECT pm.* FROM security.profile_method pm
-            JOIN security.methods m ON pm.method_id = m.method_id
-            WHERE pm.profile_id = $1 AND m.method_name = 'dw_test_method'
+            JOIN security.method m ON pm.method_id = m.method_id
+            WHERE pm.profile_id = $1 AND m.method_na = 'dw_test_method'
         `,
             [profileId]
         )
@@ -132,7 +133,7 @@ async function main() {
 
         // Check permission (should be false - in memory)
         console.log('\n8. Checking permission AFTER revoke (memory)...')
-        const afterRevoke = guard.check(profileId, 'DWTestObj', 'dw_test_method')
+        const afterRevoke = guard.check([profileId], 'DWTestObj', 'dw_test_method')
         console.log(`   Permission exists: ${afterRevoke}`)
 
         // Summary

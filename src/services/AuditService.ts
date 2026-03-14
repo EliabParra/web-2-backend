@@ -34,22 +34,23 @@ export class AuditService implements IAuditService {
             methodName = null,
             tx = null,
             user_id = req?.session?.userId ?? null,
-            profile_id = req?.session?.profileId ?? null,
+            // TODO(REVERT_NAMING): Singular tables & N:M profiles
+            profile_id = req?.session?.profileIds?.[0] ?? null,
             details = {},
         } = args ?? ({} as AuditArgs)
 
         try {
             const safeDetails = redactSecrets((details ?? {}) as Record<string, unknown>)
+            const auditDet = { ...safeDetails, action }
 
             await this.db.query(AuditQueries.insertAuditLog, [
                 req?.requestId,
                 user_id,
                 profile_id,
-                action,
                 objectName,
                 methodName,
                 tx,
-                JSON.stringify(safeDetails),
+                JSON.stringify(auditDet),
             ])
         } catch (err) {
             this.logger.error('Error al registrar auditoría', err as Error)

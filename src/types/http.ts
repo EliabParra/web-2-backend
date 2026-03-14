@@ -13,7 +13,8 @@ declare module 'express-session' {
     interface SessionData {
         userId?: number
         username?: string
-        profileId?: number
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        profileIds?: number[]
         email?: string
         csrfToken?: string
     }
@@ -58,7 +59,8 @@ export interface ToProccessRequestBody {
 export interface SessionUser {
     userId: number
     username: string
-    profileId: number
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+    profileIds: number[]
     profileName: string
     email: string
 }

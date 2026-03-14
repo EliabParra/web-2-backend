@@ -22,6 +22,8 @@ export function applyCorsIfEnabled(app: Express, config: IConfig) {
             ) => {
                 // Permitir requests sin origin (ej. llamadas Server-to-Server, curl, REST clients)
                 if (!origin) return callback(null, true)
+                // Soporte explícito para wildcard en configuración.
+                if (allowedOrigins.includes('*')) return callback(null, true)
                 // Permitir explícitamente orígenes configurados
                 if (allowedOrigins.includes(origin)) return callback(null, true)
 

@@ -134,14 +134,14 @@ export class BORegistrar {
      */
     private async getNextTx(): Promise<number> {
         const result = await this.db.exeRaw(
-            'SELECT COALESCE(MAX(transaction_number::integer), 0) + 1 AS next_tx FROM security.transactions'
+            'SELECT COALESCE(MAX(transaction_nu::integer), 0) + 1 AS next_tx FROM security.transaction'
         )
         return Number(result.rows[0]?.next_tx) || 1
     }
 
     private async checkProfileExists(profileId: number): Promise<boolean> {
         const result = await this.db.exeRaw(
-            'SELECT 1 FROM security.profiles WHERE profile_id = $1',
+            'SELECT 1 FROM security.profile WHERE profile_id = $1',
             [profileId]
         )
         return (result.rowCount ?? 0) > 0
@@ -150,7 +150,7 @@ export class BORegistrar {
     private async upsertObject(objectName: string): Promise<number> {
         // First check if object exists to avoid sequence increment on CONFLICT
         const existing = await this.db.exeRaw(
-            'SELECT object_id FROM security.objects WHERE object_name = $1',
+            'SELECT object_id FROM security.object WHERE object_na = $1',
             [objectName]
         )
         if (existing.rows[0]?.object_id) {
@@ -158,7 +158,7 @@ export class BORegistrar {
         }
 
         const result = await this.db.exeRaw(
-            `INSERT INTO security.objects (object_name) VALUES ($1) RETURNING object_id`,
+            `INSERT INTO security.object (object_na) VALUES ($1) RETURNING object_id`,
             [objectName]
         )
         return result.rows[0]?.object_id
@@ -174,7 +174,7 @@ export class BORegistrar {
     ): Promise<{ methodId: number; tx: number }> {
         // 1. Check if method already exists
         const existingMethod = await this.db.exeRaw(
-            'SELECT method_id FROM security.methods WHERE method_name = $1',
+            'SELECT method_id FROM security.method WHERE method_na = $1',
             [methodName]
         )
         let methodId = existingMethod.rows[0]?.method_id
@@ -182,7 +182,7 @@ export class BORegistrar {
         // If no method exists, insert it
         if (!methodId) {
             const methodResult = await this.db.exeRaw(
-                `INSERT INTO security.methods (method_name) VALUES ($1) RETURNING method_id`,
+                `INSERT INTO security.method (method_na) VALUES ($1) RETURNING method_id`,
                 [methodName]
             )
             methodId = methodResult.rows[0]?.method_id
@@ -202,17 +202,17 @@ export class BORegistrar {
 
         // 3. Create or get transaction entry
         const existingTx = await this.db.exeRaw(
-            `SELECT transaction_number FROM security.transactions 
+            `SELECT transaction_nu AS tx FROM security.transaction 
              WHERE method_id = $1 AND object_id = $2`,
             [methodId, objectId]
         )
 
         let finalTx = tx
-        if (existingTx.rows[0]?.transaction_number) {
-            finalTx = Number(existingTx.rows[0].transaction_number)
+        if (existingTx.rows[0]?.tx) {
+            finalTx = Number(existingTx.rows[0].tx)
         } else {
             await this.db.exeRaw(
-                `INSERT INTO security.transactions (transaction_number, method_id, object_id) VALUES ($1, $2, $3)`,
+                `INSERT INTO security.transaction (transaction_nu, method_id, object_id) VALUES ($1, $2, $3)`,
                 [tx.toString(), methodId, objectId]
             )
         }
@@ -334,20 +334,20 @@ export class BORegistrar {
         const result = await this.db.exeRaw(`
             SELECT 
                 m.method_id, 
-                o.object_name, 
-                m.method_name, 
-                COALESCE(t.transaction_number::integer, 0) as tx
-            FROM security.methods m
+                o.object_na, 
+                m.method_na, 
+                COALESCE(t.transaction_nu::integer, 0) as tx
+            FROM security.method m
             JOIN security.object_method om ON om.method_id = m.method_id
-            JOIN security.objects o ON o.object_id = om.object_id
-            LEFT JOIN security.transactions t ON t.method_id = m.method_id AND t.object_id = om.object_id
-            ORDER BY o.object_name, m.method_name
+            JOIN security.object o ON o.object_id = om.object_id
+            LEFT JOIN security.transaction t ON t.method_id = m.method_id AND t.object_id = om.object_id
+            ORDER BY o.object_na, m.method_na
         `)
 
         return result.rows.map((row: any) => ({
             methodId: row.method_id,
-            objectName: row.object_name,
-            methodName: row.method_name,
+            objectName: row.object_na,
+            methodName: row.method_na,
             tx: Number(row.tx),
         }))
     }
@@ -361,8 +361,8 @@ export class BORegistrar {
         // Delete object_method links
         await this.db.exeRaw('DELETE FROM security.object_method WHERE method_id = $1', [methodId])
         // Delete transactions
-        await this.db.exeRaw('DELETE FROM security.transactions WHERE method_id = $1', [methodId])
+        await this.db.exeRaw('DELETE FROM security.transaction WHERE method_id = $1', [methodId])
         // Delete the method
-        await this.db.exeRaw('DELETE FROM security.methods WHERE method_id = $1', [methodId])
+        await this.db.exeRaw('DELETE FROM security.method WHERE method_id = $1', [methodId])
     }
 }

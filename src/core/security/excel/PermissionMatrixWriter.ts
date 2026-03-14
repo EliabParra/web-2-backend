@@ -134,11 +134,12 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
             this.db.query<ObjectMethodRow>(ExcelQueries.SELECT_OBJECT_METHODS),
         ])
 
+        // TODO(REVERT_NAMING): Revert profile_na→profile_na, object_na→object_na, menu_na→menu_na
         return {
-            profiles: profiles.rows.map((r) => r.profile_name),
+            profiles: profiles.rows.map((r) => r.profile_na),
             subsystems: subsystems.rows.map((r) => r.subsystem_name),
-            objects: objects.rows.map((r) => r.object_name),
-            menus: menus.rows.map((r) => r.menu_name),
+            objects: objects.rows.map((r) => r.object_na),
+            menus: menus.rows.map((r) => r.menu_na),
             objectMethods: objectMethods.rows.map((r) => r.object_method),
         }
     }
@@ -205,27 +206,45 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
         names: ExistingNames
     ): void {
         const maxRow = 200
-        const validationMap: Record<string, string[]> = {
-            profile_name: names.profiles,
-            subsystem_name: names.subsystems,
-            object_name: names.objects,
-            menu_name: names.menus,
-            object_method: names.objectMethods,
+        // TODO(REVERT_NAMING): Revert profile_na, object_na, menu_na to originals
+        const validationMap: Record<string, { formula?: string; list: string[] }> = {
+            profile_na: { formula: "'Perfiles'!$A$2:$A$200", list: names.profiles },
+            subsystem_name: { formula: "'Subsistemas'!$A$2:$A$200", list: names.subsystems },
+            object_na: { formula: "'Objetos'!$A$2:$A$200", list: names.objects },
+            menu_na: { formula: "'Menús'!$A$2:$A$200", list: names.menus },
+            object_method: { list: names.objectMethods },
         }
 
         for (let colIdx = 0; colIdx < columns.length; colIdx++) {
             const col = columns[colIdx]
-            const list = validationMap[col]
-            if (!list || list.length === 0) continue
+            const validationDef = validationMap[col]
+            if (!validationDef) continue
+
+            // No aplicar validación a las claves primarias en sus propias hojas de definición
+            if (sheet.name === 'Perfiles' && col === 'profile_na') continue;
+            if (sheet.name === 'Subsistemas' && col === 'subsystem_name') continue;
+            if (sheet.name === 'Objetos' && col === 'object_na') continue;
+            if (sheet.name === 'Menús' && col === 'menu_na') continue;
+            if (sheet.name === 'Métodos' && col === 'object_method') continue; // En hoja de métodos, object_na y method_na son definitorios, pero object_method no está.
+            if (sheet.name === 'Permisos' && col === 'object_method') {
+                // Validación sí aplica aquí.
+            }
+
+            const formulaeList = validationDef.formula 
+                ? [validationDef.formula] 
+                : [`"${validationDef.list.join(',')}"`];
 
             for (let row = 2; row <= maxRow; row++) {
                 sheet.getCell(row, colIdx + 1).dataValidation = {
                     type: 'list',
                     allowBlank: true,
-                    formulae: [`"${list.join(',')}"`],
-                    showErrorMessage: true,
-                    errorTitle: 'Valor inválido',
-                    error: `Seleccione un valor de la lista para ${col}`,
+                    formulae: formulaeList,
+                    showErrorMessage: validationDef.formula ? true : false,
+                    errorStyle: validationDef.formula ? 'stop' : 'warning',
+                    errorTitle: validationDef.formula ? 'Valor inválido' : 'Precaución',
+                    error: validationDef.formula 
+                        ? `El valor debe existir en la fila correspondiente de su hoja original.` 
+                        : `Para methods complejos asegúrese que existe previamente escrito.`,
                 }
             }
         }
@@ -246,7 +265,7 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
             '2. Los campos con dropdown muestran valores existentes en la base de datos.',
             '3. Los valores deben coincidir exactamente (sensible a mayúsculas/minúsculas).',
             '4. En "object_method", use el formato: NombreObjeto.nombreMetodo (ej: Auth.login).',
-            '5. En "password", ingrese la contraseña en texto plano — será hasheada al importar.',
+            '5. En "user_pw", ingrese la contraseña en texto plano — será hasheada al importar.',
             '6. Las filas vacías se ignoran, los duplicados se omiten automáticamente.',
             '',
             'Generado por: ToProc Security Framework',

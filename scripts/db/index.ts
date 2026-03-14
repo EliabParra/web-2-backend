@@ -156,7 +156,7 @@ async function main() {
                     const password = config.security.adminPassword || AdminSeeder.generatePassword()
 
                     await adminSeeder.seed({
-                        username: config.security.adminUser || 'admin',
+                        user_na: config.security.adminUser || 'admin',
                         password,
                         profileId: config.security.adminProfileId || 1,
                     })

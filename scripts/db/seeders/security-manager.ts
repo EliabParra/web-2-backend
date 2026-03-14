@@ -137,10 +137,13 @@ export class SecurityManager {
 
         if (action === 'list') {
             const rows = await this.db.exeRaw(`
-                SELECT u.user_id, u.username, p.profile_name,
-                       u.user_created_at::date as created
-                FROM security.users u
-                LEFT JOIN security.profiles p ON u.profile_id = p.profile_id
+              SELECT u.user_id, u.user_na,
+                  STRING_AGG(DISTINCT p.profile_na, ', ' ORDER BY p.profile_na) AS profile_na,
+                       u.user_created_dt::date as created
+                FROM security."user" u
+              LEFT JOIN security.user_profile up ON up.user_id = u.user_id
+              LEFT JOIN security.profile p ON p.profile_id = up.profile_id
+              GROUP BY u.user_id, u.user_na, u.user_created_dt
                 ORDER BY u.user_id
             `)
             if (rows.rows.length === 0) {
@@ -151,21 +154,21 @@ export class SecurityManager {
             console.log(colors.gray('   ----+------------------+--------------+-----------'))
             for (const r of rows.rows) {
                 console.log(
-                    `   ${String(r.user_id).padEnd(4)}| ${String(r.username).padEnd(17)}| ${String(r.profile_name || '—').padEnd(13)}| ${r.created}`
+                    `   ${String(r.user_id).padEnd(4)}| ${String(r.user_na).padEnd(17)}| ${String(r.profile_na || '—').padEnd(13)}| ${r.created}`
                 )
             }
             console.log()
         }
 
         if (action === 'create') {
-            const username = await p.text({ message: 'Nombre de usuario', placeholder: 'vendedor1' })
-            if (p.isCancel(username)) return
+            const user_na = await p.text({ message: 'Nombre de usuario', placeholder: 'vendedor1' })
+            if (p.isCancel(user_na)) return
 
             const password = await p.password({ message: 'Contraseña' })
             if (p.isCancel(password)) return
 
             const profiles = await this.db.exeRaw(
-                'SELECT profile_id, profile_name FROM security.profiles ORDER BY profile_id'
+                'SELECT profile_id, profile_na FROM security.profile ORDER BY profile_id'
             )
             if (profiles.rows.length === 0) {
                 console.log(colors.yellow('   No hay perfiles. Crea uno primero.'))
@@ -176,7 +179,7 @@ export class SecurityManager {
                 message: 'Perfil',
                 options: profiles.rows.map((r: any) => ({
                     value: r.profile_id,
-                    label: `${r.profile_name} (id=${r.profile_id})`,
+                    label: `${r.profile_na} (id=${r.profile_id})`,
                 })),
             })
             if (p.isCancel(profileId)) return
@@ -184,11 +187,11 @@ export class SecurityManager {
             const passwordHash = await bcrypt.hash(password as string, 10)
 
             const result = await this.db.exeRaw(
-                `INSERT INTO security.users (username, user_password, profile_id, user_email_verified_at)
-                 VALUES ($1, $2, $3, NOW())
-                 ON CONFLICT (username) DO UPDATE SET user_password = EXCLUDED.user_password, user_email_verified_at = NOW()
+                `INSERT INTO security."user" (user_na, user_pw, user_em_verified_dt)
+                 VALUES ($1, $2, NOW())
+                 ON CONFLICT (user_na) DO UPDATE SET user_pw = EXCLUDED.user_pw, user_em_verified_dt = NOW()
                  RETURNING user_id`,
-                [username, passwordHash, profileId]
+                [user_na, passwordHash]
             )
             const userId = result.rows[0]?.user_id
 
@@ -198,7 +201,7 @@ export class SecurityManager {
                 [userId, profileId]
             )
 
-            console.log(colors.green(`   ✅ Usuario "${username}" creado (id=${userId})`))
+            console.log(colors.green(`   ✅ Usuario "${user_na}" creado (id=${userId})`))
         }
     }
 
@@ -220,16 +223,16 @@ export class SecurityManager {
 
         if (action === 'list') {
             const rows = await this.db.exeRaw(`
-                SELECT p.profile_id, p.profile_name,
+                SELECT p.profile_id, p.profile_na,
                        (SELECT count(*) FROM security.user_profile up WHERE up.profile_id = p.profile_id) as users,
                        (SELECT count(*) FROM security.profile_method pm WHERE pm.profile_id = p.profile_id) as methods
-                FROM security.profiles p ORDER BY p.profile_id
+                FROM security.profile p ORDER BY p.profile_id
             `)
             console.log(colors.cyan('\n   ID  | Nombre           | Users | Methods'))
             console.log(colors.gray('   ----+------------------+-------+--------'))
             for (const r of rows.rows) {
                 console.log(
-                    `   ${String(r.profile_id).padEnd(4)}| ${String(r.profile_name).padEnd(17)}| ${String(r.users).padEnd(6)}| ${r.methods}`
+                    `   ${String(r.profile_id).padEnd(4)}| ${String(r.profile_na).padEnd(17)}| ${String(r.users).padEnd(6)}| ${r.methods}`
                 )
             }
             console.log()
@@ -240,7 +243,7 @@ export class SecurityManager {
             if (p.isCancel(name)) return
 
             const result = await this.db.exeRaw(
-                `INSERT INTO security.profiles (profile_name) VALUES ($1)
+                `INSERT INTO security.profile (profile_na) VALUES ($1)
                  ON CONFLICT DO NOTHING RETURNING profile_id`,
                 [name]
             )
@@ -274,7 +277,7 @@ export class SecurityManager {
             const rows = await this.db.exeRaw(`
                 SELECT s.subsystem_id, s.subsystem_name,
                        (SELECT count(*) FROM security.subsystem_object so WHERE so.subsystem_id = s.subsystem_id) as bos,
-                       (SELECT count(*) FROM security.menus m WHERE m.subsystem_id = s.subsystem_id) as menus
+                       (SELECT count(*) FROM security.menu m WHERE m.subsystem_id = s.subsystem_id) as menus
                 FROM security.subsystems s ORDER BY s.subsystem_id
             `)
             if (rows.rows.length === 0) {
@@ -327,13 +330,13 @@ export class SecurityManager {
             if (p.isCancel(subsystemId)) return
 
             const objects = await this.db.exeRaw(
-                `SELECT o.object_id, o.object_name
-                 FROM security.objects o
+                `SELECT o.object_id, o.object_na
+                 FROM security.object o
                  WHERE o.object_id NOT IN (
                      SELECT so.object_id FROM security.subsystem_object so
                      WHERE so.subsystem_id = $1
                  )
-                 ORDER BY o.object_name`,
+                 ORDER BY o.object_na`,
                 [subsystemId]
             )
             if (objects.rows.length === 0) {
@@ -345,7 +348,7 @@ export class SecurityManager {
                 message: 'Selecciona BOs para enlazar',
                 options: objects.rows.map((r: any) => ({
                     value: r.object_id,
-                    label: r.object_name,
+                    label: r.object_na,
                 })),
             })
             if (p.isCancel(selected)) return
@@ -381,9 +384,9 @@ export class SecurityManager {
 
         if (action === 'list') {
             const rows = await this.db.exeRaw(`
-                SELECT m.menu_id, m.menu_name, s.subsystem_name,
+                SELECT m.menu_id, m.menu_na, s.subsystem_name,
                        (SELECT count(*) FROM security.menu_option mo WHERE mo.menu_id = m.menu_id) as options
-                FROM security.menus m
+                FROM security.menu m
                 LEFT JOIN security.subsystems s ON m.subsystem_id = s.subsystem_id
                 ORDER BY m.menu_id
             `)
@@ -395,7 +398,7 @@ export class SecurityManager {
             console.log(colors.gray('   ----+------------------+------------------+---------'))
             for (const r of rows.rows) {
                 console.log(
-                    `   ${String(r.menu_id).padEnd(4)}| ${String(r.menu_name).padEnd(17)}| ${String(r.subsystem_name || '—').padEnd(17)}| ${r.options}`
+                    `   ${String(r.menu_id).padEnd(4)}| ${String(r.menu_na).padEnd(17)}| ${String(r.subsystem_name || '—').padEnd(17)}| ${r.options}`
                 )
             }
             console.log()
@@ -426,7 +429,7 @@ export class SecurityManager {
             if (p.isCancel(name)) return
 
             const result = await this.db.exeRaw(
-                `INSERT INTO security.menus (menu_name, subsystem_id) VALUES ($1, $2) RETURNING menu_id`,
+                `INSERT INTO security.menu (menu_na, subsystem_id) VALUES ($1, $2) RETURNING menu_id`,
                 [name, subsystemId]
             )
             console.log(colors.green(`   ✅ Menú "${name}" creado (id=${result.rows[0]?.menu_id})`))
@@ -452,12 +455,12 @@ export class SecurityManager {
 
         if (action === 'list') {
             const rows = await this.db.exeRaw(`
-                SELECT o.option_id, o.option_name, m.method_name,
-                       obj.object_name
-                FROM security.options o
-                LEFT JOIN security.methods m ON o.method_id = m.method_id
+                SELECT o.option_id, o.option_na, m.method_na,
+                       obj.object_na
+                FROM security.option o
+                LEFT JOIN security.method m ON o.method_id = m.method_id
                 LEFT JOIN security.object_method om ON m.method_id = om.method_id
-                LEFT JOIN security.objects obj ON om.object_id = obj.object_id
+                LEFT JOIN security.object obj ON om.object_id = obj.object_id
                 ORDER BY o.option_id
             `)
             if (rows.rows.length === 0) {
@@ -467,8 +470,8 @@ export class SecurityManager {
             console.log(colors.cyan('\n   ID  | Opción           | Método (BO)'))
             console.log(colors.gray('   ----+------------------+---------------------------'))
             for (const r of rows.rows) {
-                const method = r.object_name ? `${r.object_name}.${r.method_name}` : r.method_name || '—'
-                console.log(`   ${String(r.option_id).padEnd(4)}| ${String(r.option_name).padEnd(17)}| ${method}`)
+                const method = r.object_na ? `${r.object_na}.${r.method_na}` : r.method_na || '—'
+                console.log(`   ${String(r.option_id).padEnd(4)}| ${String(r.option_na).padEnd(17)}| ${method}`)
             }
             console.log()
         }
@@ -478,11 +481,11 @@ export class SecurityManager {
             if (p.isCancel(name)) return
 
             const methods = await this.db.exeRaw(`
-                SELECT m.method_id, m.method_name, obj.object_name
-                FROM security.methods m
+                SELECT m.method_id, m.method_na, obj.object_na
+                FROM security.method m
                 LEFT JOIN security.object_method om ON m.method_id = om.method_id
-                LEFT JOIN security.objects obj ON om.object_id = obj.object_id
-                ORDER BY obj.object_name, m.method_name
+                LEFT JOIN security.object obj ON om.object_id = obj.object_id
+                ORDER BY obj.object_na, m.method_na
             `)
 
             let methodId: number | null = null
@@ -493,9 +496,9 @@ export class SecurityManager {
                         { value: 0, label: '— Sin método —' },
                         ...methods.rows.map((r: any) => ({
                             value: r.method_id,
-                            label: r.object_name
-                                ? `${r.object_name}.${r.method_name}`
-                                : r.method_name,
+                            label: r.object_na
+                                ? `${r.object_na}.${r.method_na}`
+                                : r.method_na,
                         })),
                     ],
                 })
@@ -504,7 +507,7 @@ export class SecurityManager {
             }
 
             const result = await this.db.exeRaw(
-                `INSERT INTO security.options (option_name, method_id) VALUES ($1, $2) RETURNING option_id`,
+                `INSERT INTO security.option (option_na, method_id) VALUES ($1, $2) RETURNING option_id`,
                 [name, methodId]
             )
             console.log(colors.green(`   ✅ Opción "${name}" creada (id=${result.rows[0]?.option_id})`))
@@ -512,7 +515,7 @@ export class SecurityManager {
 
         if (action === 'link') {
             const menus = await this.db.exeRaw(
-                'SELECT menu_id, menu_name FROM security.menus ORDER BY menu_id'
+                'SELECT menu_id, menu_na FROM security.menu ORDER BY menu_id'
             )
             if (menus.rows.length === 0) {
                 console.log(colors.yellow('   No hay menús. Crea uno primero.'))
@@ -523,18 +526,18 @@ export class SecurityManager {
                 message: 'Selecciona menú',
                 options: menus.rows.map((r: any) => ({
                     value: r.menu_id,
-                    label: `${r.menu_name} (id=${r.menu_id})`,
+                    label: `${r.menu_na} (id=${r.menu_id})`,
                 })),
             })
             if (p.isCancel(menuId)) return
 
             const options = await this.db.exeRaw(
-                `SELECT o.option_id, o.option_name
-                 FROM security.options o
+                `SELECT o.option_id, o.option_na
+                 FROM security.option o
                  WHERE o.option_id NOT IN (
                      SELECT mo.option_id FROM security.menu_option mo WHERE mo.menu_id = $1
                  )
-                 ORDER BY o.option_name`,
+                 ORDER BY o.option_na`,
                 [menuId]
             )
             if (options.rows.length === 0) {
@@ -546,7 +549,7 @@ export class SecurityManager {
                 message: 'Selecciona opciones para agregar al menú',
                 options: options.rows.map((r: any) => ({
                     value: r.option_id,
-                    label: r.option_name,
+                    label: r.option_na,
                 })),
             })
             if (p.isCancel(selected)) return
@@ -570,7 +573,7 @@ export class SecurityManager {
 
     private async manageAssignments(): Promise<void> {
         const profiles = await this.db.exeRaw(
-            'SELECT profile_id, profile_name FROM security.profiles ORDER BY profile_id'
+            'SELECT profile_id, profile_na FROM security.profile ORDER BY profile_id'
         )
         if (profiles.rows.length === 0) {
             console.log(colors.yellow('   No hay perfiles. Crea uno primero.'))
@@ -581,7 +584,7 @@ export class SecurityManager {
             message: '🔗 Asignar a perfil:',
             options: profiles.rows.map((r: any) => ({
                 value: r.profile_id,
-                label: `${r.profile_name} (id=${r.profile_id})`,
+                label: `${r.profile_na} (id=${r.profile_id})`,
             })),
         })
         if (p.isCancel(profileId)) return
@@ -630,10 +633,10 @@ export class SecurityManager {
 
         if (entity === 'menus') {
             const items = await this.db.exeRaw(
-                `SELECT m.menu_id, m.menu_name FROM security.menus m
+                `SELECT m.menu_id, m.menu_na FROM security.menu m
                  WHERE m.menu_id NOT IN (
                      SELECT pm.menu_id FROM security.profile_menu pm WHERE pm.profile_id = $1
-                 ) ORDER BY m.menu_name`,
+                 ) ORDER BY m.menu_na`,
                 [profileId]
             )
             if (items.rows.length === 0) {
@@ -644,7 +647,7 @@ export class SecurityManager {
                 message: 'Selecciona menús',
                 options: items.rows.map((r: any) => ({
                     value: r.menu_id,
-                    label: r.menu_name,
+                    label: r.menu_na,
                 })),
             })
             if (p.isCancel(selected)) return
@@ -661,10 +664,10 @@ export class SecurityManager {
 
         if (entity === 'options') {
             const items = await this.db.exeRaw(
-                `SELECT o.option_id, o.option_name FROM security.options o
+                `SELECT o.option_id, o.option_na FROM security.option o
                  WHERE o.option_id NOT IN (
                      SELECT po.option_id FROM security.profile_option po WHERE po.profile_id = $1
-                 ) ORDER BY o.option_name`,
+                 ) ORDER BY o.option_na`,
                 [profileId]
             )
             if (items.rows.length === 0) {
@@ -675,7 +678,7 @@ export class SecurityManager {
                 message: 'Selecciona opciones',
                 options: items.rows.map((r: any) => ({
                     value: r.option_id,
-                    label: r.option_name,
+                    label: r.option_na,
                 })),
             })
             if (p.isCancel(selected)) return
@@ -698,21 +701,21 @@ export class SecurityManager {
     private async showStatus(): Promise<void> {
         const counts = await this.db.exeRaw(`
             SELECT
-                (SELECT count(*) FROM security.users) as users,
-                (SELECT count(*) FROM security.profiles) as profiles,
+                (SELECT count(*) FROM security."user") as users,
+                (SELECT count(*) FROM security.profile) as profiles,
                 (SELECT count(*) FROM security.subsystems) as subsystems,
-                (SELECT count(*) FROM security.menus) as menus,
-                (SELECT count(*) FROM security.options) as options,
-                (SELECT count(*) FROM security.objects) as objects,
-                (SELECT count(*) FROM security.methods) as methods,
-                (SELECT count(*) FROM security.transactions) as transactions,
+                (SELECT count(*) FROM security.menu) as menus,
+                (SELECT count(*) FROM security.option) as options,
+                (SELECT count(*) FROM security.object) as objects,
+                (SELECT count(*) FROM security.method) as methods,
+                (SELECT count(*) FROM security.transaction) as transactions,
                 (SELECT count(*) FROM security.profile_method) as profile_methods,
                 (SELECT count(*) FROM security.profile_subsystem) as profile_subsystems,
                 (SELECT count(*) FROM security.profile_menu) as profile_menus,
                 (SELECT count(*) FROM security.profile_option) as profile_options,
                 (SELECT count(*) FROM security.subsystem_object) as subsystem_objects,
                 (SELECT count(*) FROM security.menu_option) as menu_options,
-                (SELECT count(*) FROM security.audit_logs) as audit_logs
+                (SELECT count(*) FROM security.audit) as audit_count
         `)
 
         const c = counts.rows[0]
@@ -735,7 +738,7 @@ export class SecurityManager {
         console.log(`   🔗 Subsystem → Objects:   ${colors.white(c.subsystem_objects)}`)
         console.log(`   🔗 Menu → Options:        ${colors.white(c.menu_options)}`)
         console.log(colors.gray('   ── Audit ──────────────────────────'))
-        console.log(`   📝 Audit Logs:         ${colors.white(c.audit_logs)}`)
+        console.log(`   📝 Audit Logs:         ${colors.white(c.audit_count)}`)
         console.log()
     }
 
@@ -752,12 +755,12 @@ export class SecurityManager {
         if (p.isCancel(limit)) return
 
         const rows = await this.db.exeRaw(
-            `SELECT a.id, a.request_id, a.user_id, u.username,
-                    a.action, a.object_name, a.method_name, a.tx,
-                    a.created_at, a.details
-             FROM security.audit_logs a
-             LEFT JOIN security.users u ON a.user_id = u.user_id
-             ORDER BY a.created_at DESC
+            `SELECT a.audit_id, a.request_id, a.user_id, u.user_na,
+                    a.audit_tab, a.audit_met, a.tx,
+                    a.audit_dt, a.audit_det
+             FROM security.audit a
+             LEFT JOIN security."user" u ON a.user_id = u.user_id
+             ORDER BY a.audit_dt DESC
              LIMIT $1`,
             [parseInt(limit as string, 10) || 20]
         )
@@ -770,12 +773,12 @@ export class SecurityManager {
         console.log(colors.cyan(`\n   🔍 Últimos ${rows.rows.length} audit logs\n`))
 
         for (const r of rows.rows) {
-            const time = new Date(r.created_at).toLocaleString()
-            const user = r.username || `uid:${r.user_id || '?'}`
-            const action = r.action || '?'
-            const target = r.object_name && r.method_name
-                ? `${r.object_name}.${r.method_name}`
-                : r.object_name || '—'
+            const time = new Date(r.audit_dt).toLocaleString()
+            const user = r.user_na || `uid:${r.user_id || '?'}`
+            const action = r.audit_det?.action || '?'
+            const target = r.audit_tab && r.audit_met
+                ? `${r.audit_tab}.${r.audit_met}`
+                : r.audit_tab || '—'
 
             console.log(
                 colors.gray(`   ${time}`) +
@@ -788,8 +791,8 @@ export class SecurityManager {
                 (r.tx ? colors.gray(` tx:${r.tx}`) : '')
             )
 
-            if (r.details && Object.keys(r.details).length > 0) {
-                const detail = JSON.stringify(r.details)
+            if (r.audit_det && Object.keys(r.audit_det).length > 0) {
+                const detail = JSON.stringify(r.audit_det)
                 if (detail.length > 80) {
                     console.log(colors.gray(`     └─ ${detail.substring(0, 80)}...`))
                 } else {
@@ -974,7 +977,7 @@ export class SecurityManager {
 
             // Obtener próximo tx
             const txRes = await this.db.exeRaw(
-                'SELECT COALESCE(MAX(transaction_number::integer), 0) + 1 AS next_tx FROM security.transactions'
+                'SELECT COALESCE(MAX(transaction_number::integer), 0) + 1 AS next_tx FROM security.transaction'
             )
             let nextTx = Number(txRes.rows[0]?.next_tx) || 1
 
@@ -983,21 +986,21 @@ export class SecurityManager {
 
                 // Upsert object
                 let objectId: number
-                const existObj = await this.db.exeRaw('SELECT object_id FROM security.objects WHERE object_name = $1', [objectName])
+                const existObj = await this.db.exeRaw('SELECT object_id FROM security.object WHERE object_na = $1', [objectName])
                 if (existObj.rows[0]?.object_id) {
                     objectId = existObj.rows[0].object_id
                 } else {
-                    const newObj = await this.db.exeRaw('INSERT INTO security.objects (object_name) VALUES ($1) RETURNING object_id', [objectName])
+                    const newObj = await this.db.exeRaw('INSERT INTO security.object (object_na) VALUES ($1) RETURNING object_id', [objectName])
                     objectId = newObj.rows[0].object_id
                 }
 
                 // Upsert method
                 let methodId: number
-                const existMet = await this.db.exeRaw('SELECT method_id FROM security.methods WHERE method_name = $1', [methodName])
+                const existMet = await this.db.exeRaw('SELECT method_id FROM security.method WHERE method_na = $1', [methodName])
                 if (existMet.rows[0]?.method_id) {
                     methodId = existMet.rows[0].method_id
                 } else {
-                    const newMet = await this.db.exeRaw('INSERT INTO security.methods (method_name) VALUES ($1) RETURNING method_id', [methodName])
+                    const newMet = await this.db.exeRaw('INSERT INTO security.method (method_na) VALUES ($1) RETURNING method_id', [methodName])
                     methodId = newMet.rows[0].method_id
                 }
 
@@ -1011,11 +1014,11 @@ export class SecurityManager {
 
                 // Transaction
                 const existTx = await this.db.exeRaw(
-                    'SELECT 1 FROM security.transactions WHERE method_id = $1 AND object_id = $2', [methodId, objectId]
+                    'SELECT 1 FROM security.transaction WHERE method_id = $1 AND object_id = $2', [methodId, objectId]
                 )
                 if ((existTx.rowCount ?? 0) === 0) {
                     await this.db.exeRaw(
-                        'INSERT INTO security.transactions (transaction_number, method_id, object_id) VALUES ($1, $2, $3)',
+                        'INSERT INTO security.transaction (transaction_number, method_id, object_id) VALUES ($1, $2, $3)',
                         [String(nextTx), methodId, objectId]
                     )
                     nextTx++
@@ -1053,18 +1056,18 @@ export class SecurityManager {
                 for (const fullMethod of onlyInDB) {
                     const [objectName, methodName] = fullMethod.split('.')
                     const metRes = await this.db.exeRaw(
-                        `SELECT m.method_id FROM security.methods m
+                        `SELECT m.method_id FROM security.method m
                          INNER JOIN security.object_method om ON m.method_id = om.method_id
-                         INNER JOIN security.objects o ON om.object_id = o.object_id
-                         WHERE o.object_name = $1 AND m.method_name = $2`,
+                         INNER JOIN security.object o ON om.object_id = o.object_id
+                         WHERE o.object_na = $1 AND m.method_na = $2`,
                         [objectName, methodName]
                     )
                     if (metRes.rows[0]?.method_id) {
                         const mId = metRes.rows[0].method_id
                         await this.db.exeRaw('DELETE FROM security.profile_method WHERE method_id = $1', [mId])
                         await this.db.exeRaw('DELETE FROM security.object_method WHERE method_id = $1', [mId])
-                        await this.db.exeRaw('DELETE FROM security.transactions WHERE method_id = $1', [mId])
-                        await this.db.exeRaw('DELETE FROM security.methods WHERE method_id = $1', [mId])
+                        await this.db.exeRaw('DELETE FROM security.transaction WHERE method_id = $1', [mId])
+                        await this.db.exeRaw('DELETE FROM security.method WHERE method_id = $1', [mId])
                         console.log(colors.red(`   🗑️  ${fullMethod} eliminado`))
                     }
                 }
@@ -1153,17 +1156,17 @@ export class SecurityManager {
     /** Obtiene todos los métodos registrados en la DB. */
     private async getDBMethods(): Promise<{ methodId: number; objectName: string; methodName: string }[]> {
         const result = await this.db.exeRaw(`
-            SELECT m.method_id, o.object_name, m.method_name
-            FROM security.methods m
+            SELECT m.method_id, o.object_na, m.method_na
+            FROM security.method m
             JOIN security.object_method om ON om.method_id = m.method_id
-            JOIN security.objects o ON o.object_id = om.object_id
-            ORDER BY o.object_name, m.method_name
+            JOIN security.object o ON o.object_id = om.object_id
+            ORDER BY o.object_na, m.method_na
         `)
 
         return result.rows.map((row: any) => ({
             methodId: row.method_id,
-            objectName: row.object_name,
-            methodName: row.method_name,
+            objectName: row.object_na,
+            methodName: row.method_na,
         }))
     }
 }

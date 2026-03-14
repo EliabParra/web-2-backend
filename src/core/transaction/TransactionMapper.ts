@@ -6,20 +6,23 @@ import {
     TransactionRoute,
 } from '../../types/core.js'
 
+// TODO(REVERT_NAMING): Revert transaction_nu to transaction_number, object_na to object_name, method_na to method_name
 const TxQueries = {
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     loadDataTx: `
-        SELECT t.transaction_number as tx, o.object_name, m.method_name 
-        FROM security.transactions t
-        INNER JOIN security.methods m ON t.method_id = m.method_id
-        INNER JOIN security.objects o ON t.object_id = o.object_id
+        SELECT t.transaction_nu as tx, o.object_na, m.method_na
+        FROM security.transaction t
+        INNER JOIN security.method m ON t.method_id = m.method_id
+        INNER JOIN security.object o ON t.object_id = o.object_id
     `,
 }
 
 /** Row resultado de la query de transacciones */
+// TODO(REVERT_NAMING): Revert object_na to object_name, method_na to method_name
 interface TxRow {
     tx: number | string
-    object_name: string
-    method_name: string
+    object_na: string
+    method_na: string
     [key: string]: unknown
 }
 
@@ -69,10 +72,11 @@ export class TransactionMapper implements ITransactionMapper {
             for (const row of result.rows) {
                 const tx = typeof row.tx === 'number' ? row.tx : Number(row.tx)
 
-                if (Number.isFinite(tx) && row.object_name && row.method_name) {
+                // TODO(REVERT_NAMING): Revert object_na to object_name, method_na to method_name
+                if (Number.isFinite(tx) && row.object_na && row.method_na) {
                     this.txMap.set(tx, {
-                        objectName: row.object_name,
-                        methodName: row.method_name,
+                        objectName: row.object_na,
+                        methodName: row.method_na,
                     })
                 }
             }

@@ -79,10 +79,11 @@ export class MenuProvider implements IMenuProvider {
         // Menus
         const menuRes = await this.db.query<DBMenu>(SecurityQueries.SELECT_MENUS)
         this.menus.clear()
+        // TODO(REVERT_NAMING): Revert menu_na to menu_name
         menuRes.rows.forEach((r) =>
             this.menus.set(r.menu_id, {
                 menu_id: r.menu_id,
-                menu_name: r.menu_name,
+                menu_na: r.menu_na,
                 subsystem_id: r.subsystem_id,
                 options: [],
             })
@@ -91,10 +92,11 @@ export class MenuProvider implements IMenuProvider {
         // Options
         const optRes = await this.db.query<DBOption>(SecurityQueries.SELECT_OPTIONS)
         this.options.clear()
+        // TODO(REVERT_NAMING): Revert option_na to option_name
         optRes.rows.forEach((r) =>
             this.options.set(r.option_id, {
                 option_id: r.option_id,
-                option_name: r.option_name,
+                option_na: r.option_na,
                 method_id: r.method_id || undefined,
             })
         )
@@ -148,15 +150,24 @@ export class MenuProvider implements IMenuProvider {
     }
 
     /**
-     * Retorna la estructura de menús para un perfil basada en asignaciones explícitas.
+     * Retorna la estructura de menús para múltiples perfiles con unión de asignaciones.
      */
-    async getStructure(profileId: number): Promise<MenuStructure> {
-        const assignedSubsystems = this.profileSubsystems.get(profileId)
-        const assignedMenus = this.profileMenus.get(profileId)
-        const assignedOptions = this.profileOptions.get(profileId)
+    async getStructure(profileIds: number[]): Promise<MenuStructure> {
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        if (!Array.isArray(profileIds) || profileIds.length === 0) return []
+
+        const assignedSubsystems = new Set<number>()
+        const assignedMenus = new Set<number>()
+        const assignedOptions = new Set<number>()
+
+        for (const profileId of profileIds) {
+            this.profileSubsystems.get(profileId)?.forEach((id) => assignedSubsystems.add(id))
+            this.profileMenus.get(profileId)?.forEach((id) => assignedMenus.add(id))
+            this.profileOptions.get(profileId)?.forEach((id) => assignedOptions.add(id))
+        }
 
         // If no subsystem assignments, return empty immediately
-        if (!assignedSubsystems || assignedSubsystems.size === 0) return []
+        if (assignedSubsystems.size === 0) return []
 
         const structure: MenuStructure = []
 
@@ -171,7 +182,7 @@ export class MenuProvider implements IMenuProvider {
             for (const menu of this.menus.values()) {
                 if (menu.subsystem_id !== sub.subsystem_id) continue
                 // Check assignment
-                if (!assignedMenus || !assignedMenus.has(menu.menu_id)) continue
+                if (!assignedMenus.has(menu.menu_id)) continue
 
                 // Create Menu Node
                 const menuNode: SecurityMenu = { ...menu, options: [] }
@@ -181,7 +192,7 @@ export class MenuProvider implements IMenuProvider {
                 if (optionsForMenu) {
                     for (const optId of optionsForMenu) {
                         // Check assignment
-                        if (!assignedOptions || !assignedOptions.has(optId)) continue
+                        if (!assignedOptions.has(optId)) continue
 
                         const opt = this.options.get(optId)
                         if (opt) {
@@ -248,9 +259,10 @@ export class MenuProvider implements IMenuProvider {
     async createMenu(name: string, subsystemId: number): Promise<SecurityMenu> {
         const res = await this.db.query<DBMenu>(SecurityQueries.INSERT_MENU, [name, subsystemId])
         const row = res.rows[0]
+        // TODO(REVERT_NAMING): Revert menu_na to menu_name
         const newMenu: SecurityMenu = {
             menu_id: row.menu_id,
-            menu_name: row.menu_name,
+            menu_na: row.menu_na,
             subsystem_id: row.subsystem_id,
             options: [],
         }
@@ -277,9 +289,10 @@ export class MenuProvider implements IMenuProvider {
             methodId || null,
         ])
         const row = res.rows[0]
+        // TODO(REVERT_NAMING): Revert option_na to option_name
         const newOpt: SecurityOption = {
             option_id: row.option_id,
-            option_name: row.option_name,
+            option_na: row.option_na,
             method_id: row.method_id ? row.method_id : undefined,
         }
         this.options.set(newOpt.option_id, newOpt)

@@ -141,15 +141,15 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
             if (!parsed) continue
 
             try {
-                const res = await this.db.query<ProfileIdRow>(ExcelQueries.INSERT_PROFILE, [parsed.profile_name])
+                const res = await this.db.query<ProfileIdRow>(ExcelQueries.INSERT_PROFILE, [parsed.profile_na])
                 if (res.rows.length > 0) {
                     inserted++
-                    this.log.debug(`Perfil creado: "${parsed.profile_name}"`)
+                    this.log.debug(`Perfil creado: "${parsed.profile_na}"`)
                 } else {
                     skipped++
                 }
             } catch (err) {
-                this.addError(SHEET_DEFINITIONS.PROFILES.name, row, 'profile_name', this.errorMessage(err))
+                this.addError(SHEET_DEFINITIONS.PROFILES.name, row, 'profile_na', this.errorMessage(err))
             }
         }
 
@@ -170,28 +170,51 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
 
             try {
                 const profileRes = await this.db.query<ProfileIdRow>(
-                    ExcelQueries.FIND_PROFILE_BY_NAME, [parsed.profile_name]
+                    ExcelQueries.FIND_PROFILE_BY_NAME, [parsed.profile_na]
                 )
 
                 if (profileRes.rows.length === 0) {
-                    this.addError(SHEET_DEFINITIONS.USERS.name, row, 'profile_name', `Perfil "${parsed.profile_name}" no existe`)
+                    this.addError(SHEET_DEFINITIONS.USERS.name, row, 'profile_na', `Perfil "${parsed.profile_na}" no existe`)
                     continue
                 }
 
                 const bcrypt = await import('bcrypt')
-                const hashedPassword = await bcrypt.default.hash(parsed.password, 10)
+                // TODO(REVERT_NAMING): Revert user_pw to user_pw
+                const hashedPassword = await bcrypt.default.hash(parsed.user_pw, 10)
 
                 const res = await this.db.query<{ [key: string]: unknown; user_id: number }>(
-                    ExcelQueries.INSERT_USER, [parsed.username, hashedPassword, profileRes.rows[0].profile_id]
+                    ExcelQueries.INSERT_USER,
+                    [parsed.user_na, hashedPassword]
                 )
+
+                // TODO(REVERT_NAMING): Singular tables & N:M profiles
+                const userId =
+                    res.rows.length > 0
+                        ? Number(res.rows[0].user_id)
+                        : Number(
+                              (
+                                  await this.db.query<{ user_id: number }>(ExcelQueries.FIND_USER_BY_NAME, [
+                                      parsed.user_na,
+                                  ])
+                              ).rows[0]?.user_id
+                          )
+
+                if (Number.isInteger(userId) && userId > 0) {
+                    await this.db.query(ExcelQueries.INSERT_USER_PROFILE, [
+                        userId,
+                        profileRes.rows[0].profile_id,
+                    ])
+                }
+
                 if (res.rows.length > 0) {
                     inserted++
-                    this.log.debug(`Usuario creado: "${parsed.username}" → perfil "${parsed.profile_name}"`)
+                    this.log.debug(`Usuario creado: "${parsed.user_na}" → perfil "${parsed.profile_na}"`)
                 } else {
                     skipped++
                 }
             } catch (err) {
-                this.addError(SHEET_DEFINITIONS.USERS.name, row, 'username', this.errorMessage(err))
+                // TODO(REVERT_NAMING): Revert user_na to username
+                this.addError(SHEET_DEFINITIONS.USERS.name, row, 'user_na', this.errorMessage(err))
             }
         }
 
@@ -239,15 +262,15 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
             if (!parsed) continue
 
             try {
-                const res = await this.db.query<ObjectIdRow>(ExcelQueries.INSERT_OBJECT, [parsed.object_name])
+                const res = await this.db.query<ObjectIdRow>(ExcelQueries.INSERT_OBJECT, [parsed.object_na])
                 if (res.rows.length > 0) {
                     inserted++
-                    this.log.debug(`Objeto creado: "${parsed.object_name}"`)
+                    this.log.debug(`Objeto creado: "${parsed.object_na}"`)
                 } else {
                     skipped++
                 }
             } catch (err) {
-                this.addError(SHEET_DEFINITIONS.OBJECTS.name, row, 'object_name', this.errorMessage(err))
+                this.addError(SHEET_DEFINITIONS.OBJECTS.name, row, 'object_na', this.errorMessage(err))
             }
         }
 
@@ -272,22 +295,22 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
 
             try {
                 // Resolver object_id
-                const objRes = await this.db.query<ObjectIdRow>(ExcelQueries.FIND_OBJECT_BY_NAME, [parsed.object_name])
+                const objRes = await this.db.query<ObjectIdRow>(ExcelQueries.FIND_OBJECT_BY_NAME, [parsed.object_na])
                 if (objRes.rows.length === 0) {
-                    this.addError(SHEET_DEFINITIONS.METHODS.name, row, 'object_name', `Objeto "${parsed.object_name}" no existe`)
+                    this.addError(SHEET_DEFINITIONS.METHODS.name, row, 'object_na', `Objeto "${parsed.object_na}" no existe`)
                     continue
                 }
 
                 // Insertar o encontrar method
-                const metInsert = await this.db.query<MethodIdRow>(ExcelQueries.INSERT_METHOD, [parsed.method_name])
+                const metInsert = await this.db.query<MethodIdRow>(ExcelQueries.INSERT_METHOD, [parsed.method_na])
                 let methodId: number
 
                 if (metInsert.rows.length > 0) {
                     methodId = metInsert.rows[0].method_id
                 } else {
-                    const metFind = await this.db.query<MethodIdRow>(ExcelQueries.FIND_METHOD_BY_NAME, [parsed.method_name])
+                    const metFind = await this.db.query<MethodIdRow>(ExcelQueries.FIND_METHOD_BY_NAME, [parsed.method_na])
                     if (metFind.rows.length === 0) {
-                        this.addError(SHEET_DEFINITIONS.METHODS.name, row, 'method_name', `No se pudo resolver method_id para "${parsed.method_name}"`)
+                        this.addError(SHEET_DEFINITIONS.METHODS.name, row, 'method_na', `No se pudo resolver method_id para "${parsed.method_na}"`)
                         continue
                     }
                     methodId = metFind.rows[0].method_id
@@ -301,9 +324,9 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
                 nextTx++
 
                 inserted++
-                this.log.debug(`Método registrado: "${parsed.object_name}.${parsed.method_name}"`)
+                this.log.debug(`Método registrado: "${parsed.object_na}.${parsed.method_na}"`)
             } catch (err) {
-                this.addError(SHEET_DEFINITIONS.METHODS.name, row, 'method_name', this.errorMessage(err))
+                this.addError(SHEET_DEFINITIONS.METHODS.name, row, 'method_na', this.errorMessage(err))
             }
         }
 
@@ -333,16 +356,16 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
                 }
 
                 const res = await this.db.query<MenuIdRow>(
-                    ExcelQueries.INSERT_MENU, [parsed.menu_name, subRes.rows[0].subsystem_id]
+                    ExcelQueries.INSERT_MENU, [parsed.menu_na, subRes.rows[0].subsystem_id]
                 )
                 if (res.rows.length > 0) {
                     inserted++
-                    this.log.debug(`Menú creado: "${parsed.menu_name}" → subsistema "${parsed.subsystem_name}"`)
+                    this.log.debug(`Menú creado: "${parsed.menu_na}" → subsistema "${parsed.subsystem_name}"`)
                 } else {
                     skipped++
                 }
             } catch (err) {
-                this.addError(SHEET_DEFINITIONS.MENUS.name, row, 'menu_name', this.errorMessage(err))
+                this.addError(SHEET_DEFINITIONS.MENUS.name, row, 'menu_na', this.errorMessage(err))
             }
         }
 
@@ -387,15 +410,15 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
                 }
 
                 const optRes = await this.db.query<OptionIdRow>(
-                    ExcelQueries.INSERT_OPTION, [parsed.option_name, methodId]
+                    ExcelQueries.INSERT_OPTION, [parsed.option_na, methodId]
                 )
 
                 if (optRes.rows.length > 0) {
                     inserted++
-                    this.log.debug(`Opción creada: "${parsed.option_name}"`)
-                    if (parsed.menu_name) {
+                    this.log.debug(`Opción creada: "${parsed.option_na}"`)
+                    if (parsed.menu_na) {
                         const menuRes = await this.db.query<MenuIdRow>(
-                            ExcelQueries.FIND_MENU_BY_NAME, [parsed.menu_name]
+                            ExcelQueries.FIND_MENU_BY_NAME, [parsed.menu_na]
                         )
                         if (menuRes.rows.length > 0) {
                             await this.db.query(
@@ -430,11 +453,11 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
 
             try {
                 const res = await this.db.query<ProfileMethodIdRow>(
-                    ExcelQueries.INSERT_PERMISSION, [parsed.profile_name, objectName, methodName]
+                    ExcelQueries.INSERT_PERMISSION, [parsed.profile_na, objectName, methodName]
                 )
                 if (res.rows.length > 0) {
                     inserted++
-                    this.log.debug(`Permiso asignado: "${parsed.profile_name}" → "${parsed.object_method}"`)
+                    this.log.debug(`Permiso asignado: "${parsed.profile_na}" → "${parsed.object_method}"`)
                 } else {
                     skipped++
                 }
@@ -460,25 +483,25 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
 
             try {
                 await this.db.query(
-                    ExcelQueries.INSERT_PROFILE_SUBSYSTEM, [parsed.profile_name, parsed.subsystem_name]
+                    ExcelQueries.INSERT_PROFILE_SUBSYSTEM, [parsed.profile_na, parsed.subsystem_name]
                 )
 
-                if (parsed.menu_name) {
+                if (parsed.menu_na) {
                     await this.db.query(
-                        ExcelQueries.INSERT_PROFILE_MENU, [parsed.profile_name, parsed.menu_name, parsed.subsystem_name]
+                        ExcelQueries.INSERT_PROFILE_MENU, [parsed.profile_na, parsed.menu_na, parsed.subsystem_name]
                     )
                 }
 
-                if (parsed.option_name) {
+                if (parsed.option_na) {
                     await this.db.query(
-                        ExcelQueries.INSERT_PROFILE_OPTION, [parsed.profile_name, parsed.option_name]
+                        ExcelQueries.INSERT_PROFILE_OPTION, [parsed.profile_na, parsed.option_na]
                     )
                 }
 
                 inserted++
-                this.log.debug(`Asignación: "${parsed.profile_name}" → subsistema "${parsed.subsystem_name}"`)
+                this.log.debug(`Asignación: "${parsed.profile_na}" → subsistema "${parsed.subsystem_name}"`)
             } catch (err) {
-                this.addError(SHEET_DEFINITIONS.ASSIGNMENTS.name, row, 'profile_name', this.errorMessage(err))
+                this.addError(SHEET_DEFINITIONS.ASSIGNMENTS.name, row, 'profile_na', this.errorMessage(err))
             }
         }
 

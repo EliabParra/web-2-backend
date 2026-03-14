@@ -39,7 +39,8 @@ export function applyRequestLogger(app: Express, log: ILogger) {
                     status,
                     durationMs,
                     user_id: req.session?.userId,
-                    profile_id: req.session?.profileId,
+                    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+                    profile_ids: req.session?.profileIds,
                     body: req.body ? redactSecrets(req.body) : undefined,
                 }
 

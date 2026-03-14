@@ -1,11 +1,14 @@
 /**
  * Security Management SQL Queries
+ * TODO(REVERT_NAMING): Revert all column names below (_na) to their original forms (_name)
  */
 export const SecurityQueries = {
     // --- LOAD STRUCTURE ---
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
     SELECT_SUBSYSTEMS: 'SELECT subsystem_id, subsystem_name FROM security.subsystems',
-    SELECT_MENUS: 'SELECT menu_id, menu_name, subsystem_id FROM security.menus',
-    SELECT_OPTIONS: 'SELECT option_id, option_name, method_id FROM security.options',
+    // TODO(REVERT_NAMING): Revert menu_na to menu_name, option_na to option_name
+    SELECT_MENUS: 'SELECT menu_id, menu_na, subsystem_id FROM security.menu',
+    SELECT_OPTIONS: 'SELECT option_id, option_na, method_id FROM security.option',
     SELECT_MENU_OPTIONS: 'SELECT menu_id, option_id FROM security.menu_option',
 
     // --- LOAD ASSIGNMENTS ---
@@ -15,16 +18,18 @@ export const SecurityQueries = {
 
     // --- CRUD SUBSYSTEMS ---
     INSERT_SUBSYSTEM:
-        'INSERT INTO security.subsystems (subsystem_name) VALUES ($1) RETURNING subsystem_id, subsystem_name',
+        'INSERT INTO security.subsystems (subsystem_name) VALUES ($1) RETURNING subsystem_id, subsystem_name', // subsystems not renamed
     DELETE_SUBSYSTEM: 'DELETE FROM security.subsystems WHERE subsystem_id = $1',
 
     // --- CRUD MENUS ---
+    // TODO(REVERT_NAMING): Revert menu_na to menu_name
     INSERT_MENU:
-        'INSERT INTO security.menus (menu_name, subsystem_id) VALUES ($1, $2) RETURNING menu_id, menu_name, subsystem_id',
+        'INSERT INTO security.menu (menu_na, subsystem_id) VALUES ($1, $2) RETURNING menu_id, menu_na, subsystem_id',
 
     // --- CRUD OPTIONS ---
+    // TODO(REVERT_NAMING): Revert option_na to option_name
     INSERT_OPTION:
-        'INSERT INTO security.options (option_name, method_id) VALUES ($1, $2) RETURNING option_id, option_name, method_id',
+        'INSERT INTO security.option (option_na, method_id) VALUES ($1, $2) RETURNING option_id, option_na, method_id',
 
     // --- ASSIGNMENTS ---
     ASSIGN_SUBSYSTEM:

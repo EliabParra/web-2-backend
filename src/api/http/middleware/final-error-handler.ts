@@ -82,7 +82,8 @@ export function createFinalErrorHandler(container: IContainer) {
             path: req.originalUrl,
             status,
             user_id: req.session?.userId,
-            profile_id: req.session?.profileId,
+            // TODO(REVERT_NAMING): Singular tables & N:M profiles
+            profile_ids: req.session?.profileIds,
             durationMs:
                 typeof req.requestStartMs === 'number'
                     ? Date.now() - req.requestStartMs

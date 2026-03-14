@@ -33,7 +33,7 @@ import { PermissionMatrixReader } from '../core/security/excel/PermissionMatrixR
  * await security.init()
  *
  * const route = security.getDataTx(txCode)
- * if (route && security.getPermissions({ profileId, ...route })) {
+ * if (route && security.getPermissions({ profileIds, ...route })) {
  *   const result = await security.executeMethod({ ...route, params })
  * }
  * ```
@@ -53,7 +53,8 @@ export class SecurityService implements ISecurityService {
     public isReady: boolean = false
 
     /** Promesa que resuelve cuando la inicialización completa. */
-    public ready!: Promise<boolean>
+    public ready: Promise<boolean> = Promise.resolve(false)
+    private initInFlight: Promise<boolean> | null = null
 
     /**
      * Crea una instancia de SecurityService.
@@ -80,23 +81,31 @@ export class SecurityService implements ISecurityService {
      * @throws Error si falla la carga de datos iniciales
      */
     async init(): Promise<boolean> {
-        if (this.ready) return this.ready
+        if (this.isReady) return true
+        if (this.initInFlight) return this.initInFlight
 
-        this.ready = (async () => {
+        const run = (async () => {
             try {
                 await Promise.all([this.guard.load(), this.mapper.load(), this.menuProvider.load()])
                 this.isReady = true
+                this.ready = Promise.resolve(true)
                 return true
             } catch (err: unknown) {
+                this.ready = Promise.resolve(false)
                 this.log.error(
                     `${this.i18n.messages.errors.server.serverError.msg}, SecurityService.init: ${err instanceof Error ? err.message : String(err)}`,
                     err as Error
                 )
                 throw err
+            } finally {
+                this.initInFlight = null
             }
         })()
 
-        return this.ready
+        this.initInFlight = run
+        this.ready = run.then(() => true).catch(() => false)
+
+        return run
     }
 
     /**
@@ -114,17 +123,18 @@ export class SecurityService implements ISecurityService {
      * Verifica si un perfil tiene permisos para ejecutar un método de un BO.
      *
      * @param jsonData - Datos de verificación
-     * @param jsonData.profileId - ID del perfil del usuario
+    * @param jsonData.profileIds - IDs de perfiles del usuario
      * @param jsonData.methodName - Nombre del método a verificar
      * @param jsonData.objectName - Nombre del Business Object
      * @returns `true` si tiene permiso
      */
     getPermissions(jsonData: {
-        profileId: number
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        profileIds: number[]
         methodName: string
         objectName: string
     }): boolean {
-        return this.guard.check(jsonData.profileId, jsonData.objectName, jsonData.methodName)
+        return this.guard.check(jsonData.profileIds, jsonData.objectName, jsonData.methodName)
     }
 
     /**
@@ -196,14 +206,15 @@ export class SecurityService implements ISecurityService {
     // ═══════════════════════════════════════════════════════════════════
 
     /**
-     * Construye la estructura de menús accesible para un perfil.
+    * Construye la estructura de menús accesible para múltiples perfiles.
      * Filtra subsistemas, menús y opciones según asignaciones.
      *
-     * @param profileId - ID del perfil del usuario
-     * @returns Árbol de menús filtrado por visibilidad del perfil
+     * @param profileIds - IDs de perfiles del usuario
+     * @returns Árbol de menús filtrado por unión de visibilidades
      */
-    async getMenuStructure(profileId: number): Promise<MenuStructure> {
-        return this.menuProvider.getStructure(profileId)
+    async getMenuStructure(profileIds: number[]): Promise<MenuStructure> {
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        return this.menuProvider.getStructure(profileIds)
     }
 
     /**

@@ -42,10 +42,8 @@ export function createCsrfTokenHandler(i18n: II18nService) {
  * Verifica que el header `X-CSRF-Token` coincida con el token almacenado en la sesión.
  *
  * Comportamiento:
- * - Si no hay sesión de usuario, permite paso (para login)
- * - Si hay sesión, exige token válido
- * - Excepción para desarrollo: permite omitir token válido si la petición
- *   proviene de intranet local (para facilitar pruebas con clientes móviles)
+ * - Exige token válido para rutas protegidas por este middleware.
+ * - En desarrollo solo flexibiliza para origen loopback (`localhost` o `127.0.0.1`).
  *
  * @param i18n - Servicio de internacionalización
  * @param config - Configuración global de la app para ver el entorno
@@ -53,12 +51,6 @@ export function createCsrfTokenHandler(i18n: II18nService) {
  */
 export function createCsrfProtection(i18n: II18nService, config: IConfig) {
     return function csrfProtection(req: AppRequest, res: AppResponse, next: NextFunction) {
-        // Preserve previous semantics: if there's no authenticated session yet,
-        // keep returning the existing 401 behavior for endpoints that already check auth.
-        if ((req.path === '/toProccess' || req.path === '/logout') && !req.session?.userId) {
-            return next()
-        }
-
         const expected = req.session?.csrfToken
         const provided = req.get('X-CSRF-Token')
 
@@ -73,22 +65,16 @@ export function createCsrfProtection(i18n: II18nService, config: IConfig) {
             isValid = true
         }
 
-        // Si es inválido, verificamos si aplica la excepción de desarrollo local
+        // En desarrollo solo flexibilizamos para localhost loopback.
         if (!isValid && config.app.env === 'development') {
             const originHost = req.get('Origin') || req.get('Referer')
             if (originHost) {
                 try {
                     const url = new URL(originHost)
                     const hostname = url.hostname
-                    const isLocalNetwork =
-                        hostname === 'localhost' ||
-                        hostname === '127.0.0.1' ||
-                        hostname.startsWith('192.168.') ||
-                        hostname.startsWith('10.') ||
-                        hostname.startsWith('172.16.') ||
-                        hostname.startsWith('172.31.')
+                    const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1'
 
-                    if (isLocalNetwork) {
+                    if (isLoopback) {
                         isValid = true
                     }
                 } catch (e) {

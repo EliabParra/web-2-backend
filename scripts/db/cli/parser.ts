@@ -110,7 +110,8 @@ export function parseCliArgs(
     if (getBool('authUsername') !== undefined)
         config.auth!.usernameSupported = getBool('authUsername')
     const authLoginId = getStr('authLoginId')
-    if (authLoginId === 'email' || authLoginId === 'username') config.auth!.loginId = authLoginId
+    // TODO(REVERT_NAMING): Revert user_na to username
+    if (authLoginId === 'email' || authLoginId === 'user_na') config.auth!.loginId = authLoginId
     if (getBool('authLogin2StepNewDevice')) config.auth!.login2StepNewDevice = true
 
     // Security/Seeding options
@@ -186,7 +187,7 @@ ${'Database Options:'.cyan.bold}
 ${'Auth Options:'.cyan.bold}
   --auth              Create auth support tables
   --authUsername      Keep username as identifier (default: true)
-  --authLoginId       Login identifier: email|username
+  --authLoginId       Login identifier: email|user_na
   --authLogin2StepNewDevice  Require verification on new device
 
 ${'Seeding Options:'.cyan.bold}

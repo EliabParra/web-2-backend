@@ -36,22 +36,23 @@ export class TransactionController {
      * @param next - Función next
      */
     async handle(req: AppRequest, res: AppResponse, next: Function): Promise<void> {
-        let effectiveProfileId: number | null = null
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        let effectiveProfileIds: number[] = []
 
         try {
-            // 1. Determinar profileId
+            // 1. Determinar profileIds
             const hasSession = this.session.sessionExists(req)
             const publicProfileId = Number(this.config.auth?.publicProfileId)
 
-            const rawSessionProfileId = req.session?.profileId
-            effectiveProfileId =
-                hasSession && rawSessionProfileId != null
-                    ? Number(rawSessionProfileId)
+            const rawSessionProfileIds = req.session?.profileIds
+            effectiveProfileIds =
+                hasSession && Array.isArray(rawSessionProfileIds)
+                    ? rawSessionProfileIds.filter((id) => Number.isInteger(id))
                     : Number.isInteger(publicProfileId) && publicProfileId > 0
-                      ? publicProfileId
-                      : null
+                      ? [publicProfileId]
+                      : []
 
-            if (!hasSession && effectiveProfileId == null) {
+            if (!hasSession && effectiveProfileIds.length === 0) {
                 res.status(this.i18n.messages.errors.client.login.code).send(
                     this.i18n.messages.errors.client.login
                 )
@@ -127,7 +128,7 @@ export class TransactionController {
                 tx,
                 {
                     userId,
-                    profileId: effectiveProfileId!,
+                    profileIds: effectiveProfileIds,
                     username,
                 },
                 effectiveParams

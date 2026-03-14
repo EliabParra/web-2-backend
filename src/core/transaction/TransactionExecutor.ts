@@ -50,28 +50,18 @@ export class TransactionExecutor implements ITransactionExecutor {
         methodName: string,
         params: Record<string, unknown> | null | undefined
     ): Promise<unknown> {
-        const key = this.instanceKey(objectName, methodName)
-
-        if (this.instances.has(key)) {
-            const instance = this.instances.get(key)
-            if (typeof instance?.[methodName] !== 'function') {
-                throw new Error(`Método de BO no encontrado: ${objectName}.${methodName}`)
-            }
-            return await (instance as any)[methodName](params)
+        let instance = this.instances.get(objectName)
+        if (!instance) {
+            const loaded = await this.loadBO(objectName)
+            instance = loaded.instance
+            this.instances.set(objectName, instance)
         }
-
-        const { instance } = await this.loadBO(objectName)
-        this.instances.set(key, instance)
 
         if (typeof instance[methodName] !== 'function') {
             throw new Error(`Método de BO no encontrado: ${objectName}.${methodName}`)
         }
 
         return await (instance as any)[methodName](params)
-    }
-
-    private instanceKey(object: string, method: string) {
-        return `${object}_${method}`
     }
 
     /**

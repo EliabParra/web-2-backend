@@ -162,9 +162,9 @@ export class AuthService extends BOService implements Types.IAuthService {
         const hash = await bcrypt.hash(data.password, 10)
 
         const user = await this.repo.insertUser({
-            username: data.name ?? null,
-            user_email: data.email,
-            user_password: hash,
+            user_na: data.name ?? null,
+            user_em: data.email,
+            user_pw: hash,
         })
 
         const sessionProfileId = Number(this.config.auth.sessionProfileId ?? 1)
@@ -179,14 +179,14 @@ export class AuthService extends BOService implements Types.IAuthService {
 
         return this.mapUser({
             ...user,
-            user_email: data.email,
-            username: data.name ?? '',
-            user_password: hash,
-            user_email_verified_at: null,
-            user_is_active: true,
+            user_em: data.email,
+            user_na: data.name ?? '',
+            user_pw: hash,
+            user_em_verified_dt: null,
+            user_act: true,
             profile_id: sessionProfileId,
-            user_created_at: new Date(),
-            user_updated_at: new Date(),
+            user_created_dt: new Date(),
+            user_updated_dt: new Date(),
         })
     }
 
@@ -198,8 +198,8 @@ export class AuthService extends BOService implements Types.IAuthService {
             user = await this.repo.getUserByUsername(identifier)
         }
 
-        if (user && user.user_email) {
-            await this.sendVerificationEmail(user.user_id, user.user_email)
+        if (user && user.user_em) {
+            await this.sendVerificationEmail(user.user_id, user.user_em)
         }
     }
 
@@ -220,7 +220,7 @@ export class AuthService extends BOService implements Types.IAuthService {
 
     async requestPasswordReset(email: string): Promise<void> {
         const user = await this.repo.getUserByEmail(email)
-        if (!user || !user.user_email) return
+        if (!user || !user.user_em) return
 
         const expiresSeconds = 900
 
@@ -232,12 +232,12 @@ export class AuthService extends BOService implements Types.IAuthService {
         await this.repo.insertPasswordReset({
             userId: user.user_id,
             tokenHash,
-            sentTo: user.user_email,
+            sentTo: user.user_em,
             expiresSeconds,
         })
 
         await this.email.sendTemplate({
-            to: user.user_email,
+            to: user.user_em,
             subject: \`\${this.config.app.name}: Password Reset\`,
             templatePath: 'auth/password-reset.html',
             data: {
@@ -270,15 +270,15 @@ export class AuthService extends BOService implements Types.IAuthService {
 
     async requestUsername(email: string): Promise<void> {
         const user = await this.repo.getUserBaseByEmail(email)
-        if (!user || !user.user_email || !user.username) return
+        if (!user || !user.user_em || !user.user_na) return
 
         await this.email.sendTemplate({
-            to: user.user_email,
+            to: user.user_em,
             subject: \`\${this.config.app.name}: Username Recovery\`,
-            templatePath: 'auth/username-recovery.html',
+            templatePath: 'auth/user_na-recovery.html',
             data: {
                 appName: this.config.app.name,
-                username: user.username,
+                user_na: user.user_na,
                 year: new Date().getFullYear(),
             },
         })
@@ -314,17 +314,17 @@ export class AuthService extends BOService implements Types.IAuthService {
     private mapUser(row: Types.UserRow): Types.User {
         return {
             user_id: row.user_id,
-            user_email: row.user_email,
-            username: row.username ?? undefined,
-            user_password: row.user_password,
-            user_email_verified_at: row.user_email_verified_at
-                ? new Date(row.user_email_verified_at)
+            user_em: row.user_em,
+            user_na: row.user_na ?? undefined,
+            user_pw: row.user_pw,
+            user_em_verified_dt: row.user_em_verified_dt
+                ? new Date(row.user_em_verified_dt)
                 : null,
-            user_is_active: !!row.user_is_active,
-            user_created_at: row.user_created_at ? new Date(row.user_created_at) : new Date(),
-            user_updated_at: row.user_updated_at ? new Date(row.user_updated_at) : undefined,
-            user_last_login_at: row.user_last_login_at ? new Date(row.user_last_login_at) : null,
-            user_solvent: row.user_solvent,
+            user_act: !!row.user_act,
+            user_created_dt: row.user_created_dt ? new Date(row.user_created_dt) : new Date(),
+            user_updated_dt: row.user_updated_dt ? new Date(row.user_updated_dt) : undefined,
+            user_last_login_dt: row.user_last_login_dt ? new Date(row.user_last_login_dt) : null,
+            user_sol: row.user_sol,
             person_id: row.person_id,
         }
     }
@@ -334,10 +334,10 @@ export class AuthService extends BOService implements Types.IAuthService {
     queries: () => `export const AuthQueries = {
     // --- Users
     getUserByEmail: \`
-        SELECT u.user_id as id, u.username, u.user_email as email, u.user_email_verified_at as email_verified_at, u.user_password as password_hash, p.profile_id
-        FROM security.users u
+        SELECT u.user_id as id, u.user_na, u.user_em as email, u.user_em_verified_dt as email_verified_at, u.user_pw as password_hash, p.profile_id
+        FROM security."user" u
         LEFT JOIN security.user_profile p ON u.user_id = p.user_id
-        WHERE u.user_email = $1
+        WHERE u.user_em = $1
     \`,
     // NOTE: Aliasing above to maintain temporary compatibility or should I return raw new names?
     // AuthRepository.ts will be refactored to read new names.
@@ -345,26 +345,26 @@ export class AuthService extends BOService implements Types.IAuthService {
     // So I should NOT use aliases like 'as id'. I should return 'user_id'.
 
     getUserByEmailRaw: \`
-        SELECT u.user_id, u.username, u.user_email, u.user_email_verified_at, u.user_password, p.profile_id, u.user_is_active, u.user_created_at, u.user_last_login_at, u.user_solvent, u.person_id
-        FROM security.users u
+        SELECT u.user_id, u.user_na, u.user_em, u.user_em_verified_dt, u.user_pw, p.profile_id, u.user_act, u.user_created_dt, u.user_last_login_dt, u.user_sol, u.person_id
+        FROM security."user" u
         LEFT JOIN security.user_profile p ON u.user_id = p.user_id
-        WHERE u.user_email = $1
+        WHERE u.user_em = $1
     \`,
 
     getUserByUsername: \`
-        SELECT user_id, username, user_email, user_password, user_email_verified_at 
-        FROM security.users 
-        WHERE username = $1
+        SELECT user_id, user_na, user_em, user_pw, user_em_verified_dt 
+        FROM security."user" 
+        WHERE user_na = $1
     \`,
 
     getUserBaseByEmail: \`
-        SELECT user_id, username, user_email, user_password, user_email_verified_at 
-        FROM security.users 
-        WHERE user_email = $1
+        SELECT user_id, user_na, user_em, user_pw, user_em_verified_dt 
+        FROM security."user" 
+        WHERE user_em = $1
     \`,
 
     insertUser: \`
-        INSERT INTO security.users (username, user_email, user_password)
+        INSERT INTO security."user" (user_na, user_em, user_pw)
         VALUES ($1, $2, $3)
         RETURNING user_id
     \`,
@@ -376,14 +376,14 @@ export class AuthService extends BOService implements Types.IAuthService {
     \`,
 
     setUserEmailVerified: \`
-        UPDATE security.users
-        SET user_email_verified_at = NOW()
+        UPDATE security."user"
+        SET user_em_verified_dt = NOW()
         WHERE user_id = $1
     \`,
 
     updateUserPassword: \`
-        UPDATE security.users
-        SET user_password = $2
+        UPDATE security."user"
+        SET user_pw = $2
         WHERE user_id = $1
     \`,
 
@@ -470,9 +470,9 @@ export class AuthRepository implements Types.IAuthRepository {
 
     async insertUser(params: Types.InsertUserParams): Promise<Types.UserId> {
         const r = await this.db.query<Types.UserId>(AuthQueries.insertUser, [
-            params.username,
-            params.user_email,
-            params.user_password,
+            params.user_na,
+            params.user_em,
+            params.user_pw,
         ])
         const row = r.rows[0]
         if (!row.user_id) throw new Error('insertUser did not return user_id')
@@ -626,16 +626,16 @@ export type RequestUsernameInput = z.infer<typeof AuthSchemas.requestUsername>
     types: () => `export namespace Auth {
     export type UserRow = {
         user_id: number
-        username: string
-        user_email: string
-        user_password: string
-        user_email_verified_at?: string | Date | null
-        user_is_active?: boolean
+        user_na: string
+        user_em: string
+        user_pw: string
+        user_em_verified_dt?: string | Date | null
+        user_act?: boolean
         profile_id: number // FK remains profile_id
-        user_created_at?: string | Date
-        user_updated_at?: string | Date
-        user_last_login_at?: string | Date | null
-        user_solvent?: boolean
+        user_created_dt?: string | Date
+        user_updated_dt?: string | Date
+        user_last_login_dt?: string | Date | null
+        user_sol?: boolean
         person_id?: number | null
     }
 
@@ -659,9 +659,9 @@ export type RequestUsernameInput = z.infer<typeof AuthSchemas.requestUsername>
     }
 
     export type InsertUserParams = {
-        username: string | null
-        user_email: string | null
-        user_password: string
+        user_na: string | null
+        user_em: string | null
+        user_pw: string
     }
 
     export type PasswordResetRow = {
@@ -700,25 +700,25 @@ export type RequestUsernameInput = z.infer<typeof AuthSchemas.requestUsername>
     // User Interface matching DB schema as requested
     export interface User {
         user_id: number
-        user_email: string
-        username?: string
-        user_password?: string
-        user_is_active: boolean
-        user_created_at: Date
-        user_updated_at?: Date
-        user_last_login_at?: Date | null
-        user_email_verified_at?: Date | null
+        user_em: string
+        user_na?: string
+        user_pw?: string
+        user_act: boolean
+        user_created_dt: Date
+        user_updated_dt?: Date
+        user_last_login_dt?: Date | null
+        user_em_verified_dt?: Date | null
 
         // Additional business fields
-        user_solvent?: boolean
+        user_sol?: boolean
         person_id?: number | null
     }
 
     export interface UserSummary {
         user_id: number
-        user_email: string
-        name?: string // username
-        user_is_active: boolean
+        user_em: string
+        name?: string // user_na
+        user_act: boolean
     }
 
     export interface Session {
@@ -860,7 +860,7 @@ export type IAuthService = Auth.Service
         emailAlreadyExists: 'A user with this email already exists',
         accountDisabled: 'Account disabled',
         validation: {
-            loginIdRequired: 'Email or username is required',
+            loginIdRequired: 'Email or user_na is required',
             passwordRequired: 'Password is required',
             passwordTooShort: 'Password must be at least 8 characters',
             emailRequired: 'Email is required',

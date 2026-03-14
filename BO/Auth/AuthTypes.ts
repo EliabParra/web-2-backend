@@ -1,16 +1,18 @@
 export namespace Auth {
+    // TODO(REVERT_NAMING): Revert user_na→username, user_em→user_email, user_pw→user_password, user_act→user_is_active, user_created_dt→user_created_at, user_updated_dt→user_updated_at, user_last_login_dt→user_last_login_at, user_em_verified_dt→user_email_verified_at, user_sol→user_solvent
     export type UserRow = {
         user_id: number
-        username: string
-        user_email: string
-        user_password: string
-        user_email_verified_at?: string | Date | null
-        user_is_active?: boolean
-        profile_id: number // FK remains profile_id
-        user_created_at?: string | Date
-        user_updated_at?: string | Date
-        user_last_login_at?: string | Date | null
-        user_solvent?: boolean
+        user_na: string
+        user_em: string
+        user_pw: string
+        user_em_verified_dt?: string | Date | null
+        user_act?: boolean
+        // TODO(REVERT_NAMING): Singular tables & N:M profiles
+        profile_ids?: number[]
+        user_created_dt?: string | Date
+        user_updated_dt?: string | Date
+        user_last_login_dt?: string | Date | null
+        user_sol?: boolean
         person_id?: number | null
     }
 
@@ -33,10 +35,11 @@ export namespace Auth {
         profileId: number
     }
 
+    // TODO(REVERT_NAMING): Revert user_na→username, user_em→user_email, user_pw→user_password
     export type InsertUserParams = {
-        username: string | null
-        user_email: string | null
-        user_password: string
+        user_na: string | null
+        user_em: string | null
+        user_pw: string
     }
 
     export type PasswordResetRow = {
@@ -73,27 +76,29 @@ export namespace Auth {
     }
 
     // User Interface matching DB schema as requested
+    // TODO(REVERT_NAMING): Revert user_em→user_email, user_na→username, user_pw→user_password, user_act→user_is_active, user_created_dt→user_created_at, user_updated_dt→user_updated_at, user_last_login_dt→user_last_login_at, user_em_verified_dt→user_email_verified_at, user_sol→user_solvent
     export interface User {
         user_id: number
-        user_email: string
-        username?: string
-        user_password?: string
-        user_is_active: boolean
-        user_created_at: Date
-        user_updated_at?: Date
-        user_last_login_at?: Date | null
-        user_email_verified_at?: Date | null
+        user_em: string
+        user_na?: string
+        user_pw?: string
+        user_act: boolean
+        user_created_dt: Date
+        user_updated_dt?: Date
+        user_last_login_dt?: Date | null
+        user_em_verified_dt?: Date | null
 
         // Additional business fields
-        user_solvent?: boolean
+        user_sol?: boolean
         person_id?: number | null
     }
 
+    // TODO(REVERT_NAMING): Revert user_em→user_email, user_act→user_is_active
     export interface UserSummary {
         user_id: number
-        user_email: string
-        name?: string // username
-        user_is_active: boolean
+        user_em: string
+        name?: string // user_na
+        user_act: boolean
     }
 
     export interface Session {

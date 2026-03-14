@@ -116,7 +116,7 @@ export function createAuthPasswordResetRateLimiter(container: IContainer) {
             }
 
             if (method === 'requestEmailVerification') {
-                const email = safeLowerTrim(req?.body?.params?.email)
+                const email = safeLowerTrim(req?.body?.params?.identifier)
                 return email
                     ? `auth:emailVerify:request:ip:${ip}:email:${email}`
                     : `auth:emailVerify:request:ip:${ip}`
@@ -131,7 +131,7 @@ export function createAuthPasswordResetRateLimiter(container: IContainer) {
             }
 
             if (method === 'requestPasswordReset') {
-                const identifier = safeLowerTrim(req?.body?.params?.identifier)
+                const identifier = safeLowerTrim(req?.body?.params?.email)
                 return identifier
                     ? `authReset:request:ip:${ip}:id:${identifier}`
                     : `authReset:request:ip:${ip}`

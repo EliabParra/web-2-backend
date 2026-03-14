@@ -198,14 +198,14 @@ export class PermsCommand {
 
     private async getProfiles(db: any): Promise<Profile[]> {
         const res = await db.exeRaw(
-            `SELECT profile_id, profile_name FROM security.profiles ORDER BY profile_id`
+            `SELECT profile_id, profile_na FROM security.profile ORDER BY profile_id`
         )
-        return res.rows.map((r: any) => ({ profileId: r.profile_id, profileName: r.profile_name }))
+        return res.rows.map((r: any) => ({ profileId: r.profile_id, profileName: r.profile_na }))
     }
 
     private async getObjectId(db: any, name: string): Promise<number | null> {
         const res = await db.exeRaw(
-            `SELECT object_id FROM security.objects WHERE object_name = $1`,
+            `SELECT object_id FROM security.object WHERE object_na = $1`,
             [name]
         )
         if (res.rows.length === 0) {
@@ -218,17 +218,17 @@ export class PermsCommand {
     private async getMethods(db: any, objectId: number): Promise<MethodInfo[]> {
         const res = await db.exeRaw(
             `
-            SELECT m.method_id, m.method_name 
-            FROM security.methods m
+            SELECT m.method_id, m.method_na 
+            FROM security.method m
             INNER JOIN security.object_method om ON m.method_id = om.method_id
             WHERE om.object_id = $1 
-            ORDER BY m.method_name
+            ORDER BY m.method_na
             `,
             [objectId]
         )
         return res.rows.map((r: any) => ({
             methodId: r.method_id,
-            methodName: r.method_name,
+            methodName: r.method_na,
         }))
     }
 
@@ -237,7 +237,7 @@ export class PermsCommand {
             `
             SELECT m.method_id, 
                    COALESCE(array_agg(pm.profile_id) FILTER (WHERE pm.profile_id IS NOT NULL), '{}') as profile_ids
-            FROM security.methods m
+            FROM security.method m
             INNER JOIN security.object_method om ON m.method_id = om.method_id
             LEFT JOIN security.profile_method pm ON pm.method_id = m.method_id
             WHERE om.object_id = $1

@@ -515,7 +515,7 @@ ${parts.join('\n')}
             user_devices: '210', // depends on users
             permission_methods: '220', // depends on methods, roles(profiles)
             sessions: '230', // depends on users
-            audit_logs: '240', // depends on users
+            audit: '240', // depends on users
         }
 
         return priorities[tableName] || '999'

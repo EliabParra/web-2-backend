@@ -12,16 +12,18 @@ export interface SecuritySubsystem {
     menus?: SecurityMenu[] // Computed hierarchy
 }
 
+// TODO(REVERT_NAMING): Revert menu_na to menu_name
 export interface SecurityMenu {
     menu_id: number
-    menu_name: string
+    menu_na: string
     subsystem_id: number
     options?: SecurityOption[] // Computed hierarchy
 }
 
+// TODO(REVERT_NAMING): Revert option_na to option_name
 export interface SecurityOption {
     option_id: number
-    option_name: string
+    option_na: string
     method_id?: number
     // Computed properties
     is_accessible?: boolean
@@ -40,16 +42,18 @@ export interface DBSubsystem {
     [key: string]: unknown
 }
 
+// TODO(REVERT_NAMING): Revert menu_na to menu_name
 export interface DBMenu {
     menu_id: number
-    menu_name: string
+    menu_na: string
     subsystem_id: number
     [key: string]: unknown
 }
 
+// TODO(REVERT_NAMING): Revert option_na to option_name
 export interface DBOption {
     option_id: number
-    option_name: string
+    option_na: string
     method_id?: number | null
     [key: string]: unknown
 }
