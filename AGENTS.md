@@ -1,6 +1,6 @@
 # Toproc AI Agent Context & Specifications
 
-This document (`AGENT.md`) serves as the master context and specification guide for any AI agent interacting with the **Toproc (ToProccess core)** repository.
+This document (`AGENTS.md`) serves as the master context and specification guide for any AI agent interacting with the **Toproc (ToProccess core)** repository.
 
 ## 1. Project Overview & Philosophy
 
