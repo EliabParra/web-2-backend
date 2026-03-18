@@ -1,6 +1,6 @@
 /**
- * Schema for business.lapse
- * Tabla de lapsos/periodos académicos o de negocio.
+ * Auto-generated schema for business.lapse
+ * Generated at: 2026-03-18T02:22:46.180Z
  */
 export const LAPSE_SCHEMA = [
     // Table Definition

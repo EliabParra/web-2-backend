@@ -512,7 +512,8 @@ ${parts.join('\n')}
 
             // Level 3: Depend on Level 2
             user_profiles: '200', // depends on users, profiles
-            user_devices: '210', // depends on users
+            // TODO(REVERT_NAMING): Revert user_device→user_devices
+            user_device: '210', // depends on users
             permission_methods: '220', // depends on methods, roles(profiles)
             sessions: '230', // depends on users
             audit: '240', // depends on users

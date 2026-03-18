@@ -215,7 +215,7 @@ export class AuthService extends BOService implements Types.IAuthService {
         if (!otp) throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
 
         await this.repo.setUserEmailVerified(otp.user_id)
-        await this.repo.consumeOneTimeCode(otp.id)
+        await this.repo.consumeOneTimeCode(otp.one_time_code_id)
     }
 
     async requestPasswordReset(email: string): Promise<void> {
@@ -253,18 +253,18 @@ export class AuthService extends BOService implements Types.IAuthService {
         const tokenHash = sha256Hex(token)
         const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
 
-        if (!reset || reset.used_at)
+        if (!reset || reset.password_reset_used_dt)
             throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
 
         const hash = await bcrypt.hash(newPassword, 10)
         await this.repo.updateUserPassword({ userId: reset.user_id, passwordHash: hash })
-        await this.repo.markPasswordResetUsed(reset.id)
+        await this.repo.markPasswordResetUsed(reset.password_reset_id)
     }
 
     async verifyPasswordResetToken(token: string): Promise<void> {
         const tokenHash = sha256Hex(token)
         const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
-        if (!reset || reset.used_at)
+        if (!reset || reset.password_reset_used_dt)
             throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
     }
 
@@ -389,51 +389,51 @@ export class AuthService extends BOService implements Types.IAuthService {
 
     // --- Password reset
     insertPasswordReset: \`
-        INSERT INTO security.password_resets
-        (user_id, token_hash, expires_at, created_at, used_at, attempt_count, token_sent_to, request_ip, user_agent)
+        INSERT INTO security.password_reset
+        (user_id, password_reset_th, password_reset_expires_dt, password_reset_created_dt, password_reset_used_dt, password_reset_ac, password_reset_st, password_reset_ip, password_reset_ua)
         VALUES ($1, $2, NOW() + ($3 || ' seconds')::INTERVAL, NOW(), NULL, 0, $4, $5, $6)
-        RETURNING id
+        RETURNING password_reset_id
     \`,
 
     invalidateActivePasswordResetsForUser: \`
-        UPDATE security.password_resets
-        SET used_at = NOW()
-        WHERE user_id = $1 AND used_at IS NULL AND expires_at > NOW()
+        UPDATE security.password_reset
+        SET password_reset_used_dt = NOW()
+        WHERE user_id = $1 AND password_reset_used_dt IS NULL AND password_reset_expires_dt > NOW()
     \`,
 
     getPasswordResetByTokenHash: \`
-        SELECT * FROM security.password_resets
-        WHERE token_hash = $1
+        SELECT * FROM security.password_reset
+        WHERE password_reset_th = $1
     \`,
 
     markPasswordResetUsed: \`
-        UPDATE security.password_resets
-        SET used_at = NOW()
-        WHERE id = $1
+        UPDATE security.password_reset
+        SET password_reset_used_dt = NOW()
+        WHERE password_reset_id = $1
     \`,
 
     // --- One-time codes
     insertOneTimeCode: \`
-        INSERT INTO security.one_time_codes
-        (user_id, purpose, code_hash, expires_at, created_at, meta)
+        INSERT INTO security.one_time_code
+        (user_id, one_time_code_pu, one_time_code_ha, one_time_code_expires_dt, one_time_code_created_dt, one_time_code_meta)
         VALUES ($1, $2, $3, NOW() + ($4 || ' seconds')::INTERVAL, NOW(), $5)
-        RETURNING id
+        RETURNING one_time_code_id
     \`,
 
     consumeOneTimeCode: \`
-        UPDATE security.one_time_codes
-        SET consumed_at = NOW()
-        WHERE id = $1
+        UPDATE security.one_time_code
+        SET one_time_code_consumed_dt = NOW()
+        WHERE one_time_code_id = $1
     \`,
 
     // Fix query usage of jsonb operator
     getActiveOneTimeCodeForPurposeAndTokenHash: \`
-        SELECT * FROM security.one_time_codes
-        WHERE purpose = $1 
-        AND (meta->>'tokenHash') = $2
-        AND consumed_at IS NULL 
-        AND expires_at > NOW()
-        ORDER BY created_at DESC LIMIT 1
+        SELECT * FROM security.one_time_code
+        WHERE one_time_code_pu = $1 
+        AND (one_time_code_meta->>'tokenHash') = $2
+        AND one_time_code_consumed_dt IS NULL 
+        AND one_time_code_expires_dt > NOW()
+        ORDER BY one_time_code_created_dt DESC LIMIT 1
     \`,
 } as const
 
@@ -640,13 +640,13 @@ export type RequestUsernameInput = z.infer<typeof AuthSchemas.requestUsername>
     }
 
     export type OneTimeCodeRow = {
-        id: number
+        one_time_code_id: number
         user_id: number
-        purpose?: string | null
-        expires_at?: string | Date | null
-        consumed_at?: string | Date | null
-        attempt_count?: number | null
-        meta?: any
+        one_time_code_pu?: string | null
+        one_time_code_expires_dt?: string | Date | null
+        one_time_code_consumed_dt?: string | Date | null
+        one_time_code_ac?: number | null
+        one_time_code_meta?: any
     }
 
     export type UserId = {
@@ -665,11 +665,11 @@ export type RequestUsernameInput = z.infer<typeof AuthSchemas.requestUsername>
     }
 
     export type PasswordResetRow = {
-        id: number
+        password_reset_id: number
         user_id: number
-        expires_at?: string | Date | null
-        used_at?: string | Date | null
-        attempt_count?: number | null
+        password_reset_expires_dt?: string | Date | null
+        password_reset_used_dt?: string | Date | null
+        password_reset_ac?: number | null
     }
 
     export type UserPasswordResetParams = {

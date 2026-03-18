@@ -1,6 +1,6 @@
 /**
- * Schema for business.movement_detail
- * Detalle de cada movimiento vinculado a inventario.
+ * Auto-generated schema for business.movement_detail
+ * Generated at: 2026-03-18T02:22:46.394Z
  */
 export const MOVEMENT_DETAIL_SCHEMA = [
     // Table Definition

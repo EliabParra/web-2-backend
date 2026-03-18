@@ -1,5 +1,6 @@
 export namespace Auth {
     // TODO(REVERT_NAMING): Revert user_na→username, user_em→user_email, user_pw→user_password, user_act→user_is_active, user_created_dt→user_created_at, user_updated_dt→user_updated_at, user_last_login_dt→user_last_login_at, user_em_verified_dt→user_email_verified_at, user_sol→user_solvent
+    // TODO(REVERT_NAMING): Revert auth columns: password_reset_id→id, password_reset_expires_dt→expires_at, password_reset_used_dt→used_at, password_reset_ac→attempt_count, one_time_code_id→id, one_time_code_pu→purpose, one_time_code_expires_dt→expires_at, one_time_code_consumed_dt→consumed_at, one_time_code_ac→attempt_count, one_time_code_meta→meta
     export type UserRow = {
         user_id: number
         user_na: string
@@ -16,14 +17,15 @@ export namespace Auth {
         person_id?: number | null
     }
 
+    // TODO(REVERT_NAMING): Revert one_time_code_id→id, one_time_code_pu→purpose, one_time_code_expires_dt→expires_at, one_time_code_consumed_dt→consumed_at, one_time_code_ac→attempt_count, one_time_code_meta→meta
     export type OneTimeCodeRow = {
-        id: number
+        one_time_code_id: number
         user_id: number
-        purpose?: string | null
-        expires_at?: string | Date | null
-        consumed_at?: string | Date | null
-        attempt_count?: number | null
-        meta?: any
+        one_time_code_pu?: string | null
+        one_time_code_expires_dt?: string | Date | null
+        one_time_code_consumed_dt?: string | Date | null
+        one_time_code_ac?: number | null
+        one_time_code_meta?: any
     }
 
     export type UserId = {
@@ -42,12 +44,13 @@ export namespace Auth {
         user_pw: string
     }
 
+    // TODO(REVERT_NAMING): Revert password_reset_id→id, password_reset_expires_dt→expires_at, password_reset_used_dt→used_at, password_reset_ac→attempt_count
     export type PasswordResetRow = {
-        id: number
+        password_reset_id: number
         user_id: number
-        expires_at?: string | Date | null
-        used_at?: string | Date | null
-        attempt_count?: number | null
+        password_reset_expires_dt?: string | Date | null
+        password_reset_used_dt?: string | Date | null
+        password_reset_ac?: number | null
     }
 
     export type UserPasswordResetParams = {

@@ -96,7 +96,8 @@ export class AuthService extends BOService implements Types.IAuthService {
         if (!otp) throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
 
         await this.repo.setUserEmailVerified(otp.user_id)
-        await this.repo.consumeOneTimeCode(otp.id)
+        // TODO(REVERT_NAMING): Revert one_time_code_id→id
+        await this.repo.consumeOneTimeCode(otp.one_time_code_id)
     }
 
     async requestPasswordReset(email: string): Promise<void> {
@@ -141,7 +142,8 @@ export class AuthService extends BOService implements Types.IAuthService {
         const hash = await bcrypt.hash(newPassword, 10)
         const validReset = reset
         await this.repo.updateUserPassword({ userId: validReset.user_id, passwordHash: hash })
-        await this.repo.markPasswordResetUsed(validReset.id)
+        // TODO(REVERT_NAMING): Revert password_reset_id→id
+        await this.repo.markPasswordResetUsed(validReset.password_reset_id)
     }
 
     async verifyPasswordResetToken(token: string): Promise<void> {
@@ -151,11 +153,12 @@ export class AuthService extends BOService implements Types.IAuthService {
             throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
     }
 
+    // TODO(REVERT_NAMING): Revert password_reset_used_dt→used_at, password_reset_expires_dt→expires_at
     private isValidPasswordReset(reset: Types.PasswordResetRow | null): reset is Types.PasswordResetRow {
-        if (!reset || reset.used_at) return false
-        if (!reset.expires_at) return false
+        if (!reset || reset.password_reset_used_dt) return false
+        if (!reset.password_reset_expires_dt) return false
 
-        const expiresAt = new Date(reset.expires_at)
+        const expiresAt = new Date(reset.password_reset_expires_dt)
         if (Number.isNaN(expiresAt.getTime())) return false
 
         return expiresAt.getTime() > Date.now()

@@ -335,7 +335,7 @@ describe('AuthService', () => {
             // Arrange
             repo.getPasswordResetByTokenHash = createMockFn(async () => ({
                 ...VALID_PASSWORD_RESET_ROW,
-                expires_at: new Date(Date.now() - 60_000),
+                password_reset_expires_dt: new Date(Date.now() - 60_000),
             }))
 
             // Act & Assert
@@ -380,7 +380,7 @@ describe('AuthService', () => {
             // Arrange
             repo.getPasswordResetByTokenHash = createMockFn(async () => ({
                 ...VALID_PASSWORD_RESET_ROW,
-                expires_at: new Date(Date.now() - 60_000),
+                password_reset_expires_dt: new Date(Date.now() - 60_000),
             }))
 
             // Act & Assert

@@ -1,6 +1,6 @@
 /**
- * Schema for business.movement_type
- * Catálogo de tipos de movimiento (préstamo, devolución, etc).
+ * Auto-generated schema for business.movement_type
+ * Generated at: 2026-03-18T02:22:46.215Z
  */
 export const MOVEMENT_TYPE_SCHEMA = [
     // Table Definition

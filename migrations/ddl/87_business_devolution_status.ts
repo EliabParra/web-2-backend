@@ -1,6 +1,6 @@
 /**
- * Schema for business.devolution_status
- * Estado de devoluciones asociado al detalle de movimiento.
+ * Auto-generated schema for business.devolution_status
+ * Generated at: 2026-03-18T02:22:46.414Z
  */
 export const DEVOLUTION_STATUS_SCHEMA = [
     // Table Definition

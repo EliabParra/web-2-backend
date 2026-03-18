@@ -1,11 +1,11 @@
 /**
  * Auto-generated schema for business.category_type
- * Generated at: 2026-03-03T14:45:24.817Z
+ * Generated at: 2026-03-18T02:22:46.143Z
  */
 export const CATEGORY_TYPE_SCHEMA = [
     // Table Definition
     `create table if not exists business.category_type (
         category_type_id serial primary key,
-        category_type_description text not null
+        category_type_de text not null
     );`,
 ]

@@ -104,12 +104,13 @@ export const VALID_REQUEST_USERNAME_INPUT = {
 /**
  * Fila de password reset activa (no usada, no expirada).
  */
+// TODO(REVERT_NAMING): Revert password_reset_id→id, password_reset_expires_dt→expires_at, password_reset_used_dt→used_at, password_reset_ac→attempt_count
 export const VALID_PASSWORD_RESET_ROW = {
-    id: 1,
+    password_reset_id: 1,
     user_id: 1,
-    expires_at: new Date(Date.now() + 900_000),
-    used_at: null,
-    attempt_count: 0,
+    password_reset_expires_dt: new Date(Date.now() + 900_000),
+    password_reset_used_dt: null,
+    password_reset_ac: 0,
 } as const
 
 /**
@@ -117,8 +118,8 @@ export const VALID_PASSWORD_RESET_ROW = {
  */
 export const USED_PASSWORD_RESET_ROW = {
     ...VALID_PASSWORD_RESET_ROW,
-    id: 2,
-    used_at: new Date('2025-06-01T00:00:00Z'),
+    password_reset_id: 2,
+    password_reset_used_dt: new Date('2025-06-01T00:00:00Z'),
 } as const
 
 // ─── One-Time Codes ──────────────────────────────────────────────────────────
@@ -126,14 +127,15 @@ export const USED_PASSWORD_RESET_ROW = {
 /**
  * Fila de código OTP activo para verificación de email.
  */
+// TODO(REVERT_NAMING): Revert one_time_code_id→id, one_time_code_pu→purpose, one_time_code_expires_dt→expires_at, one_time_code_consumed_dt→consumed_at, one_time_code_ac→attempt_count, one_time_code_meta→meta
 export const VALID_OTP_ROW = {
-    id: 1,
+    one_time_code_id: 1,
     user_id: 1,
-    purpose: EMAIL_VERIFICATION_PURPOSE,
-    expires_at: new Date(Date.now() + 900_000),
-    consumed_at: null,
-    attempt_count: 0,
-    meta: { tokenHash: VALID_TOKEN_HASH },
+    one_time_code_pu: EMAIL_VERIFICATION_PURPOSE,
+    one_time_code_expires_dt: new Date(Date.now() + 900_000),
+    one_time_code_consumed_dt: null,
+    one_time_code_ac: 0,
+    one_time_code_meta: { tokenHash: VALID_TOKEN_HASH },
 } as const
 
 // ─── Insert Results ──────────────────────────────────────────────────────────

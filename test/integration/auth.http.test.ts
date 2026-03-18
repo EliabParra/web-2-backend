@@ -259,7 +259,8 @@ function createDeps() {
             }
             if (sql.includes('INSERT INTO security."user"')) return { rows: [{ user_id: 2 }] }
             if (sql.includes('INSERT INTO security.user_profile')) return { rows: [] }
-            if (sql.includes('INSERT INTO security.one_time_codes')) return { rows: [{ id: 1 }] }
+            // TODO(REVERT_NAMING): Revert one_time_code→one_time_codes, one_time_code_id→id
+            if (sql.includes('INSERT INTO security.one_time_code')) return { rows: [{ one_time_code_id: 1 }] }
 
             return { rows: [] }
         },
