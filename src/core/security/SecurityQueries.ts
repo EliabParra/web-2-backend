@@ -5,7 +5,7 @@
 export const SecurityQueries = {
     // --- LOAD STRUCTURE ---
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
-    SELECT_SUBSYSTEMS: 'SELECT subsystem_id, subsystem_name FROM security.subsystems',
+    SELECT_SUBSYSTEMS: 'SELECT subsystem_id, subsystem_na FROM security.subsystem',
     // TODO(REVERT_NAMING): Revert menu_na to menu_name, option_na to option_name
     SELECT_MENUS: 'SELECT menu_id, menu_na, subsystem_id FROM security.menu',
     SELECT_OPTIONS: 'SELECT option_id, option_na, method_id FROM security.option',
