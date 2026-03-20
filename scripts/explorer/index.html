@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toproc Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        surface: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' },
+                        accent: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7' },
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                },
+            },
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        code, pre, .font-mono { font-family: 'JetBrains Mono', monospace !important; }
+
+        body { background: #0a0e1a; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); } 50% { box-shadow: 0 0 20px 4px rgba(56, 189, 248, 0.15); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-slide-in { animation: slideIn 0.25s ease-out forwards; }
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+        /* Sidebar items */
+        .tx-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .tx-item:hover {
+            background: rgba(56, 189, 248, 0.06);
+            border-left-color: #38bdf8;
+        }
+        .tx-item.active {
+            background: rgba(56, 189, 248, 0.1);
+            border-left-color: #38bdf8;
+        }
+
+        /* Input focus */
+        .field-input {
+            transition: all 0.2s ease;
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .field-input:focus {
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+            border-color: #38bdf8;
+        }
+
+        /* Response panel */
+        .response-panel {
+            background: linear-gradient(135deg, #0f172a 0%, #0c1425 100%);
+        }
+
+        /* Badge colors */
+        .badge-auth { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+        .badge-component { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+        .badge-location { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+        .badge-default { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200 overflow-hidden">
+
+    <!-- Header -->
+    <header class="h-14 border-b border-slate-800/80 flex items-center justify-between px-6 backdrop-blur-md bg-slate-950/70 fixed top-0 left-0 right-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-white font-bold text-sm">T</div>
+            <h1 class="text-base font-semibold tracking-tight">Toproc <span class="text-accent-400">Explorer</span></h1>
+            <span id="txCount" class="text-xs text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded-full ml-2"></span>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="statusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="text-xs text-slate-500">Live</span>
+        </div>
+    </header>
+
+    <div class="flex h-screen pt-14">
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-72 min-w-[18rem] border-r border-slate-800/80 flex flex-col bg-slate-950/50">
+            <div class="p-3 border-b border-slate-800/50">
+                <input id="searchInput" type="text" placeholder="Buscar transacción..."
+                    class="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-300 placeholder-slate-500 outline-none field-input">
+            </div>
+            <nav id="txList" class="flex-1 overflow-y-auto py-1"></nav>
+        </aside>
+
+        <!-- Main -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+
+            <!-- Empty state -->
+            <div id="emptyState" class="flex-1 flex items-center justify-center">
+                <div class="text-center animate-fade-in">
+                    <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-slate-800/40 border border-slate-700/30 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-medium text-slate-400 mb-2">Selecciona una Transacción</h2>
+                    <p class="text-sm text-slate-600 max-w-xs">Elige un método del sidebar izquierdo para construir y ejecutar la petición.</p>
+                </div>
+            </div>
+
+            <!-- Active TX panel -->
+            <div id="txPanel" class="flex-1 flex flex-col overflow-hidden hidden">
+
+                <!-- TX Header -->
+                <div id="txHeader" class="px-6 py-4 border-b border-slate-800/60 bg-slate-900/30">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 id="txTitle" class="text-lg font-semibold text-white"></h2>
+                            <p id="txDesc" class="text-xs text-slate-500 mt-1"></p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="txBadge" class="text-xs font-medium px-2.5 py-1 rounded-full"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content area -->
+                <div class="flex-1 overflow-y-auto">
+                    <div class="max-w-3xl mx-auto px-6 py-6 space-y-6">
+
+                        <!-- TX ID Override -->
+                        <div class="animate-fade-in">
+                            <label class="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">TX ID Override</label>
+                            <input id="txIdInput" type="number" min="1"
+                                class="w-full bg-slate-800/40 border border-slate-700/40 rounded-lg px-4 py-2.5 text-sm text-white outline-none field-input font-mono">
+                        </div>
+
+                        <!-- Dynamic Form -->
+                        <div id="formFields" class="space-y-4 animate-fade-in"></div>
+
+                        <!-- Execute Button -->
+                        <button id="execBtn" onclick="executeTx()"
+                            class="w-full bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 text-sm shadow-lg shadow-accent-500/20 hover:shadow-accent-500/30 active:scale-[0.98] flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/>
+                            </svg>
+                            Ejecutar Transacción
+                        </button>
+
+                        <!-- Response -->
+                        <div id="responseSection" class="hidden animate-fade-in">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider">Respuesta</label>
+                                <div class="flex items-center gap-2">
+                                    <span id="responseStatus" class="text-xs font-mono px-2 py-0.5 rounded"></span>
+                                    <span id="responseTime" class="text-xs text-slate-600 font-mono"></span>
+                                </div>
+                            </div>
+                            <div class="response-panel rounded-xl border border-slate-800/60 overflow-hidden">
+                                <pre id="responseBody" class="p-4 text-sm font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[50vh] overflow-y-auto"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[999]">
+        <div class="text-center animate-fade-in">
+            <div class="w-12 h-12 border-2 border-accent-400/30 border-t-accent-400 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-sm text-slate-400">Cargando especificación...</p>
+        </div>
+    </div>
+
+<script>
+    const API_KEY = new URLSearchParams(window.location.search).get('key') || '';
+    const API_BASE = window.location.origin;
+
+    let spec = [];
+    let activeTx = null;
+
+    function getBadgeClass(name) {
+        const bo = name.split('.')[0].toLowerCase();
+        if (bo.includes('auth')) return 'badge-auth';
+        if (bo.includes('component')) return 'badge-component';
+        if (bo.includes('location')) return 'badge-location';
+        return 'badge-default';
+    }
+
+    function getBOName(name) {
+        return name.split('.')[0].replace('BO', '');
+    }
+
+    function renderSidebar(filter = '') {
+        const list = document.getElementById('txList');
+        list.innerHTML = '';
+        const lower = filter.toLowerCase();
+
+        // Group by BO
+        const groups = {};
+        spec.forEach(tx => {
+            const bo = getBOName(tx.name);
+            if (!groups[bo]) groups[bo] = [];
+            if (!filter || tx.name.toLowerCase().includes(lower)) {
+                groups[bo].push(tx);
+            }
+        });
+
+        Object.entries(groups).forEach(([bo, txs]) => {
+            if (txs.length === 0) return;
+
+            const groupEl = document.createElement('div');
+            groupEl.className = 'animate-slide-in';
+            groupEl.innerHTML = `
+                <div class="px-4 py-2 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">${bo}</div>
+            `;
+
+            txs.forEach(tx => {
+                const method = tx.name.split('.')[1];
+                const fieldCount = Object.keys(tx.payloadSchema).length;
+                const btn = document.createElement('button');
+                btn.className = `tx-item w-full text-left px-4 py-2.5 flex items-center justify-between group ${activeTx?.tx === tx.tx ? 'active' : ''}`;
+                btn.onclick = () => selectTx(tx);
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-sm text-slate-300 group-hover:text-white transition-colors truncate">${method}</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        ${fieldCount > 0 ? `<span class="text-[10px] text-slate-600">${fieldCount}p</span>` : ''}
+                        <span class="text-[10px] font-mono text-slate-600">#${tx.tx}</span>
+                    </div>
+                `;
+                groupEl.appendChild(btn);
+            });
+
+            list.appendChild(groupEl);
+        });
+    }
+
+    function selectTx(tx) {
+        activeTx = tx;
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('txPanel').classList.remove('hidden');
+        document.getElementById('txTitle').textContent = tx.name;
+        document.getElementById('txDesc').textContent = tx.description;
+        document.getElementById('txIdInput').value = tx.tx;
+
+        const badge = document.getElementById('txBadge');
+        badge.className = `text-xs font-medium px-2.5 py-1 rounded-full ${getBadgeClass(tx.name)}`;
+        badge.textContent = getBOName(tx.name);
+
+        // Build form
+        const container = document.getElementById('formFields');
+        container.innerHTML = '';
+
+        const entries = Object.entries(tx.payloadSchema);
+        if (entries.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-6 text-sm text-slate-500 border border-dashed border-slate-700/40 rounded-xl">
+                    <svg class="w-6 h-6 mx-auto mb-2 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Sin parámetros requeridos
+                </div>`;
+        } else {
+            entries.forEach(([key, meta], idx) => {
+                const inputType = meta.type === 'number' ? 'number' : (meta.type === 'boolean' ? 'checkbox' : 'text');
+                const div = document.createElement('div');
+                div.className = 'animate-fade-in';
+                div.style.animationDelay = `${idx * 50}ms`;
+
+                if (meta.type === 'boolean') {
+                    div.innerHTML = `
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input data-field="${key}" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-accent-500 focus:ring-accent-500/30">
+                            <div>
+                                <span class="text-sm text-slate-300 group-hover:text-white transition-colors">${key}</span>
+                                ${meta.optional ? '<span class="text-[10px] text-slate-600 ml-2">opcional</span>' : '<span class="text-[10px] text-amber-500/80 ml-2">requerido</span>'}
+                            </div>
+                        </label>`;
+                } else {
+                    div.innerHTML = `
+                        <label class="block">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-xs font-medium text-slate-400">${key}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-600 font-mono">${meta.type}</span>
+                                    ${meta.optional ? '<span class="text-[10px] text-slate-600">opcional</span>' : '<span class="text-[10px] text-amber-500/80">requerido</span>'}
+                                </div>
+                            </div>
+                            <input data-field="${key}" type="${inputType}" placeholder="${key}"
+                                class="w-full bg-slate-800/40 border border-slate-700/40 rounded-lg px-4 py-2.5 text-sm text-white outline-none field-input ${meta.type === 'number' ? 'font-mono' : ''}">
+                        </label>`;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        // Hide response
+        document.getElementById('responseSection').classList.add('hidden');
+        renderSidebar(document.getElementById('searchInput').value);
+    }
+
+    function collectParams() {
+        const params = {};
+        document.querySelectorAll('[data-field]').forEach(input => {
+            const key = input.dataset.field;
+            const meta = activeTx.payloadSchema[key];
+            if (!meta) return;
+
+            if (input.type === 'checkbox') {
+                params[key] = input.checked;
+            } else {
+                const val = input.value.trim();
+                if (val === '' && meta.optional) return;
+                if (meta.type === 'number') {
+                    params[key] = val !== '' ? Number(val) : '';
+                } else {
+                    params[key] = val;
+                }
+            }
+        });
+        return params;
+    }
+
+    async function executeTx() {
+        if (!activeTx) return;
+
+        const btn = document.getElementById('execBtn');
+        btn.disabled = true;
+        btn.innerHTML = `
+            <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            Ejecutando...
+        `;
+
+        const txId = Number(document.getElementById('txIdInput').value);
+        const params = collectParams();
+        const body = { tx: txId, params };
+
+        const responseSection = document.getElementById('responseSection');
+        const responseBody = document.getElementById('responseBody');
+        const responseStatus = document.getElementById('responseStatus');
+        const responseTime = document.getElementById('responseTime');
+
+        const startTime = performance.now();
+
+        try {
+            const res = await fetch(`${API_BASE}/toProccess`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(body),
+            });
+
+            const elapsed = Math.round(performance.now() - startTime);
+            const data = await res.json();
+
+            responseSection.classList.remove('hidden');
+            responseTime.textContent = `${elapsed}ms`;
+
+            if (res.ok || data.code < 400) {
+                responseStatus.className = 'text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400';
+                responseStatus.textContent = `${data.code || res.status}`;
+                responseBody.className = 'p-4 text-sm font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[50vh] overflow-y-auto text-emerald-400';
+            } else {
+                responseStatus.className = 'text-xs font-mono px-2 py-0.5 rounded bg-red-500/15 text-red-400';
+                responseStatus.textContent = `${data.code || res.status}`;
+                responseBody.className = 'p-4 text-sm font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[50vh] overflow-y-auto text-red-400';
+            }
+
+            responseBody.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            const elapsed = Math.round(performance.now() - startTime);
+            responseSection.classList.remove('hidden');
+            responseTime.textContent = `${elapsed}ms`;
+            responseStatus.className = 'text-xs font-mono px-2 py-0.5 rounded bg-red-500/15 text-red-400';
+            responseStatus.textContent = 'ERR';
+            responseBody.className = 'p-4 text-sm font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[50vh] overflow-y-auto text-red-400';
+            responseBody.textContent = `Network Error: ${err.message}`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/>
+                </svg>
+                Ejecutar Transacción
+            `;
+        }
+    }
+
+    // Search
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        renderSidebar(e.target.value);
+    });
+
+    // Keyboard shortcut: Ctrl+Enter to execute
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            executeTx();
+        }
+    });
+
+    // Init
+    async function init() {
+        try {
+            const res = await fetch(`/explorer/spec?key=${encodeURIComponent(API_KEY)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            spec = await res.json();
+            document.getElementById('txCount').textContent = `${spec.length} tx`;
+            renderSidebar();
+        } catch (err) {
+            document.getElementById('txList').innerHTML = `
+                <div class="p-4 text-sm text-red-400 text-center">
+                    <p class="mb-1 font-medium">Error cargando spec</p>
+                    <p class="text-xs text-slate-500">${err.message}</p>
+                </div>`;
+        } finally {
+            document.getElementById('loadingOverlay').remove();
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

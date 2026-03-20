@@ -32,6 +32,8 @@ import {
     createAuthPasswordResetRateLimiter,
 } from './http/rate-limit/index.js'
 
+import { explorerRouter } from '../../scripts/explorer/router.js'
+
 // Handlers
 import { AuthController } from './http/controllers/AuthController.js'
 import { TransactionController } from './http/controllers/TransactionController.js'
@@ -151,6 +153,9 @@ export class AppServer {
             session: sessionAdapter,
             stage: 'preApi',
         })
+
+        // 3.5. Explorer (Solo en desarrollo)
+        if (this.config.app.env !== 'production') this.app.use('/explorer', explorerRouter)
 
         // 4. Rutas API
         this.setupRoutes()
