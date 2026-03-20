@@ -168,7 +168,7 @@ describe('AuthBO', () => {
 
         it('should return 400 when token is empty', async () => {
             // Arrange
-            const params = { token: '' }
+            const params = { code: '' }
 
             // Act
             const result = await bo.verifyEmail(params)
@@ -240,7 +240,7 @@ describe('AuthBO', () => {
     describe('verifyPasswordReset', () => {
         it('should return 200 when token is valid', async () => {
             // Arrange
-            const params = { ...VALID_VERIFY_EMAIL_INPUT }
+            const params = { token: 'a'.repeat(64) }
 
             // Act
             const result = await bo.verifyPasswordReset(params)
@@ -262,7 +262,7 @@ describe('AuthBO', () => {
             const errorBo = new AuthBO(container)
 
             // Act
-            const result = await errorBo.verifyPasswordReset({ ...VALID_VERIFY_EMAIL_INPUT })
+            const result = await errorBo.verifyPasswordReset({ token: 'a'.repeat(64) })
 
             // Assert
             assert.equal(result.code, 400)

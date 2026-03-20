@@ -12,9 +12,9 @@ function createMockDB() {
     // In-memory tables for the mock DB to persist state during the test run
     // This allows us to test inter-dependent operations (Create -> Assign -> View)
     const tables = {
-        subsystems: [],
-        menus: [],
-        options: [],
+        subsystem: [],
+        menu: [],
+        option: [],
         menu_option: [],
         profile_subsystem: [],
         profile_menu: [],
@@ -27,14 +27,14 @@ function createMockDB() {
     return {
         query: async (sql, params = []) => {
             // --- LOAD Queries (SELECT) ---
-            if (sql.includes('SELECT subsystem_id')) return { rows: tables.subsystems }
+            if (sql.includes('SELECT subsystem_id')) return { rows: tables.subsystem }
             // TODO(REVERT_NAMING): Revert menu_na to menu_name
             if (sql.includes('SELECT menu_id, menu_na, subsystem_id'))
-                return { rows: tables.menus }
+                return { rows: tables.menu }
             if (sql.includes('SELECT option_id')) {
                 if (sql.includes('profile_option')) return { rows: tables.profile_option }
                 // Basic options select
-                return { rows: tables.options }
+                return { rows: tables.option }
             }
             if (sql.includes('SELECT menu_id, option_id')) return { rows: tables.menu_option }
 
@@ -45,10 +45,10 @@ function createMockDB() {
             // --- INSERT Queries (RETURNING) ---
 
             // Subsystem Create
-            if (sql.includes('INSERT INTO security.subsystems')) {
+            if (sql.includes('INSERT INTO security.subsystem')) {
                 const name = params[0]
-                const newRow = { subsystem_id: ++idCounter, subsystem_name: name, menus: [] }
-                tables.subsystems.push(newRow)
+                const newRow = { subsystem_id: ++idCounter, subsystem_na: name, menus: [] }
+                tables.subsystem.push(newRow)
                 return { rows: [newRow] }
             }
 
@@ -62,7 +62,7 @@ function createMockDB() {
                     subsystem_id: subId,
                     options: [],
                 }
-                tables.menus.push(newRow)
+                tables.menu.push(newRow)
                 return { rows: [newRow] }
             }
 
@@ -71,7 +71,7 @@ function createMockDB() {
                 const [name, methodId] = params
                 // TODO(REVERT_NAMING): Revert option_na to option_name
                 const newRow = { option_id: ++idCounter, option_na: name, method_id: methodId }
-                tables.options.push(newRow)
+                tables.option.push(newRow)
                 return { rows: [newRow] }
             }
 
@@ -182,7 +182,7 @@ test('Security Management API: Full Lifecycle', async () => {
             // 4. Verify Visibility (Visible)
             structure = await security.getMenuStructure([profileId])
             assert.equal(structure.length, 1, 'Structure should have 1 subsystem')
-            assert.equal(structure[0].subsystem_name, 'Sales')
+            assert.equal(structure[0].subsystem_na, 'Sales')
             assert.equal(structure[0].menus.length, 1, 'Subsystem should have 1 menu')
             // TODO(REVERT_NAMING): Revert menu_na to menu_name
             assert.equal(structure[0].menus[0].menu_na, 'Orders')

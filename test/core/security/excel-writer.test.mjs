@@ -13,14 +13,14 @@ function createMockDB(data = {}) {
         async query(sql) {
             if (sql.includes('profile_na') && sql.includes('security.profile'))
                 return { rows: data.profiles ?? [{ profile_na: 'Admin' }] }
-            if (sql.includes('subsystem_name') && sql.includes('subsystems') && !sql.includes('menu'))
-                return { rows: data.subsystems ?? [{ subsystem_name: 'Core' }] }
+            if (sql.includes('subsystem_na') && sql.includes('subsystem') && !sql.includes('menu'))
+                return { rows: data.subsystem ?? [{ subsystem_na: 'Core' }] }
             if (sql.includes('object_na') && sql.includes('security.object') && !sql.includes('object_method'))
                 return { rows: data.objects ?? [{ object_na: 'Auth' }] }
             if (sql.includes('object_na') && sql.includes('method_na'))
                 return { rows: data.methods ?? [{ object_na: 'Auth', method_na: 'login' }] }
-            if (sql.includes('menu_na') && sql.includes('subsystem_name'))
-                return { rows: data.menus ?? [{ menu_na: 'Dashboard', subsystem_name: 'Core' }] }
+            if (sql.includes('menu_na') && sql.includes('subsystem_na'))
+                return { rows: data.menus ?? [{ menu_na: 'Dashboard', subsystem_na: 'Core' }] }
             if (sql.includes('menu_na') && !sql.includes('subsystem'))
                 return { rows: data.menuNames ?? [{ menu_na: 'Dashboard' }] }
             if (sql.includes('option_na'))
@@ -31,8 +31,8 @@ function createMockDB(data = {}) {
                 return { rows: data.permissions ?? [{ profile_na: 'Admin', object_method: 'Auth.login' }] }
             if (sql.includes('user_na'))
                 return { rows: data.users ?? [{ user_na: 'admin', user_pw: 'hashed', profile_na: 'Admin' }] }
-            if (sql.includes('profile_na') && sql.includes('subsystem_name') && sql.includes('menu_na'))
-                return { rows: data.assignments ?? [{ profile_na: 'Admin', subsystem_name: 'Core', menu_na: 'Dashboard', option_na: 'Ver' }] }
+            if (sql.includes('profile_na') && sql.includes('subsystem_na') && sql.includes('menu_na'))
+                return { rows: data.assignments ?? [{ profile_na: 'Admin', subsystem_na: 'Core', menu_na: 'Dashboard', option_na: 'Ver' }] }
             return { rows: [] }
         },
     }

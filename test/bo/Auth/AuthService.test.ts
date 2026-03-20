@@ -41,7 +41,7 @@ interface MockAuthRepo {
     markPasswordResetUsed: MockFn
     insertOneTimeCode: MockFn
     consumeOneTimeCode: MockFn
-    getActiveOneTimeCodeForPurposeAndTokenHash: MockFn
+    getActiveOneTimeCodeForPurposeAndCodeHash: MockFn
     updateUserPassword: MockFn
 }
 
@@ -70,7 +70,7 @@ function createAuthServiceWithMocks(): {
         markPasswordResetUsed: createMockFn(async () => true),
         insertOneTimeCode: createMockFn(async () => true),
         consumeOneTimeCode: createMockFn(async () => true),
-        getActiveOneTimeCodeForPurposeAndTokenHash: createMockFn(async () => null),
+        getActiveOneTimeCodeForPurposeAndCodeHash: createMockFn(async () => null),
         updateUserPassword: createMockFn(async () => true),
     }
 
@@ -186,7 +186,7 @@ describe('AuthService', () => {
     describe('verifyEmail', () => {
         it('should verify email and consume OTP when token is valid', async () => {
             // Arrange
-            repo.getActiveOneTimeCodeForPurposeAndTokenHash = createMockFn(
+            repo.getActiveOneTimeCodeForPurposeAndCodeHash = createMockFn(
                 async () => ({ ...VALID_OTP_ROW })
             )
 
@@ -200,7 +200,7 @@ describe('AuthService', () => {
 
         it('should throw AuthTokenInvalidError when OTP is not found', async () => {
             // Arrange
-            repo.getActiveOneTimeCodeForPurposeAndTokenHash = createMockFn(async () => null)
+            repo.getActiveOneTimeCodeForPurposeAndCodeHash = createMockFn(async () => null)
 
             // Act & Assert
             await assert.rejects(
@@ -218,7 +218,7 @@ describe('AuthService', () => {
     describe('requestEmailVerification', () => {
         it('should lookup by email and send verification when identifier contains @', async () => {
             // Arrange
-            repo.getUserByEmail = createMockFn(async () => ({ ...VALID_USER_ROW }))
+            repo.getUserByEmail = createMockFn(async () => ({ ...UNVERIFIED_USER_ROW }))
 
             // Act
             await service.requestEmailVerification('test@example.com')
@@ -232,7 +232,7 @@ describe('AuthService', () => {
 
         it('should lookup by username when identifier does not contain @', async () => {
             // Arrange
-            repo.getUserByUsername = createMockFn(async () => ({ ...VALID_USER_ROW }))
+            repo.getUserByUsername = createMockFn(async () => ({ ...UNVERIFIED_USER_ROW }))
 
             // Act
             await service.requestEmailVerification('testuser')

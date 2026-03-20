@@ -71,12 +71,12 @@ test('UserRowSchema rechaza user_na vacío', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 test('SubsystemRowSchema acepta nombre válido', () => {
-    const result = SubsystemRowSchema.safeParse({ subsystem_name: 'Core' })
+    const result = SubsystemRowSchema.safeParse({ subsystem_na: 'Core' })
     assert.ok(result.success)
 })
 
 test('SubsystemRowSchema rechaza vacío', () => {
-    const result = SubsystemRowSchema.safeParse({ subsystem_name: '' })
+    const result = SubsystemRowSchema.safeParse({ subsystem_na: '' })
     assert.ok(!result.success)
 })
 
@@ -143,12 +143,12 @@ test('MethodRowSchema rechaza object_na vacío', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 test('MenuRowSchema acepta datos válidos', () => {
-    const result = MenuRowSchema.safeParse({ menu_na: 'Dashboard', subsystem_name: 'Core' })
+    const result = MenuRowSchema.safeParse({ menu_na: 'Dashboard', subsystem_na: 'Core' })
     assert.ok(result.success)
 })
 
 test('MenuRowSchema rechaza menu_na vacío', () => {
-    const result = MenuRowSchema.safeParse({ menu_na: '', subsystem_name: 'Core' })
+    const result = MenuRowSchema.safeParse({ menu_na: '', subsystem_na: 'Core' })
     assert.ok(!result.success)
 })
 
@@ -201,7 +201,7 @@ test('PermissionRowSchema rechaza object_method sin punto', () => {
 test('AssignmentRowSchema acepta datos completos', () => {
     const result = AssignmentRowSchema.safeParse({
         profile_na: 'Admin',
-        subsystem_name: 'Core',
+        subsystem_na: 'Core',
         menu_na: 'Dashboard',
         option_na: 'Ver',
     })
@@ -211,7 +211,7 @@ test('AssignmentRowSchema acepta datos completos', () => {
 test('AssignmentRowSchema aplica default vacío a menu_na y option_na', () => {
     const result = AssignmentRowSchema.safeParse({
         profile_na: 'Admin',
-        subsystem_name: 'Core',
+        subsystem_na: 'Core',
     })
     assert.ok(result.success)
     assert.equal(result.data.menu_na, '')

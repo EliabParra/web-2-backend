@@ -86,7 +86,7 @@ function createMockDB(opts = {}) {
                 return { rows: [{ user_id: 1 }] }
             }
             // INSERT subsystem
-            if (sql.includes('INSERT') && sql.includes('subsystems')) {
+            if (sql.includes('INSERT') && sql.includes('subsystem')) {
                 return { rows: [{ subsystem_id: 1 }] }
             }
             // INSERT object
@@ -329,7 +329,7 @@ test('Reader reporta error cuando perfil no existe para un usuario', async () =>
 test('Reader reporta error cuando subsistema no existe para un menú', async () => {
     const buffer = await buildWorkbook({
         [SHEET_DEFINITIONS.MENUS.name]: {
-            columns: ['menu_na', 'subsystem_name'],
+            columns: ['menu_na', 'subsystem_na'],
             rows: [['Dashboard', 'FakeSub']],
         },
     })
@@ -491,7 +491,7 @@ test('Reader procesa todas las 9 hojas en orden correcto', async () => {
             rows: [['admin', 'secret123', 'Admin']],
         },
         [SHEET_DEFINITIONS.SUBSYSTEMS.name]: {
-            columns: ['subsystem_name'],
+            columns: ['subsystem_na'],
             rows: [['Core']],
         },
         [SHEET_DEFINITIONS.OBJECTS.name]: {
@@ -503,7 +503,7 @@ test('Reader procesa todas las 9 hojas en orden correcto', async () => {
             rows: [['Auth', 'login']],
         },
         [SHEET_DEFINITIONS.MENUS.name]: {
-            columns: ['menu_na', 'subsystem_name'],
+            columns: ['menu_na', 'subsystem_na'],
             rows: [['Dashboard', 'Core']],
         },
         [SHEET_DEFINITIONS.OPTIONS.name]: {
@@ -515,7 +515,7 @@ test('Reader procesa todas las 9 hojas en orden correcto', async () => {
             rows: [['Admin', 'Auth.login']],
         },
         [SHEET_DEFINITIONS.ASSIGNMENTS.name]: {
-            columns: ['profile_na', 'subsystem_name', 'menu_na', 'option_na'],
+            columns: ['profile_na', 'subsystem_na', 'menu_na', 'option_na'],
             rows: [['Admin', 'Core', 'Dashboard', 'Ver']],
         },
     })

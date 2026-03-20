@@ -74,7 +74,7 @@ export const VALID_REGISTER_INPUT = {
  * Input de verificación de email válido.
  */
 export const VALID_VERIFY_EMAIL_INPUT = {
-    token: VALID_TOKEN,
+    code: '123456',
 } as const
 
 /**
