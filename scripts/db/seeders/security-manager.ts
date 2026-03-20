@@ -275,10 +275,10 @@ export class SecurityManager {
 
         if (action === 'list') {
             const rows = await this.db.exeRaw(`
-                SELECT s.subsystem_id, s.subsystem_name,
+                SELECT s.subsystem_id, s.subsystem_na,
                        (SELECT count(*) FROM security.subsystem_object so WHERE so.subsystem_id = s.subsystem_id) as bos,
                        (SELECT count(*) FROM security.menu m WHERE m.subsystem_id = s.subsystem_id) as menus
-                FROM security.subsystems s ORDER BY s.subsystem_id
+                FROM security.subsystem s ORDER BY s.subsystem_id
             `)
             if (rows.rows.length === 0) {
                 console.log(colors.yellow('   No hay subsistemas registrados.'))
@@ -288,7 +288,7 @@ export class SecurityManager {
             console.log(colors.gray('   ----+------------------+------+------'))
             for (const r of rows.rows) {
                 console.log(
-                    `   ${String(r.subsystem_id).padEnd(4)}| ${String(r.subsystem_name).padEnd(17)}| ${String(r.bos).padEnd(5)}| ${r.menus}`
+                    `   ${String(r.subsystem_id).padEnd(4)}| ${String(r.subsystem_na).padEnd(17)}| ${String(r.bos).padEnd(5)}| ${r.menus}`
                 )
             }
             console.log()
@@ -299,8 +299,8 @@ export class SecurityManager {
             if (p.isCancel(name)) return
 
             const result = await this.db.exeRaw(
-                `INSERT INTO security.subsystems (subsystem_name) VALUES ($1)
-                 ON CONFLICT (subsystem_name) DO NOTHING RETURNING subsystem_id`,
+                `INSERT INTO security.subsystem (subsystem_na) VALUES ($1)
+                 ON CONFLICT (subsystem_na) DO NOTHING RETURNING subsystem_id`,
                 [name]
             )
             const id = result.rows[0]?.subsystem_id
@@ -313,7 +313,7 @@ export class SecurityManager {
 
         if (action === 'link') {
             const subsystems = await this.db.exeRaw(
-                'SELECT subsystem_id, subsystem_name FROM security.subsystems ORDER BY subsystem_id'
+                'SELECT subsystem_id, subsystem_na FROM security.subsystem ORDER BY subsystem_id'
             )
             if (subsystems.rows.length === 0) {
                 console.log(colors.yellow('   No hay subsistemas. Crea uno primero.'))
@@ -324,7 +324,7 @@ export class SecurityManager {
                 message: 'Selecciona subsistema',
                 options: subsystems.rows.map((r: any) => ({
                     value: r.subsystem_id,
-                    label: `${r.subsystem_name} (id=${r.subsystem_id})`,
+                    label: `${r.subsystem_na} (id=${r.subsystem_id})`,
                 })),
             })
             if (p.isCancel(subsystemId)) return
@@ -384,10 +384,10 @@ export class SecurityManager {
 
         if (action === 'list') {
             const rows = await this.db.exeRaw(`
-                SELECT m.menu_id, m.menu_na, s.subsystem_name,
+                SELECT m.menu_id, m.menu_na, s.subsystem_na,
                        (SELECT count(*) FROM security.menu_option mo WHERE mo.menu_id = m.menu_id) as options
                 FROM security.menu m
-                LEFT JOIN security.subsystems s ON m.subsystem_id = s.subsystem_id
+                LEFT JOIN security.subsystem s ON m.subsystem_id = s.subsystem_id
                 ORDER BY m.menu_id
             `)
             if (rows.rows.length === 0) {
@@ -398,7 +398,7 @@ export class SecurityManager {
             console.log(colors.gray('   ----+------------------+------------------+---------'))
             for (const r of rows.rows) {
                 console.log(
-                    `   ${String(r.menu_id).padEnd(4)}| ${String(r.menu_na).padEnd(17)}| ${String(r.subsystem_name || '—').padEnd(17)}| ${r.options}`
+                    `   ${String(r.menu_id).padEnd(4)}| ${String(r.menu_na).padEnd(17)}| ${String(r.subsystem_na || '—').padEnd(17)}| ${r.options}`
                 )
             }
             console.log()
@@ -406,7 +406,7 @@ export class SecurityManager {
 
         if (action === 'create') {
             const subsystems = await this.db.exeRaw(
-                'SELECT subsystem_id, subsystem_name FROM security.subsystems ORDER BY subsystem_id'
+                'SELECT subsystem_id, subsystem_na FROM security.subsystem ORDER BY subsystem_id'
             )
 
             let subsystemId: number | null = null
@@ -417,7 +417,7 @@ export class SecurityManager {
                         { value: 0, label: '— Sin subsistema —' },
                         ...subsystems.rows.map((r: any) => ({
                             value: r.subsystem_id,
-                            label: r.subsystem_name,
+                            label: r.subsystem_na,
                         })),
                     ],
                 })
@@ -602,10 +602,10 @@ export class SecurityManager {
 
         if (entity === 'subsystems') {
             const items = await this.db.exeRaw(
-                `SELECT s.subsystem_id, s.subsystem_name FROM security.subsystems s
+                `SELECT s.subsystem_id, s.subsystem_na FROM security.subsystem s
                  WHERE s.subsystem_id NOT IN (
                      SELECT ps.subsystem_id FROM security.profile_subsystem ps WHERE ps.profile_id = $1
-                 ) ORDER BY s.subsystem_name`,
+                 ) ORDER BY s.subsystem_na`,
                 [profileId]
             )
             if (items.rows.length === 0) {
@@ -616,7 +616,7 @@ export class SecurityManager {
                 message: 'Selecciona subsistemas',
                 options: items.rows.map((r: any) => ({
                     value: r.subsystem_id,
-                    label: r.subsystem_name,
+                    label: r.subsystem_na,
                 })),
             })
             if (p.isCancel(selected)) return
@@ -703,7 +703,7 @@ export class SecurityManager {
             SELECT
                 (SELECT count(*) FROM security."user") as users,
                 (SELECT count(*) FROM security.profile) as profiles,
-                (SELECT count(*) FROM security.subsystems) as subsystems,
+                (SELECT count(*) FROM security.subsystem) as subsystems,
                 (SELECT count(*) FROM security.menu) as menus,
                 (SELECT count(*) FROM security.option) as options,
                 (SELECT count(*) FROM security.object) as objects,

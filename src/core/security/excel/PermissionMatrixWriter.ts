@@ -137,7 +137,7 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
         // TODO(REVERT_NAMING): Revert profile_na→profile_na, object_na→object_na, menu_na→menu_na
         return {
             profiles: profiles.rows.map((r) => r.profile_na),
-            subsystems: subsystems.rows.map((r) => r.subsystem_name),
+            subsystems: subsystems.rows.map((r) => r.subsystem_na),
             objects: objects.rows.map((r) => r.object_na),
             menus: menus.rows.map((r) => r.menu_na),
             objectMethods: objectMethods.rows.map((r) => r.object_method),
@@ -209,7 +209,7 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
         // TODO(REVERT_NAMING): Revert profile_na, object_na, menu_na to originals
         const validationMap: Record<string, { formula?: string; list: string[] }> = {
             profile_na: { formula: "'Perfiles'!$A$2:$A$200", list: names.profiles },
-            subsystem_name: { formula: "'Subsistemas'!$A$2:$A$200", list: names.subsystems },
+            subsystem_na: { formula: "'Subsistemas'!$A$2:$A$200", list: names.subsystems },
             object_na: { formula: "'Objetos'!$A$2:$A$200", list: names.objects },
             menu_na: { formula: "'Menús'!$A$2:$A$200", list: names.menus },
             object_method: { list: names.objectMethods },
@@ -222,7 +222,7 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
 
             // No aplicar validación a las claves primarias en sus propias hojas de definición
             if (sheet.name === 'Perfiles' && col === 'profile_na') continue;
-            if (sheet.name === 'Subsistemas' && col === 'subsystem_name') continue;
+            if (sheet.name === 'Subsistemas' && col === 'subsystem_na') continue;
             if (sheet.name === 'Objetos' && col === 'object_na') continue;
             if (sheet.name === 'Menús' && col === 'menu_na') continue;
             if (sheet.name === 'Métodos' && col === 'object_method') continue; // En hoja de métodos, object_na y method_na son definitorios, pero object_method no está.

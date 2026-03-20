@@ -68,10 +68,11 @@ export class MenuProvider implements IMenuProvider {
         // Subsystems
         const subRes = await this.db.query<DBSubsystem>(SecurityQueries.SELECT_SUBSYSTEMS)
         this.subsystems.clear()
+        // TODO(REVERT_NAMING): Revert subsystem_na to subsystem_name
         subRes.rows.forEach((r) =>
             this.subsystems.set(r.subsystem_id, {
                 subsystem_id: r.subsystem_id,
-                subsystem_name: r.subsystem_name,
+                subsystem_na: r.subsystem_na,
                 menus: [],
             })
         )
@@ -214,17 +215,18 @@ export class MenuProvider implements IMenuProvider {
 
     // --- CRUD: Subsystems ---
 
+    // TODO(REVERT_NAMING): Revert subsystem_na to subsystem_name
     async createSubsystem(name: string): Promise<SecuritySubsystem> {
         const res = await this.db.query<DBSubsystem>(SecurityQueries.INSERT_SUBSYSTEM, [name])
         const row = res.rows[0]
         const newSub: SecuritySubsystem = {
             subsystem_id: row.subsystem_id,
-            subsystem_name: row.subsystem_name,
+            subsystem_na: row.subsystem_na,
             menus: [],
         }
         this.subsystems.set(newSub.subsystem_id, newSub)
         this.log.info(
-            `MenuProvider: Created Subsystem [${newSub.subsystem_id}] ${newSub.subsystem_name}`
+            `MenuProvider: Created Subsystem [${newSub.subsystem_id}] ${newSub.subsystem_na}`
         )
         return newSub
     }

@@ -22,7 +22,7 @@ export const ExcelQueries = {
         LEFT JOIN security.profile p ON up.profile_id = p.profile_id
         ORDER BY u.user_id`,
 
-    SELECT_SUBSYSTEMS: 'SELECT subsystem_name FROM security.subsystems ORDER BY subsystem_id',
+    SELECT_SUBSYSTEMS: 'SELECT subsystem_na FROM security.subsystem ORDER BY subsystem_id',
 
     SELECT_OBJECTS: 'SELECT object_na FROM security.object ORDER BY object_id',
 
@@ -34,9 +34,9 @@ export const ExcelQueries = {
         ORDER BY obj.object_na, met.method_na`,
 
     SELECT_MENUS: `
-        SELECT m.menu_na, s.subsystem_name
+        SELECT m.menu_na, s.subsystem_na
         FROM security.menu m
-        INNER JOIN security.subsystems s ON m.subsystem_id = s.subsystem_id
+        INNER JOIN security.subsystem s ON m.subsystem_id = s.subsystem_id
         ORDER BY m.menu_id`,
 
     SELECT_OPTIONS: `
@@ -61,18 +61,18 @@ export const ExcelQueries = {
         ORDER BY p.profile_na, obj.object_na, met.method_na`,
 
     SELECT_ASSIGNMENTS: `
-        SELECT p.profile_na, s.subsystem_name,
+        SELECT p.profile_na, s.subsystem_na,
                COALESCE(m.menu_na, '') as menu_na,
                COALESCE(o.option_na, '') as option_na
         FROM security.profile_subsystem ps
         INNER JOIN security.profile p ON ps.profile_id = p.profile_id
-        INNER JOIN security.subsystems s ON ps.subsystem_id = s.subsystem_id
+        INNER JOIN security.subsystem s ON ps.subsystem_id = s.subsystem_id
         LEFT JOIN security.profile_menu pm ON ps.profile_id = pm.profile_id
         LEFT JOIN security.menu m ON pm.menu_id = m.menu_id AND m.subsystem_id = s.subsystem_id
         LEFT JOIN security.profile_option po ON ps.profile_id = po.profile_id
         LEFT JOIN security.menu_option mo ON po.option_id = mo.option_id AND mo.menu_id = m.menu_id
         LEFT JOIN security.option o ON po.option_id = o.option_id
-        ORDER BY p.profile_na, s.subsystem_name`,
+        ORDER BY p.profile_na, s.subsystem_na`,
 
     SELECT_OBJECT_METHODS: `
         SELECT obj.object_na || '.' || met.method_na as object_method
@@ -105,7 +105,7 @@ export const ExcelQueries = {
         ON CONFLICT (user_id, profile_id) DO NOTHING`,
 
     INSERT_SUBSYSTEM: `
-        INSERT INTO security.subsystems (subsystem_name)
+        INSERT INTO security.subsystem (subsystem_na)
         VALUES ($1) ON CONFLICT DO NOTHING
         RETURNING subsystem_id`,
 
@@ -158,16 +158,16 @@ export const ExcelQueries = {
     INSERT_PROFILE_SUBSYSTEM: `
         INSERT INTO security.profile_subsystem (profile_id, subsystem_id)
         SELECT p.profile_id, s.subsystem_id
-        FROM security.profile p, security.subsystems s
-        WHERE p.profile_na = $1 AND s.subsystem_name = $2
+        FROM security.profile p, security.subsystem s
+        WHERE p.profile_na = $1 AND s.subsystem_na = $2
         ON CONFLICT DO NOTHING`,
 
     INSERT_PROFILE_MENU: `
         INSERT INTO security.profile_menu (profile_id, menu_id)
         SELECT p.profile_id, m.menu_id
         FROM security.profile p, security.menu m
-        INNER JOIN security.subsystems s ON m.subsystem_id = s.subsystem_id
-        WHERE p.profile_na = $1 AND m.menu_na = $2 AND s.subsystem_name = $3
+        INNER JOIN security.subsystem s ON m.subsystem_id = s.subsystem_id
+        WHERE p.profile_na = $1 AND m.menu_na = $2 AND s.subsystem_na = $3
         ON CONFLICT DO NOTHING`,
 
     INSERT_PROFILE_OPTION: `
@@ -182,7 +182,7 @@ export const ExcelQueries = {
     // ═══════════════════════════════════════════════════════════════════
 
     FIND_PROFILE_BY_NAME: 'SELECT profile_id FROM security.profile WHERE profile_na = $1',
-    FIND_SUBSYSTEM_BY_NAME: 'SELECT subsystem_id FROM security.subsystems WHERE subsystem_name = $1',
+    FIND_SUBSYSTEM_BY_NAME: 'SELECT subsystem_id FROM security.subsystem WHERE subsystem_na = $1',
     FIND_MENU_BY_NAME: 'SELECT menu_id FROM security.menu WHERE menu_na = $1',
 
     // TODO(REVERT_NAMING): Singular tables & N:M profiles

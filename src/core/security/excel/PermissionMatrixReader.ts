@@ -234,15 +234,15 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
             if (!parsed) continue
 
             try {
-                const res = await this.db.query<SubsystemIdRow>(ExcelQueries.INSERT_SUBSYSTEM, [parsed.subsystem_name])
+                const res = await this.db.query<SubsystemIdRow>(ExcelQueries.INSERT_SUBSYSTEM, [parsed.subsystem_na])
                 if (res.rows.length > 0) {
                     inserted++
-                    this.log.debug(`Subsistema creado: "${parsed.subsystem_name}"`)
+                    this.log.debug(`Subsistema creado: "${parsed.subsystem_na}"`)
                 } else {
                     skipped++
                 }
             } catch (err) {
-                this.addError(SHEET_DEFINITIONS.SUBSYSTEMS.name, row, 'subsystem_name', this.errorMessage(err))
+                this.addError(SHEET_DEFINITIONS.SUBSYSTEMS.name, row, 'subsystem_na', this.errorMessage(err))
             }
         }
 
@@ -347,11 +347,11 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
 
             try {
                 const subRes = await this.db.query<SubsystemIdRow>(
-                    ExcelQueries.FIND_SUBSYSTEM_BY_NAME, [parsed.subsystem_name]
+                    ExcelQueries.FIND_SUBSYSTEM_BY_NAME, [parsed.subsystem_na]
                 )
 
                 if (subRes.rows.length === 0) {
-                    this.addError(SHEET_DEFINITIONS.MENUS.name, row, 'subsystem_name', `Subsistema "${parsed.subsystem_name}" no existe`)
+                    this.addError(SHEET_DEFINITIONS.MENUS.name, row, 'subsystem_na', `Subsistema "${parsed.subsystem_na}" no existe`)
                     continue
                 }
 
@@ -360,7 +360,7 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
                 )
                 if (res.rows.length > 0) {
                     inserted++
-                    this.log.debug(`Menú creado: "${parsed.menu_na}" → subsistema "${parsed.subsystem_name}"`)
+                    this.log.debug(`Menú creado: "${parsed.menu_na}" → subsistema "${parsed.subsystem_na}"`)
                 } else {
                     skipped++
                 }
@@ -483,12 +483,12 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
 
             try {
                 await this.db.query(
-                    ExcelQueries.INSERT_PROFILE_SUBSYSTEM, [parsed.profile_na, parsed.subsystem_name]
+                    ExcelQueries.INSERT_PROFILE_SUBSYSTEM, [parsed.profile_na, parsed.subsystem_na]
                 )
 
                 if (parsed.menu_na) {
                     await this.db.query(
-                        ExcelQueries.INSERT_PROFILE_MENU, [parsed.profile_na, parsed.menu_na, parsed.subsystem_name]
+                        ExcelQueries.INSERT_PROFILE_MENU, [parsed.profile_na, parsed.menu_na, parsed.subsystem_na]
                     )
                 }
 
@@ -499,7 +499,7 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
                 }
 
                 inserted++
-                this.log.debug(`Asignación: "${parsed.profile_na}" → subsistema "${parsed.subsystem_name}"`)
+                this.log.debug(`Asignación: "${parsed.profile_na}" → subsistema "${parsed.subsystem_na}"`)
             } catch (err) {
                 this.addError(SHEET_DEFINITIONS.ASSIGNMENTS.name, row, 'profile_na', this.errorMessage(err))
             }

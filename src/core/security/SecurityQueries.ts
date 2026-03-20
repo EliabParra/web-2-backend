@@ -17,9 +17,10 @@ export const SecurityQueries = {
     SELECT_PROFILE_OPTIONS: 'SELECT profile_id, option_id FROM security.profile_option',
 
     // --- CRUD SUBSYSTEMS ---
+    // TODO(REVERT_NAMING): Revert subsystem_na to subsystem_name
     INSERT_SUBSYSTEM:
-        'INSERT INTO security.subsystems (subsystem_name) VALUES ($1) RETURNING subsystem_id, subsystem_name', // subsystems not renamed
-    DELETE_SUBSYSTEM: 'DELETE FROM security.subsystems WHERE subsystem_id = $1',
+        'INSERT INTO security.subsystem (subsystem_na) VALUES ($1) RETURNING subsystem_id, subsystem_na',
+    DELETE_SUBSYSTEM: 'DELETE FROM security.subsystem WHERE subsystem_id = $1',
 
     // --- CRUD MENUS ---
     // TODO(REVERT_NAMING): Revert menu_na to menu_name

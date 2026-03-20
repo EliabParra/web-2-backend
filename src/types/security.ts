@@ -6,9 +6,10 @@
 export type OptionType = 'internal' | 'external' | 'separator' // Kept for type safety if needed, though column removed from DB? Wait, column WAS removed.
 // If column removed, we don't need this type in the interface interacting with DB.
 
+// TODO(REVERT_NAMING): Revert subsystem_name to subsystem_na
 export interface SecuritySubsystem {
     subsystem_id: number
-    subsystem_name: string
+    subsystem_na: string
     menus?: SecurityMenu[] // Computed hierarchy
 }
 
@@ -36,9 +37,10 @@ export type MenuStructure = SecuritySubsystem[]
 
 // --- DB Row Types (Internal) ---
 
+// TODO(REVERT_NAMING): Revert subsystem_name to subsystem_na
 export interface DBSubsystem {
     subsystem_id: number
-    subsystem_name: string
+    subsystem_na: string
     [key: string]: unknown
 }
 

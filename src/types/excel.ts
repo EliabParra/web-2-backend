@@ -26,14 +26,14 @@ export const UserRowSchema = z.object({
 
 /** Schema de validación para filas de la hoja Subsistemas. */
 export const SubsystemRowSchema = z.object({
-    subsystem_name: z.string().min(1, 'subsystem_name es requerido').max(100),
+    subsystem_na: z.string().min(1, 'subsystem_na es requerido').max(100),
 })
 
 /** Schema de validación para filas de la hoja Menús. */
 // TODO(REVERT_NAMING): Revert menu_na to menu_name
 export const MenuRowSchema = z.object({
     menu_na: z.string().min(1, 'menu_na es requerido').max(100),
-    subsystem_name: z.string().min(1, 'subsystem_name es requerido').max(100),
+    subsystem_na: z.string().min(1, 'subsystem_na es requerido').max(100),
 })
 
 /** Schema de validación para filas de la hoja Objetos. */
@@ -78,7 +78,7 @@ export const PermissionRowSchema = z.object({
 // TODO(REVERT_NAMING): Revert profile_na, menu_na, option_na to originals
 export const AssignmentRowSchema = z.object({
     profile_na: z.string().min(1, 'profile_na es requerido').max(100),
-    subsystem_name: z.string().min(1, 'subsystem_name es requerido').max(100),
+    subsystem_na: z.string().min(1, 'subsystem_na es requerido').max(100),
     menu_na: z.string().max(100).default(''),
     option_na: z.string().max(100).default(''),
 })
@@ -190,15 +190,15 @@ export interface IPermissionMatrixReader {
 export const SHEET_DEFINITIONS = {
     PROFILES: { name: 'Perfiles', columns: ['profile_na'] },
     USERS: { name: 'Usuarios', columns: ['user_na', 'user_pw', 'profile_na'] },
-    SUBSYSTEMS: { name: 'Subsistemas', columns: ['subsystem_name'] },
+    SUBSYSTEMS: { name: 'Subsistemas', columns: ['subsystem_na'] },
     OBJECTS: { name: 'Objetos', columns: ['object_na'] },
     METHODS: { name: 'Métodos', columns: ['object_na', 'method_na'] },
-    MENUS: { name: 'Menús', columns: ['menu_na', 'subsystem_name'] },
+    MENUS: { name: 'Menús', columns: ['menu_na', 'subsystem_na'] },
     OPTIONS: { name: 'Opciones', columns: ['option_na', 'object_method', 'menu_na'] },
     PERMISSIONS: { name: 'Permisos', columns: ['profile_na', 'object_method'] },
     ASSIGNMENTS: {
         name: 'Asignaciones',
-        columns: ['profile_na', 'subsystem_name', 'menu_na', 'option_na'],
+        columns: ['profile_na', 'subsystem_na', 'menu_na', 'option_na'],
     },
 } as const
 
@@ -210,7 +210,7 @@ export const SHEET_DEFINITIONS = {
 // TODO(REVERT_NAMING): Revert profile_na→profile_name, menu_na→menu_name, object_na→object_name, method_na→method_name, option_na→option_name, user_na→username
 export interface ProfileNameRow { [key: string]: unknown; profile_na: string }
 
-export interface SubsystemNameRow { [key: string]: unknown; subsystem_name: string }
+export interface SubsystemNameRow { [key: string]: unknown; subsystem_na: string }
 
 export interface MenuNameRow { [key: string]: unknown; menu_na: string }
 
@@ -218,13 +218,13 @@ export interface ObjectMethodRow { [key: string]: unknown; object_method: string
 
 export interface UserExportRow { [key: string]: unknown; user_na: string; password: string; profile_na: string }
 
-export interface MenuExportRow { [key: string]: unknown; menu_na: string; subsystem_name: string }
+export interface MenuExportRow { [key: string]: unknown; menu_na: string; subsystem_na: string }
 
 export interface OptionExportRow { [key: string]: unknown; option_na: string; object_method: string; menu_na: string }
 
 export interface PermissionExportRow { [key: string]: unknown; profile_na: string; object_method: string }
 
-export interface AssignmentExportRow { [key: string]: unknown; profile_na: string; subsystem_name: string; menu_na: string; option_na: string }
+export interface AssignmentExportRow { [key: string]: unknown; profile_na: string; subsystem_na: string; menu_na: string; option_na: string }
 
 export interface ObjectNameExportRow { [key: string]: unknown; object_na: string }
 
