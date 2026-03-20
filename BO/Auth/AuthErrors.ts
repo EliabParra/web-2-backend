@@ -36,6 +36,13 @@ export class AuthEmailNotVerifiedError extends AuthError {
     }
 }
 
+export class AuthEmailVerifiedError extends AuthError {
+    constructor(message?: string) {
+        super(message ?? defaultMessages.emailAlreadyVerified, 'AUTH_EMAIL_VERIFIED', 403)
+        this.name = 'AuthEmailVerifiedError'
+    }
+}
+
 export class AuthSessionExpiredError extends AuthError {
     constructor(message?: string) {
         super(message ?? defaultMessages.sessionExpired, 'AUTH_SESSION_EXPIRED', 401)

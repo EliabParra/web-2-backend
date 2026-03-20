@@ -75,7 +75,7 @@ export namespace Auth {
 
     export type GetActiveOneTimeCodeParams = {
         purpose: string
-        tokenHash: string
+        codeHash: string
     }
 
     // User Interface matching DB schema as requested
@@ -157,7 +157,7 @@ export namespace Auth {
         markPasswordResetUsed(resetId: number): Promise<boolean>
         insertOneTimeCode(params: OneTimeCode): Promise<boolean>
         consumeOneTimeCode(codeId: number): Promise<boolean>
-        getActiveOneTimeCodeForPurposeAndTokenHash(
+        getActiveOneTimeCodeForPurposeAndCodeHash(
             params: GetActiveOneTimeCodeParams
         ): Promise<OneTimeCodeRow | null>
         updateUserPassword(params: UserPasswordResetParams): Promise<boolean>
@@ -166,7 +166,7 @@ export namespace Auth {
     export interface Service {
         register(data: RegisterData): Promise<User>
         requestEmailVerification(identifier: string): Promise<void>
-        verifyEmail(token: string): Promise<void>
+        verifyEmail(code: string): Promise<void>
         requestPasswordReset(email: string): Promise<void>
         verifyPasswordResetToken(token: string): Promise<void>
         resetPassword(token: string, newPassword: string): Promise<void>

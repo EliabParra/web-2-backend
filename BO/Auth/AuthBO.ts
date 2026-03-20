@@ -29,7 +29,7 @@ export class AuthBO extends BaseBO {
             params,
             AuthSchemas.verifyEmail,
             async (data) => {
-                await this.service.verifyEmail(data.token)
+                await this.service.verifyEmail(data.code)
                 return this.success(null, this.authMessages.emailVerified)
             }
         )

@@ -23,7 +23,7 @@ export const createAuthSchemas = (messages: AuthMessagesSet = AuthMessages.es) =
         }),
 
         verifyEmail: z.object({
-            token: z.string().min(1, validation.tokenRequired),
+            code: z.string().length(6, validation.codeRequired),
         }),
 
         requestEmailVerification: z.object({

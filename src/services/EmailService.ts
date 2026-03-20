@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { IEmailService, IConfig, ILogger, IContainer } from '../types/core.js'
 
 function maskEmail(email: string) {
@@ -115,8 +116,10 @@ export class EmailService implements IEmailService {
         data: Record<string, unknown>
     }) {
         try {
-            // Resolver ruta absoluta (asumiendo ejecución desde root o dist)
-            // Esto es simplificado y debería robustecerse para prod/dev
+            // Resolver ruta absoluta en ESM usando import.meta.url
+            const __filename = fileURLToPath(import.meta.url)
+            const __dirname = path.dirname(__filename)
+            
             const isDist = __dirname.includes('dist')
             // Ajustar ruta base según entorno (src vs dist)
             const baseDir = isDist
@@ -168,10 +171,10 @@ export class EmailService implements IEmailService {
     }) {
         if (this.mode !== 'smtp' || !this._transport) {
             this.log.info(
-                `[Email:${this.mode}] Would send email to=${to} subject="${subject}"`,
-                this.logIncludeSecrets
-                    ? { to, subject, body: text ?? 'HTML Content' }
-                    : { to, subject }
+                `[Email:${this.mode}] Would send email to=${to} subject="${subject}"`, { to, subject, body: text ?? 'HTML Content' }
+                // this.logIncludeSecrets
+                //     ? { to, subject, body: text ?? 'HTML Content' }
+                //     : { to, subject }
             )
             return { ok: true, mode: this.mode }
         }

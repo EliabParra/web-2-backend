@@ -95,12 +95,12 @@ export class AuthRepository implements Types.IAuthRepository {
         return true
     }
 
-    async getActiveOneTimeCodeForPurposeAndTokenHash(
+    async getActiveOneTimeCodeForPurposeAndCodeHash(
         params: Types.GetActiveOneTimeCodeParams
     ): Promise<Types.OneTimeCodeRow | null> {
         const r = await this.db.query<Types.OneTimeCodeRow>(
-            AuthQueries.getActiveOneTimeCodeForPurposeAndTokenHash,
-            [params.purpose, params.tokenHash]
+            AuthQueries.getActiveOneTimeCodeForPurposeAndCodeHash,
+            [params.purpose, params.codeHash]
         )
         return r.rows[0]
     }

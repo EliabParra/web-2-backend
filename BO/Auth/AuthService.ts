@@ -5,7 +5,7 @@ import {
     IContainer,
 } from '../../src/core/business-objects/index.js'
 import { AuthRepository, AuthMessages, Errors, Types } from './AuthModule.js'
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash, randomBytes, randomInt } from 'node:crypto'
 import bcrypt from 'bcryptjs'
 
 function sha256Hex(value: string): string {
@@ -78,19 +78,21 @@ export class AuthService extends BOService implements Types.IAuthService {
             user = await this.repo.getUserByUsername(identifier)
         }
 
+        if (user?.user_em_verified_dt) throw new Errors.AuthEmailVerifiedError(this.messages.emailAlreadyVerified)
+
         // TODO(REVERT_NAMING): Revert user_em to user_email
         if (user && user.user_em) {
             await this.sendVerificationEmail(user.user_id, user.user_em)
         }
     }
 
-    async verifyEmail(token: string): Promise<void> {
+    async verifyEmail(code: string): Promise<void> {
         const purpose = String(this.config.auth.emailVerificationPurpose ?? 'email_verification')
-        const tokenHash = sha256Hex(token)
+        const codeHash = sha256Hex(code)
 
-        const otp = await this.repo.getActiveOneTimeCodeForPurposeAndTokenHash({
+        const otp = await this.repo.getActiveOneTimeCodeForPurposeAndCodeHash({
             purpose,
-            tokenHash,
+            codeHash,
         })
 
         if (!otp) throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
@@ -188,10 +190,13 @@ export class AuthService extends BOService implements Types.IAuthService {
         const token = randomBytes(32).toString('hex')
         const tokenHash = sha256Hex(token)
 
+        const code = randomInt(100000, 999999).toString()
+        const codeHash = sha256Hex(code)
+
         await this.repo.insertOneTimeCode({
             userId,
             purpose,
-            codeHash: tokenHash,
+            codeHash,
             expiresSeconds,
             meta: { tokenHash },
         })
@@ -202,7 +207,7 @@ export class AuthService extends BOService implements Types.IAuthService {
             templatePath: 'auth/email-verification.html',
             data: {
                 appName: this.config.app.name,
-                code: '000000', // Placeholder
+                code,
                 token,
             },
         })

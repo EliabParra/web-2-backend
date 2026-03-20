@@ -135,10 +135,10 @@ export const AuthQueries = {
         WHERE one_time_code_id = $1
     `,
 
-    getActiveOneTimeCodeForPurposeAndTokenHash: `
+    getActiveOneTimeCodeForPurposeAndCodeHash: `
         SELECT * FROM security.one_time_code
         WHERE one_time_code_pu = $1
-        AND (one_time_code_meta->>'tokenHash') = $2
+        AND one_time_code_ha = $2
         AND one_time_code_consumed_dt IS NULL
         AND one_time_code_expires_dt > NOW()
         ORDER BY one_time_code_created_dt DESC LIMIT 1
