@@ -1,17 +1,23 @@
 import { z } from 'zod'
-import * as schemas from '@toproc/config'
+import { AppConfigSchema } from './app.schema.js'
+import { DbConfigSchema } from './db.schema.js'
+import { AuthConfigSchema } from './auth.schema.js'
+import { SessionConfigSchema } from './session.schema.js'
+import { WebsocketConfigSchema } from './websocket.schema.js'
+import { LogConfigSchema, EmailConfigSchema } from './misc.schema.js'
+import { CorsConfigSchema, BoConfigSchema } from './extra.schema.js'
 
 export const ConfigSchema = z
     .object({
-        app: schemas.AppConfigSchema,
-        db: schemas.DbConfigSchema,
-        auth: schemas.AuthConfigSchema,
-        session: schemas.SessionConfigSchema,
-        log: schemas.LogConfigSchema,
-        email: schemas.EmailConfigSchema,
-        cors: schemas.CorsConfigSchema,
-        bo: schemas.BoConfigSchema,
-        websocket: schemas.WebsocketConfigSchema,
+        app: AppConfigSchema,
+        db: DbConfigSchema,
+        auth: AuthConfigSchema,
+        session: SessionConfigSchema,
+        log: LogConfigSchema,
+        email: EmailConfigSchema,
+        cors: CorsConfigSchema,
+        bo: BoConfigSchema,
+        websocket: WebsocketConfigSchema,
     })
     .refine((config) => {
         // Cross-validation

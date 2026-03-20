@@ -58,6 +58,9 @@ function createTestBO() {
                     return i18nStub
                 case 'validator':
                     return validator
+                case 'session':
+                case 'security':
+                    return {}
                 default:
                     throw new Error(`Unknown dependency: ${key}`)
             }

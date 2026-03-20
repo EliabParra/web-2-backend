@@ -263,6 +263,16 @@ export function createTestContainer(overrides: Record<string, unknown> = {}): IC
         i18n: mockI18n(),
         email: mockEmail(),
         validator: zodValidator(),
+        session: {
+            createSession: async () => ({ ok: true, session: {} as any }),
+            sessionExists: async () => true,
+            destroySession: async () => true,
+        } as any,
+        security: {
+            isReady: true,
+            init: async () => {},
+            executeMethod: async () => ({ code: 200, msg: 'ok' } as any),
+        } as any,
         ...overrides,
     })
 }

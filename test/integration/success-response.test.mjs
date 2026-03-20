@@ -8,6 +8,8 @@ const mockDeps = {
     log: { info: () => {}, error: () => {} },
     config: {},
     validator: { validate: (d) => ({ valid: true, data: d }) },
+    session: {},
+    security: {},
     i18n: {
         translate: (key) => {
             if (key === 'success.create') return 'Elemento creado con éxito'

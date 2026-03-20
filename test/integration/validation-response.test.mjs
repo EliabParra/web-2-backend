@@ -11,6 +11,8 @@ const mockDeps = {
         error: () => {},
     },
     config: {},
+    session: {},
+    security: {},
     validator: {
         validate: (data, schema) => {
             const result = schema.safeParse(data)

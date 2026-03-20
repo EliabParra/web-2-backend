@@ -73,10 +73,8 @@ test('templateMessages genera TS object', () => {
 test('templateErrors genera clases de error (nuevos imports)', () => {
     const out = templateErrors('Product')
     assert.match(out, /ProductMessages/)
-    assert.match(
-        out,
-        /import \{ BOError, TxKey \} from '\.\.\/\.\.\/src\/core\/business-objects\/index\.js'/
-    )
+    assert.match(out, /import \{ BOError \} from '@toproc\/bo'/)
+    assert.match(out, /import type \{ TxKey \} from '@toproc\/types'/)
     assert.match(out, /class ProductError extends BOError/)
     assert.match(out, /class ProductNotFoundError/)
     assert.match(out, /class ProductAlreadyExistsError/)
