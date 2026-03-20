@@ -21,7 +21,7 @@
         "requireEmailVerification": true
     },
     "email": {
-        "mode": "smtp",
+        "mode": "log",
         "from": "toproc@gmail.com"
     }
 }

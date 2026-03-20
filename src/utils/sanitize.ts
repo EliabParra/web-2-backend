@@ -19,7 +19,7 @@ export function redactSecretsInString(s: string): string {
  * @returns Copia del objeto con valores redactados
  */
 export function redactSecrets(obj: Record<string, unknown>): Record<string, unknown> {
-    if (!obj || typeof obj !== 'object') return obj
+    if (!obj || typeof obj !== 'object' || process.env.NODE_ENV === 'development') return obj
     const out = { ...obj }
     for (const k of Object.keys(out)) {
         if (/password/i.test(k) || /token/i.test(k) || /secret/i.test(k) || /code/i.test(k)) {
