@@ -1,4 +1,4 @@
-import { II18nService, AppRequest, AppResponse } from '../../../types/index.js'
+import { II18nService, AppRequest, AppResponse } from '@toproc/types'
 import { NextFunction } from 'express'
 
 /**

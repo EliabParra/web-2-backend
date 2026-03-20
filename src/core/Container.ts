@@ -1,4 +1,4 @@
-import type { IContainer } from '../types/core.js'
+import type { IContainer } from '@toproc/types'
 
 /**
  * Contenedor IoC (Inversión de Control).

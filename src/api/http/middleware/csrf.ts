@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { IConfig, II18nService, AppRequest, AppResponse } from '../../../types/index.js'
+import { IConfig, II18nService, AppRequest, AppResponse } from '@toproc/types'
 import { NextFunction } from 'express'
 
 /**

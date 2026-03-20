@@ -1,9 +1,5 @@
-import {
-    BOService,
-    II18nService,
-    IEmailService,
-    IContainer,
-} from '../../src/core/business-objects/index.js'
+import { BOService } from '@toproc/bo'
+import type { IContainer, II18nService, IEmailService } from '@toproc/types'
 import { AuthRepository, AuthMessages, Errors, Types } from './AuthModule.js'
 import { createHash, randomBytes, randomInt } from 'node:crypto'
 import bcrypt from 'bcryptjs'

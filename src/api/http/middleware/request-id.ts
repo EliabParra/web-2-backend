@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { Express, NextFunction } from 'express'
-import { AppRequest, AppResponse } from '../../../types/index.js'
+import { AppRequest, AppResponse } from '@toproc/types'
 
 /**
  * Middleware para asignar y trazar un ID único por petición (Request ID).

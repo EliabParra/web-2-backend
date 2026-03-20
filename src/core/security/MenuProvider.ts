@@ -1,5 +1,8 @@
-import { IDatabase, ILogger, IContainer, IMenuProvider } from '../../types/core.js'
 import {
+    IDatabase,
+    ILogger,
+    IContainer,
+    IMenuProvider,
     SecuritySubsystem,
     SecurityMenu,
     SecurityOption,
@@ -9,8 +12,8 @@ import {
     DBOption,
     DBMenuOption,
     DBProfileAssignment,
-} from '../../types/security.js'
-import { SecurityQueries } from './SecurityQueries.js'
+} from '@toproc/types'
+import { SecurityQueries } from '@toproc/security'
 
 /**
  * MenuProvider — Proveedor de estructura de menús y gestión de asignaciones.

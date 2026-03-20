@@ -25,6 +25,10 @@ function resolveTscScript() {
     return path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc')
 }
 
+function resolveTscAliasScript() {
+    return path.join(repoRoot, 'node_modules', 'tsc-alias', 'dist', 'bin', 'index.js')
+}
+
 async function copyFileIfExists(from: string, to: string) {
     try {
         await fs.access(from)
@@ -84,6 +88,9 @@ async function main() {
 
     // Compile TS sources to dist/
     await run(process.execPath, [resolveTscScript(), '-p', 'tsconfig.build.ts.json'])
+
+    // Resolve paths and replace them with relative paths (adds extensions if missing)
+    await run(process.execPath, [resolveTscAliasScript(), '-p', 'tsconfig.build.ts.json'])
 }
 
 main().catch((err) => {

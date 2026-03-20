@@ -5,9 +5,9 @@ import {
     II18nService,
     AppRequest,
     AppResponse,
-} from '../../../types/index.js'
-import { sendInvalidParameters } from '../../../utils/http-responses.js'
-import { TransactionOrchestrator } from '../../../core/transaction/TransactionOrchestrator.js'
+} from '@toproc/types'
+import { sendInvalidParameters } from '@toproc/utils'
+import { TransactionOrchestrator } from '@toproc/transaction'
 
 /**
  * Controlador de Transacciones de Negocio.

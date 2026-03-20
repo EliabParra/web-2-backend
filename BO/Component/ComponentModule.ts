@@ -1,4 +1,4 @@
-import { IContainer } from '../../src/types/index.js'
+import { IContainer } from '@toproc/types'
 import { ComponentService } from './ComponentService.js'
 import { ComponentRepository } from './ComponentRepository.js'
 

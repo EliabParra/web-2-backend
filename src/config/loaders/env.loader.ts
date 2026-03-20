@@ -1,4 +1,4 @@
-import { Config } from '../schemas/index.js'
+import { Config } from '../schemas/config.schema.js'
 import { PartialDeep, envBool, envInt, envList } from '../utils/env.utils.js'
 
 /**

@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { IEmailService, IConfig, ILogger, IContainer } from '../types/core.js'
+import { IEmailService, IConfig, ILogger, IContainer } from '@toproc/types'
 
 function maskEmail(email: string) {
     const s = String(email ?? '').trim()

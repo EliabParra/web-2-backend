@@ -1,45 +1,34 @@
 import bcrypt from 'bcryptjs'
-import type {
-    IContainer,
-    IDatabase,
-    ILogger,
-    ISessionService,
-    IConfig,
-    IAuditService,
-    II18nService,
-    AppRequest,
-    ValidationError,
-    SessionResult,
-} from '../types/index.js'
+import type * as types from '@toproc/types'
 import { LoginSchema, LoginInput, SessionUserRow } from './schemas/session.js'
 import { ValidatorService } from './ValidatorService.js'
 import { SessionQueries } from './queries/session.js'
 
 type ValidationResponse =
     | { success: true; data: LoginInput }
-    | { success: false; errors: ValidationError[] }
+    | { success: false; errors: types.ValidationError[] }
 
 /**
  * Gestor de sesiones de usuario.
  * Maneja la autenticación segura de usuarios y la gestión de sesiones.
  */
-export class SessionManager implements ISessionService {
-    private db: IDatabase
-    private log: ILogger
-    private config: IConfig
-    private i18n: II18nService
-    private audit: IAuditService
+export class SessionManager implements types.ISessionService {
+    private db: types.IDatabase
+    private log: types.ILogger
+    private config: types.IConfig
+    private i18n: types.II18nService
+    private audit: types.IAuditService
     private validator: ValidatorService
 
     private authCfg: Record<string, unknown>
     private requireEmailVerification: boolean
 
-    constructor(container: IContainer) {
-        this.db = container.resolve<IDatabase>('db')
-        this.log = container.resolve<ILogger>('log').child({ category: 'Session' })
-        this.config = container.resolve<IConfig>('config')
-        this.i18n = container.resolve<II18nService>('i18n')
-        this.audit = container.resolve<IAuditService>('audit')
+    constructor(container: types.IContainer) {
+        this.db = container.resolve<types.IDatabase>('db')
+        this.log = container.resolve<types.ILogger>('log').child({ category: 'Session' })
+        this.config = container.resolve<types.IConfig>('config')
+        this.i18n = container.resolve<types.II18nService>('i18n')
+        this.audit = container.resolve<types.IAuditService>('audit')
         this.validator = container.resolve<ValidatorService>('validator')
 
         this.authCfg = (this.config.auth ?? {}) as Record<string, unknown>
@@ -52,7 +41,7 @@ export class SessionManager implements ISessionService {
      * @param req - Objeto Request de Express con la sesión
      * @returns `true` si existe userId en la sesión
      */
-    sessionExists(req: AppRequest): boolean {
+    sessionExists(req: types.AppRequest): boolean {
         return !!(req.session && req.session.userId)
     }
 
@@ -62,7 +51,7 @@ export class SessionManager implements ISessionService {
      * @param req - Objeto Request que contiene las credenciales (body) y la sesión
      * @returns Promesa con el resultado de la operación (éxito, error o fallo de validación)
      */
-    async createSession(req: AppRequest, user: SessionUserRow): Promise<SessionResult> {
+    async createSession(req: types.AppRequest, user: SessionUserRow): Promise<types.SessionResult> {
         try {
             this.initializeUserSession(req, user)
 
@@ -95,7 +84,7 @@ export class SessionManager implements ISessionService {
      *
      * @param req - Objeto Request con la sesión a destruir
      */
-    destroySession(req: AppRequest): void {
+    destroySession(req: types.AppRequest): void {
         try {
             req.session?.destroy?.(() => {})
         } catch {}
@@ -106,7 +95,7 @@ export class SessionManager implements ISessionService {
      * @param req - Request con la sesión
      * @param data - Datos a fusionar en la sesión
      */
-    setDataSession(req: AppRequest, data: any): void {
+    setDataSession(req: types.AppRequest, data: any): void {
         if (req.session) {
             // Fusiona las nuevas propiedades sin eliminar las existentes
             Object.assign(req.session, data)
@@ -121,7 +110,7 @@ export class SessionManager implements ISessionService {
      * @param req - Request con la sesión
      * @returns Copia del objeto de sesión
      */
-    getDataSession(req: AppRequest): any {
+    getDataSession(req: types.AppRequest): any {
         return req.session ? { ...req.session } : {}
     }
 
@@ -129,7 +118,7 @@ export class SessionManager implements ISessionService {
      * Autentica a un usuario.
      * @param req - Request con credenciales en el body
      */
-    async authenticate(req: AppRequest): Promise<SessionResult> {
+    async authenticate(req: types.AppRequest): Promise<types.SessionResult> {
         try {
             const validation = this.validateLoginRequest(req)
             if (!validation.success) {
@@ -177,7 +166,7 @@ export class SessionManager implements ISessionService {
     // Private Helpers (SRP & Readability)
     // =========================================================================
 
-    private validateLoginRequest(req: AppRequest): ValidationResponse {
+    private validateLoginRequest(req: types.AppRequest): ValidationResponse {
         const result = this.validator.validate<LoginInput>(req.body, LoginSchema)
         if (!result.valid) {
             return { success: false, errors: result.errors }
@@ -208,7 +197,7 @@ export class SessionManager implements ISessionService {
     }
 
     // TODO(REVERT_NAMING): Revert user_na to username, user_em to user_email
-    private initializeUserSession(req: AppRequest, user: SessionUserRow): void {
+    private initializeUserSession(req: types.AppRequest, user: SessionUserRow): void {
         if (req.session) {
             req.session.userId = user.user_id
             req.session.username = user.user_na
@@ -227,7 +216,7 @@ export class SessionManager implements ISessionService {
     }
 
     // TODO(REVERT_NAMING): Revert user_na to username
-    private async auditLoginSuccess(req: AppRequest, user: SessionUserRow): Promise<void> {
+    private async auditLoginSuccess(req: types.AppRequest, user: SessionUserRow): Promise<void> {
         await this.audit.log(req, {
             action: 'login',
             user_id: user.user_id,
@@ -241,7 +230,7 @@ export class SessionManager implements ISessionService {
     // Private Helpers (SRP & Readability)
     // =========================================================================
 
-    private logSystemError(req: AppRequest, error: unknown): void {
+    private logSystemError(req: types.AppRequest, error: unknown): void {
         const msg = this.i18n.messages.errors.server.serverError.msg || 'Server Error'
         const status = this.i18n.messages.errors.server.serverError.code || 500
 

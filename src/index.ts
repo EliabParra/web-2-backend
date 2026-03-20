@@ -6,9 +6,9 @@
  *
  * @module index
  */
-import { container } from './foundation.js'
-import type { ILogger, ISecurityService, IWebSocketService } from './types/index.js'
-import type { AppServer } from './api/AppServer.js'
+import { container } from '@toproc/foundation.js'
+import type { ILogger, ISecurityService, IWebSocketService } from '@toproc/types'
+import type { AppServer } from '@toproc/api/AppServer.js'
 
 const log = container.resolve<ILogger>('log').child({ category: 'Main' })
 

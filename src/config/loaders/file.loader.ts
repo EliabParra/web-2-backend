@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import fs from 'node:fs'
 import { PartialDeep } from '../utils/env.utils.js'
-import { Config } from '../schemas/index.js'
+import { Config } from '../schemas/config.schema.js'
 
 const require = createRequire(import.meta.url)
 

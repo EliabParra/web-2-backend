@@ -1,5 +1,5 @@
 import { ZodType } from 'zod'
-import type { IValidator, ValidationResult, ValidationError, II18nService } from '../types/index.js'
+import type { IValidator, ValidationResult, ValidationError, II18nService } from '@toproc/types'
 
 // Interface compatible with ZodIssue to avoid strict type mismatch issues
 interface ZodIssueCompatible {

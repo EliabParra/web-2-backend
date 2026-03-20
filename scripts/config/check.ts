@@ -1,4 +1,4 @@
-import { ConfigLoader } from '../../src/config/index.js'
+import { ConfigLoader } from '../../src/config/ConfigLoader.js'
 import 'colors'
 
 async function main() {

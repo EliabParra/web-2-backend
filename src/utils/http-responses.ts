@@ -1,4 +1,4 @@
-import type { AppResponse } from '../types/http.js'
+import type { AppResponse } from '@toproc/types'
 
 /**
  * Sends a standardized `invalidParameters` response.

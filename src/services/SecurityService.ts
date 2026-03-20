@@ -1,19 +1,5 @@
-import type {
-    IContainer,
-    IDatabase,
-    II18nService,
-    ILogger,
-    IValidator,
-    ISecurityService,
-    ITransactionMapper,
-    ITransactionExecutor,
-    IPermissionProvider,
-    IMenuProvider,
-    ImportResult,
-} from '../types/index.js'
-import { MenuStructure } from '../types/security.js'
-import { PermissionMatrixWriter } from '../core/security/excel/PermissionMatrixWriter.js'
-import { PermissionMatrixReader } from '../core/security/excel/PermissionMatrixReader.js'
+import type * as types from '@toproc/types'
+import { PermissionMatrixWriter, PermissionMatrixReader } from '@toproc/security'
 
 /**
  * Servicio de seguridad y fachada principal del framework.
@@ -38,16 +24,16 @@ import { PermissionMatrixReader } from '../core/security/excel/PermissionMatrixR
  * }
  * ```
  */
-export class SecurityService implements ISecurityService {
-    private mapper: ITransactionMapper
-    private guard: IPermissionProvider
-    private executor: ITransactionExecutor
-    private menuProvider: IMenuProvider
-    private db: IDatabase
-    private validator: IValidator
+export class SecurityService implements types.ISecurityService {
+    private mapper: types.ITransactionMapper
+    private guard: types.IPermissionProvider
+    private executor: types.ITransactionExecutor
+    private menuProvider: types.IMenuProvider
+    private db: types.IDatabase
+    private validator: types.IValidator
 
-    private i18n: II18nService
-    private log: ILogger
+    private i18n: types.II18nService
+    private log: types.ILogger
 
     /** Indica si el sistema de seguridad ha cargado correctamente. */
     public isReady: boolean = false
@@ -61,16 +47,16 @@ export class SecurityService implements ISecurityService {
      *
      * @param container - Contenedor IoC con las dependencias registradas
      */
-    constructor(container: IContainer) {
-        this.log = container.resolve<ILogger>('log').child({ category: 'Security' })
-        this.i18n = container.resolve<II18nService>('i18n')
+    constructor(container: types.IContainer) {
+        this.log = container.resolve<types.ILogger>('log').child({ category: 'Security' })
+        this.i18n = container.resolve<types.II18nService>('i18n')
 
-        this.db = container.resolve<IDatabase>('db')
-        this.validator = container.resolve<IValidator>('validator')
-        this.mapper = container.resolve<ITransactionMapper>('transactionMapper')
-        this.executor = container.resolve<ITransactionExecutor>('transactionExecutor')
-        this.guard = container.resolve<IPermissionProvider>('permissionGuard')
-        this.menuProvider = container.resolve<IMenuProvider>('menuProvider')
+        this.db = container.resolve<types.IDatabase>('db')
+        this.validator = container.resolve<types.IValidator>('validator')
+        this.mapper = container.resolve<types.ITransactionMapper>('transactionMapper')
+        this.executor = container.resolve<types.ITransactionExecutor>('transactionExecutor')
+        this.guard = container.resolve<types.IPermissionProvider>('permissionGuard')
+        this.menuProvider = container.resolve<types.IMenuProvider>('menuProvider')
     }
 
     /**
@@ -212,7 +198,7 @@ export class SecurityService implements ISecurityService {
      * @param profileIds - IDs de perfiles del usuario
      * @returns Árbol de menús filtrado por unión de visibilidades
      */
-    async getMenuStructure(profileIds: number[]): Promise<MenuStructure> {
+    async getMenuStructure(profileIds: number[]): Promise<types.MenuStructure> {
         // TODO(REVERT_NAMING): Singular tables & N:M profiles
         return this.menuProvider.getStructure(profileIds)
     }
@@ -340,7 +326,7 @@ export class SecurityService implements ISecurityService {
      * @param buffer - Buffer del archivo Excel (.xlsx)
      * @returns Resultado con resumen por hoja y errores de validación
      */
-    async importMatrix(buffer: Buffer): Promise<ImportResult> {
+    async importMatrix(buffer: Buffer): Promise<types.ImportResult> {
         const reader = new PermissionMatrixReader(this.db, this.validator, this.log)
         const result = await reader.import(buffer)
 

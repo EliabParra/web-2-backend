@@ -4,7 +4,7 @@ import {
     IContainer,
     ITransactionMapper,
     TransactionRoute,
-} from '../../types/core.js'
+} from '@toproc/types'
 
 // TODO(REVERT_NAMING): Revert transaction_nu to transaction_number, object_na to object_name, method_na to method_name
 const TxQueries = {

@@ -1,6 +1,6 @@
 import express, { type Application, type Request, type Response, type NextFunction } from 'express'
 import path from 'node:path'
-import type { IConfig } from '../types/index.js'
+import type { IConfig } from '@toproc/types'
 
 async function ensureSpaDistPathIfNeeded(config: IConfig) {
     const hasPath =

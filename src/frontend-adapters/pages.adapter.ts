@@ -1,5 +1,5 @@
 import express, { type Application } from 'express'
-import { IContainer, ISessionService } from '../types/core.js'
+import { IContainer, ISessionService } from '@toproc/types'
 
 /**
  * Configura el hosting de páginas estáticas o SSR.

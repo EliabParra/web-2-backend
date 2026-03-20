@@ -1,4 +1,4 @@
-import { IDatabase } from '../../src/core/business-objects/index.js'
+import { IDatabase } from '@toproc/types'
 import { LocationQueries, Types } from './LocationModule.js'
 
 /**

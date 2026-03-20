@@ -1,4 +1,4 @@
-import { ITransactionExecutor, ILogger, IContainer, IConfig } from '../../types/index.js'
+import { ITransactionExecutor, ILogger, IContainer, IConfig } from '@toproc/types'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 

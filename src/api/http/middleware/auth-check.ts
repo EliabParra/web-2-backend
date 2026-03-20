@@ -1,5 +1,5 @@
 import { NextFunction } from 'express'
-import { AppRequest, AppResponse, ISessionService } from '../../../types/index.js'
+import { AppRequest, AppResponse, ISessionService } from '@toproc/types'
 
 /**
  * Middleware para requerir autenticación en rutas de páginas.

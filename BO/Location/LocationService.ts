@@ -1,5 +1,5 @@
-import { BOService, IContainer, IConfig, IDatabase } from '../../src/core/business-objects/index.js'
-import type { ILogger } from '../../src/types/core.js'
+import { BOService } from '@toproc/bo'
+import type { IContainer } from '@toproc/types'
 import { LocationRepository, Errors, Types } from './LocationModule.js'
 
 /**

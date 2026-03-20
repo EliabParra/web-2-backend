@@ -1,4 +1,4 @@
-import { IContainer } from '../../src/types/index.js'
+import { IContainer } from '@toproc/types'
 import { LocationService } from './LocationService.js'
 import { LocationRepository } from './LocationRepository.js'
 

@@ -110,7 +110,7 @@ export function templateRepository(objectName: string, methods: string[] = []) {
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
 
     if (methods.length === 0) {
-        return `import { IDatabase } from '../../src/core/business-objects/index.js'
+        return `import { IDatabase } from '@toproc/types'
 import { ${pascalName}Queries, Types } from './${pascalName}Module.js'
 
 /**
@@ -122,7 +122,7 @@ export class ${pascalName}Repository implements Types.I${pascalName}Repository {
 `
     }
 
-    return `import { IDatabase } from '../../src/core/business-objects/index.js'
+    return `import { IDatabase } from '@toproc/types'
 import { ${pascalName}Queries, Types } from './${pascalName}Module.js'
 
 /**
@@ -201,8 +201,8 @@ export function templateService(objectName: string, methods: string[] = []) {
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
 
     if (methods.length === 0) {
-        return `import { BOService, IContainer, IConfig, IDatabase } from '../../src/core/business-objects/index.js'
-import type { ILogger } from '../../src/types/core.js'
+        return `import { BOService } from '@toproc/bo'
+import type { IContainer } from '@toproc/types'
 import { ${pascalName}Repository, Errors, Types } from './${pascalName}Module.js'
 
 /**
@@ -219,8 +219,8 @@ export class ${pascalName}Service extends BOService implements Types.I${pascalNa
 `
     }
 
-    return `import { BOService, IContainer, IConfig, IDatabase } from '../../src/core/business-objects/index.js'
-import type { ILogger } from '../../src/types/core.js'
+    return `import { BOService } from '@toproc/bo'
+import type { IContainer } from '@toproc/types'
 import { ${pascalName}Repository, Errors, Types } from './${pascalName}Module.js'
 
 /**
@@ -301,7 +301,7 @@ export function templateModule(objectName: string) {
     const cleanName = objectName.replace(/BO$/, '')
     const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
 
-    return `import { IContainer } from '../../src/types/index.js'
+    return `import { IContainer } from '@toproc/types'
 import { ${pascalName}Service } from './${pascalName}Service.js'
 import { ${pascalName}Repository } from './${pascalName}Repository.js'
 
@@ -394,7 +394,8 @@ export function templateBO(className: string, methods: string[]) {
         })
         .join('\n\n')
 
-    return `import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
+    return `import { BaseBO } from '@toproc/bo'
+import type { IContainer, ApiResponse } from '@toproc/types'
 import { ${pascalName}Service, ${pascalName}Messages, ${pascalName}Schemas, Inputs, Types, register${pascalName} } from './${pascalName}Module.js'
 
 /**

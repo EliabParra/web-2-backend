@@ -7,8 +7,8 @@ import {
     AppMessages,
     ISecurityContext,
     IContainer,
-} from '../../types/index.js'
-import { AuthorizationService } from '../security/AuthorizationService.js'
+} from '@toproc/types'
+import { AuthorizationService } from '@toproc/security'
 
 /**
  * Orquestador de Transacciones.

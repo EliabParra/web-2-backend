@@ -4,7 +4,7 @@ import type {
     IContainer,
     ISecurityService,
     IConfig,
-} from '../../../types/index.js'
+} from '@toproc/types'
 
 /**
  * Controlador de Probes (Health/Readiness).

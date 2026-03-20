@@ -1,6 +1,6 @@
 import session, { SessionOptions, Store } from 'express-session'
 import connectPgSimple from 'connect-pg-simple'
-import { IContainer, IConfig, ILogger, IDatabase } from '../../../types/core.js'
+import { IContainer, IConfig, ILogger, IDatabase } from '@toproc/types'
 import { Express, RequestHandler } from 'express'
 import { Pool } from 'pg'
 

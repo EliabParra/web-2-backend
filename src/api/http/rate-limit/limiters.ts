@@ -5,7 +5,7 @@ import type {
     IContainer,
     ISecurityService,
     II18nService,
-} from '../../../types/index.js'
+} from '@toproc/types'
 
 /** Tipos para rate limiters */
 interface TxData {

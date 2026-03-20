@@ -1,4 +1,4 @@
-import { IDatabase, ILogger, IConfig, IContainer } from '../../types/core.js'
+import { IDatabase, ILogger, IConfig, IContainer } from '@toproc/types'
 
 /**
  * Clase base para Servicios de Lógica de Negocio (BOServices).

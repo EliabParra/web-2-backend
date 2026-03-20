@@ -1,5 +1,5 @@
 import express, { Express } from 'express'
-import { IConfig } from '../../../types/index.js'
+import { IConfig } from '@toproc/types'
 
 /**
  * Configura los parsers de body de Express (JSON y URL-encoded).

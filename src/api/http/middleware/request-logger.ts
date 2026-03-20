@@ -1,6 +1,6 @@
-import { ILogger, AppRequest, AppResponse } from '../../../types/index.js'
+import { ILogger, AppRequest, AppResponse } from '@toproc/types'
 import { Express, NextFunction } from 'express'
-import { redactSecrets } from '../../../utils/sanitize.js'
+import { redactSecrets } from '@toproc/utils'
 
 /**
  * Middleware para logging de peticiones HTTP.

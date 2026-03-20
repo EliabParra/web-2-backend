@@ -1,4 +1,5 @@
-import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
+import { BaseBO } from '@toproc/bo'
+import type { IContainer, ApiResponse } from '@toproc/types'
 import { LocationService, LocationMessages, LocationSchemas, Inputs, Types, registerLocation } from './LocationModule.js'
 
 /**

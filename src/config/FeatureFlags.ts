@@ -1,4 +1,4 @@
-import { IConfig } from '../types/core.js'
+import { IConfig } from '@toproc/types'
 
 export enum Feature {
     USE_NEW_VALIDATOR = 'USE_NEW_VALIDATOR',

@@ -1,4 +1,5 @@
-import { BaseBO, ApiResponse, IContainer } from '../../src/core/business-objects/index.js'
+import { BaseBO } from '@toproc/bo'
+import { IContainer, ApiResponse } from '@toproc/types'
 import { AuthService, AuthMessages, AuthSchemas, Inputs, registerAuth } from './AuthModule.js'
 
 /**

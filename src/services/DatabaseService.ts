@@ -5,9 +5,8 @@ import type {
     ILogger,
     IConfig,
     II18nService,
-    LocalizedMessages,
-} from '../types/index.js'
-import { buildParamsArray } from '../utils/sql.js'
+} from '@toproc/types'
+import { buildParamsArray } from '@toproc/utils'
 
 /**
  * Servicio de Base de Datos (PostgreSQL).

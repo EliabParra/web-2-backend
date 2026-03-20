@@ -1,5 +1,6 @@
 export * from './BaseBO.js'
 export * from './BOService.js'
+export * from './BOError.js'
 
 // Re-export common types for convenience
 export type {
@@ -20,5 +21,4 @@ export type {
     TxKey,
     AppMessages,
     WithRequest,
-} from '../../types/index.js'
-export { BOError } from './BOError.js'
+} from '@toproc/types'

@@ -11,7 +11,7 @@ import type {
     IConfig,
     AppResponse,
     AppRequest,
-} from '../types/index.js'
+} from '@toproc/types'
 
 export interface IncomingMessageWithSession extends IncomingMessage {
     session?: {

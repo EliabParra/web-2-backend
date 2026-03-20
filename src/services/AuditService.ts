@@ -1,5 +1,11 @@
-import type { IAuditService, IContainer, IDatabase, ILogger, AppRequest } from '../types/index.js'
-import { redactSecrets } from '../utils/sanitize.js'
+import {
+    IAuditService,
+    IContainer,
+    IDatabase,
+    ILogger,
+    AppRequest,
+} from '@toproc/types'
+import { redactSecrets } from '@toproc/utils'
 import { AuditQueries } from './queries/audit.js'
 
 export type AuditArgs = {

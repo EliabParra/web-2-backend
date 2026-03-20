@@ -1,24 +1,20 @@
 import { ZodType } from 'zod'
-import { BOError, isBOError } from './BOError.js'
+import { BOError, isBOError } from '@toproc/bo'
 import type {
     IDatabase,
     ILogger,
     IConfig,
     IValidator,
     II18nService,
-    ISessionService,
-    ISecurityService,
-    IAuditService,
     ApiResponse,
     TxKey,
     ValidationError,
     AppMessages,
     AppRequest,
-    IEmailService,
     IContainer,
-} from '../../types/index.js'
-
-export type { ApiResponse, TxKey, IDatabase, IConfig, II18nService, IEmailService }
+    ISessionService,
+    ISecurityService,
+} from '@toproc/types'
 
 /**
  * Clase base para todos los Business Objects (BOs) en el framework ToProccess.
@@ -62,22 +58,16 @@ export abstract class BaseBO {
     protected readonly config: IConfig
 
     /** Validador para validación de entrada (soporta esquemas Zod) */
-    protected validator?: IValidator
+    protected readonly validator: IValidator
+
+    /** Servicio de sesiones */
+    protected readonly session: ISessionService
+
+    /** Servicio de seguridad */
+    protected readonly security: ISecurityService
 
     /** Servicio i18n */
     protected readonly i18n: II18nService
-
-    /** Servicio de seguridad (opcional) */
-    protected readonly security?: ISecurityService
-
-    /** Servicio de sesiones (opcional) */
-    protected readonly session?: ISessionService
-
-    /** Servicio de auditoría (opcional) */
-    protected readonly audit?: IAuditService
-
-    /** Servicio de correo electrónico (opcional) */
-    protected readonly email?: IEmailService
 
     /** Acceso tipado a mensajes de aplicación */
     protected get appMessages(): AppMessages {
@@ -94,23 +84,9 @@ export abstract class BaseBO {
         this.log = container.resolve<ILogger>('log')
         this.config = container.resolve<IConfig>('config')
         this.i18n = container.resolve<II18nService>('i18n')
-
-        // Optional/Lazy dependencies
-        try {
-            this.validator = container.resolve<IValidator>('validator')
-        } catch {}
-        try {
-            this.security = container.resolve<ISecurityService>('security')
-        } catch {}
-        try {
-            this.session = container.resolve<ISessionService>('session')
-        } catch {}
-        try {
-            this.audit = container.resolve<IAuditService>('audit')
-        } catch {}
-        try {
-            this.email = container.resolve<IEmailService>('email')
-        } catch {}
+        this.validator = container.resolve<IValidator>('validator')
+        this.session = container.resolve<ISessionService>('session')
+        this.security = container.resolve<ISecurityService>('security')
     }
 
     /**

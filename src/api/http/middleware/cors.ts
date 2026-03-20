@@ -1,5 +1,5 @@
 import cors from 'cors'
-import { IConfig } from '../../../types/index.js'
+import { IConfig } from '@toproc/types'
 import { Express } from 'express'
 
 /**

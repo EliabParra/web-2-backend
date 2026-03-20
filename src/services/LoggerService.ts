@@ -1,5 +1,6 @@
 import 'colors'
-import { ILogger, IConfig, LogLevel } from '../types/core.js'
+import { ILogger, IConfig } from '@toproc/types'
+import { LogLevel } from '@toproc/types/core.js'
 import { AsyncLocalStorage } from 'node:async_hooks'
 
 export const loggerContext = new AsyncLocalStorage<object>()
@@ -13,7 +14,7 @@ export const loggerContext = new AsyncLocalStorage<object>()
  * Niveles jerárquicos: ERROR (50), WARN (40), INFO (30), DEBUG (20), TRACE (10).
  * Configurable mediante `config.log`.
  */
-export class AppLogger implements ILogger {
+export class LoggerService implements ILogger {
     private minLevel: LogLevel
     private format: 'json' | 'text' | 'pretty'
     private context: object = {}
@@ -21,7 +22,7 @@ export class AppLogger implements ILogger {
     private categories: Record<string, LogLevel> = {}
 
     /**
-     * Crea una nueva instancia de AppLogger.
+     * Crea una nueva instancia de LoggerService.
      *
      * @param deps - Dependencias necesarias (configuración).
      * @param context - Contexto inicial persistente para este logger.
@@ -123,7 +124,7 @@ export class AppLogger implements ILogger {
     child(ctx: object): ILogger {
         // Create new instance with merged context
         // We pass { config: ... } to match constructor signature
-        return new AppLogger(
+        return new LoggerService(
             {
                 config: {
                     log: {

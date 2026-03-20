@@ -1,4 +1,4 @@
-import { redactSecretsInString } from '../../../utils/sanitize.js'
+import { redactSecretsInString } from '@toproc/utils'
 import {
     IContainer,
     ILogger,

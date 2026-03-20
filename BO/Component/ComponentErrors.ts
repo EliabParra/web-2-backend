@@ -7,7 +7,8 @@
  * - Depuración más fácil
  */
 
-import { BOError, TxKey } from '../../src/core/business-objects/index.js'
+import { BOError } from '@toproc/bo'
+import type { TxKey } from '@toproc/types'
 import { ComponentMessages } from './ComponentModule.js'
 
 const defaultMessages = ComponentMessages.es

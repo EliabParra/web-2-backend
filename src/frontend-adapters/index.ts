@@ -1,5 +1,5 @@
 import type { Application } from 'express'
-import type { IContainer, IConfig, ISessionService } from '../types/index.js'
+import type { IContainer, IConfig, ISessionService } from '@toproc/types'
 
 function getFrontendMode(config: IConfig) {
     const raw = String(config.app.frontendMode).trim().toLowerCase()

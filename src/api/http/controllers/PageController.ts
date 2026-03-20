@@ -6,7 +6,7 @@ import type {
     IContainer,
     ILogger,
     II18nService,
-} from '../../../types/index.js'
+} from '@toproc/types'
 
 /**
  * Controlador de Páginas Estáticas.

@@ -1,4 +1,4 @@
-import type { TxKey } from '../../types/core.js'
+import type { TxKey } from '@toproc/types'
 
 /**
  * Error base para la capa de Business Objects.

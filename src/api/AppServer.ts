@@ -1,5 +1,8 @@
+// Express
 import express, { Express, RequestHandler } from 'express'
 import { Server } from 'http'
+
+// Types
 import {
     IContainer,
     IConfig,
@@ -9,35 +12,22 @@ import {
     II18nService,
     AppRequest,
     AppResponse,
-} from '../types/index.js'
-import { registerFrontendHosting } from '../frontend-adapters/index.js'
+} from '@toproc/types'
 
-// Middlewares consolidados
-import {
-    applyHelmet,
-    applyRequestId,
-    applyRequestLogger,
-    applyCorsIfEnabled,
-    applyBodyParsers,
-    applySessionMiddleware,
-    createJsonSyntaxErrorHandler,
-    createCsrfProtection,
-    createCsrfTokenHandler,
-    createFinalErrorHandler,
-} from './http/middleware/index.js'
+// Frontend Adapters
+import { registerFrontendHosting } from '@toproc/frontend-adapters/index.js'
 
-import {
-    createLoginRateLimiter,
-    createToProccessRateLimiter,
-    createAuthPasswordResetRateLimiter,
-} from './http/rate-limit/index.js'
+// Middlewares
+import * as middlewares from '@toproc/middleware'
 
-import { explorerRouter } from '../../scripts/explorer/router.js'
+// Rate Limit
+import * as rateLimit from '@toproc/api/http/rate-limit/index.js'
 
-// Handlers
-import { AuthController } from './http/controllers/AuthController.js'
-import { TransactionController } from './http/controllers/TransactionController.js'
-import { ProbeController } from './http/controllers/ProbeController.js'
+// Controllers
+import * as controllers from '@toproc/controllers'
+
+// Toproc Explorer
+import { explorerRouter } from '@toproc/scripts/explorer/router.js'
 
 /**
  * Servidor de Aplicación (AppServer).
@@ -71,9 +61,9 @@ export class AppServer {
     private readonly db: IDatabase
 
     // Controladores
-    private authController: AuthController
-    private txController: TransactionController
-    private probeController: ProbeController
+    private authController: controllers.AuthController
+    private txController: controllers.TransactionController
+    private probeController: controllers.ProbeController
 
     // Middlewares guardados
     private loginRateLimiter: RequestHandler
@@ -91,9 +81,9 @@ export class AppServer {
         this.db = container.resolve<IDatabase>('db')
 
         // Resolve pre-registered controllers from the IoC container
-        this.authController = container.resolve<AuthController>('authController')
-        this.txController = container.resolve<TransactionController>('txController')
-        this.probeController = container.resolve<ProbeController>('probeController')
+        this.authController = container.resolve<controllers.AuthController>('authController')
+        this.txController = container.resolve<controllers.TransactionController>('txController')
+        this.probeController = container.resolve<controllers.ProbeController>('probeController')
 
         this.app = express()
 
@@ -105,11 +95,11 @@ export class AppServer {
         this.container.register('expressApp', this.app)
 
         // Inicializar Middlewares de Seguridad (Factories)
-        this.csrfTokenHandler = createCsrfTokenHandler(this.i18n)
-        this.csrfProtection = createCsrfProtection(this.i18n, this.config)
+        this.csrfTokenHandler = middlewares.createCsrfTokenHandler(this.i18n)
+        this.csrfProtection = middlewares.createCsrfProtection(this.i18n, this.config)
 
-        this.loginRateLimiter = createLoginRateLimiter(this.container)
-        this.authPasswordResetRateLimiter = createAuthPasswordResetRateLimiter(this.container)
+        this.loginRateLimiter = rateLimit.createLoginRateLimiter(this.container)
+        this.authPasswordResetRateLimiter = rateLimit.createAuthPasswordResetRateLimiter(this.container)
     }
 
     /**
@@ -117,7 +107,7 @@ export class AppServer {
      */
     public get toProccessRateLimiter(): RequestHandler {
         if (!this._toProccessRateLimiter) {
-            this._toProccessRateLimiter = createToProccessRateLimiter(this.container)
+            this._toProccessRateLimiter = rateLimit.createToProccessRateLimiter(this.container)
         }
         return this._toProccessRateLimiter
     }
@@ -127,12 +117,12 @@ export class AppServer {
         if (this.config.app.trustProxy != null) {
             this.app.set('trust proxy', this.config.app.trustProxy)
         }
-        applyHelmet(this.app)
-        applyRequestId(this.app)
-        applyRequestLogger(this.app, this.log)
-        applyCorsIfEnabled(this.app, this.config)
-        applyBodyParsers(this.app, this.config)
-        this.app.use(createJsonSyntaxErrorHandler(this.i18n))
+        middlewares.applyHelmet(this.app)
+        middlewares.applyRequestId(this.app)
+        middlewares.applyRequestLogger(this.app, this.log)
+        middlewares.applyCorsIfEnabled(this.app, this.config)
+        middlewares.applyBodyParsers(this.app, this.config)
+        this.app.use(middlewares.createJsonSyntaxErrorHandler(this.i18n))
     }
 
     /**
@@ -140,7 +130,7 @@ export class AppServer {
      */
     async init(): Promise<void> {
         // 1. Session Middleware
-        applySessionMiddleware(this.app, this.container)
+        middlewares.applySessionMiddleware(this.app, this.container)
 
         // 2. Session Adapter
         const sessionAdapter = {
@@ -168,7 +158,7 @@ export class AppServer {
         })
 
         // 6. Error Handler Final
-        this.app.use(createFinalErrorHandler(this.container))
+        this.app.use(middlewares.createFinalErrorHandler(this.container))
 
         this.initialized = true
     }

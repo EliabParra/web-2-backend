@@ -1,4 +1,4 @@
-import { IPermissionProvider, ILogger, IContainer } from '../../types/core.js'
+import { IPermissionProvider, ILogger, IContainer } from '@toproc/types'
 
 /**
  * Servicio de Autorización.

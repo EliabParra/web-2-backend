@@ -15,7 +15,8 @@ export function templateErrors(objectName: string) {
  * - Depuración más fácil
  */
 
-import { BOError, TxKey } from '../../src/core/business-objects/index.js'
+import { BOError } from '@toproc/bo'
+import type { TxKey } from '@toproc/types'
 import { ${pascalName}Messages } from './${pascalName}Module.js'
 
 const defaultMessages = ${pascalName}Messages.es

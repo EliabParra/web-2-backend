@@ -1,17 +1,8 @@
 import express, { NextFunction } from 'express'
-import path from 'path'
 import { routes, pagesPath } from './routes.js'
-import { createAuthCheckMiddleware } from '../middleware/auth-check.js'
-import { PageController } from '../controllers/PageController.js'
-import type {
-    IContainer,
-    IConfig,
-    ILogger,
-    II18nService,
-    ISessionService,
-    AppRequest,
-    AppResponse,
-} from '../../../types/index.js'
+import { createAuthCheckMiddleware } from '@toproc/middleware'
+import { PageController } from '@toproc/controllers'
+import type { IContainer, ISessionService, AppRequest, AppResponse } from '@toproc/types'
 
 /** Route definition type */
 interface PageRoute {

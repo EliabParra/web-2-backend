@@ -5,8 +5,8 @@ import {
     II18nService,
     AppRequest,
     AppResponse,
-} from '../../../types/index.js'
-import { sendInvalidParameters } from '../../../utils/http-responses.js'
+} from '@toproc/types'
+import { sendInvalidParameters } from '@toproc/utils'
 
 /**
  * Controlador de Autenticación.

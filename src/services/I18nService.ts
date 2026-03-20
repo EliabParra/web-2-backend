@@ -1,7 +1,5 @@
-import { deepMerge } from '../config/utils/merge.utils.js'
-import type { AppMessages } from '../locales/es.js'
-import type { LocalizedMessage } from '../types/api.js'
-import type { II18nService } from '../types/core.js'
+import { deepMerge } from '@toproc/config'
+import type { AppMessages, LocalizedMessage, II18nService } from '@toproc/types'
 
 /**
  * Servicio de internacionalización (I18n).

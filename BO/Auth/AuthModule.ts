@@ -8,7 +8,7 @@ export type * as Types from './AuthTypes.js'
 export * as Errors from './AuthErrors.js'
 export * as Queries from './AuthQueries.js'
 
-import { IContainer } from '../../src/types/core.js'
+import { IContainer } from '@toproc/types'
 import { AuthService } from './AuthService.js'
 import { AuthRepository } from './AuthRepository.js'
 

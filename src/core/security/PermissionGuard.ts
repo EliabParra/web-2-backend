@@ -1,5 +1,5 @@
-import { IDatabase, ILogger, IPermissionProvider, IContainer } from '../../types/core.js'
-import { SecurityQueries } from '../../services/queries/security.js'
+import { IDatabase, ILogger, IPermissionProvider, IContainer } from '@toproc/types'
+import { SecurityQueries } from '@toproc/security'
 
 /**
  * Guardián de permisos basado en base de datos.
@@ -35,13 +35,13 @@ export class PermissionGuard implements IPermissionProvider {
      */
     async load(): Promise<void> {
         try {
-            // Updated to use SecurityQueries.loadPermissions (new schema)
+            // Updated to use SecurityQueries.LOAD_PERMISSIONS
             // TODO(REVERT_NAMING): Revert object_na to object_name, method_na to method_name
             const res = await this.db.query<{
                 profile_id: number
                 object_na: string
                 method_na: string
-            }>(SecurityQueries.loadPermissions)
+            }>(SecurityQueries.LOAD_PERMISSIONS)
 
             const nextPermissions = new Set<string>()
 
@@ -95,7 +95,7 @@ export class PermissionGuard implements IPermissionProvider {
     async grant(profileId: number, objectName: string, methodName: string): Promise<boolean> {
         try {
             // 1. Write to DB
-            const res = await this.db.query(SecurityQueries.grantPermission, [
+            const res = await this.db.query(SecurityQueries.GRANT_PERMISSION, [
                 profileId,
                 objectName,
                 methodName,
@@ -127,7 +127,7 @@ export class PermissionGuard implements IPermissionProvider {
     async revoke(profileId: number, objectName: string, methodName: string): Promise<boolean> {
         try {
             // 1. Write to DB
-            const res = await this.db.query(SecurityQueries.revokePermission, [
+            const res = await this.db.query(SecurityQueries.REVOKE_PERMISSION, [
                 profileId,
                 objectName,
                 methodName,

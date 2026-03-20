@@ -1,6 +1,6 @@
 import { Pool } from 'pg'
 import type { AppMessages } from '../locales/es.js'
-import type { AppRequest, AppResponse } from './http.js'
+import type { AppRequest } from './http.js'
 import type { MenuStructure, SecuritySubsystem, SecurityMenu, SecurityOption } from './security.js'
 
 export type { AppMessages }

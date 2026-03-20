@@ -1,4 +1,4 @@
-import { BOError, TxKey } from '../../src/core/business-objects/index.js'
+import { BOError, TxKey } from '@toproc/bo'
 import { AuthMessages } from './AuthModule.js'
 
 const defaultMessages = AuthMessages.es

@@ -4,16 +4,56 @@
         "lib": ["ES2022"],
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
+        "esModuleInterop": true,
         "resolveJsonModule": true,
-
         "allowJs": false,
-
         "strict": true,
         "skipLibCheck": true,
+        "noEmit": true,
+        "allowImportingTsExtensions": false,
+        "paths": {
+            "@toproc": ["./src/index.ts"],
+            "@toproc/*": ["./src/*"],
+            
+            "@toproc/types": ["./src/types/index.ts"],
+            "@toproc/types/*": ["./src/types/*"],
+            
+            "@toproc/api": ["./src/api/index.ts"],
+            "@toproc/api/*": ["./src/api/*"],
+            
+            "@toproc/core": ["./src/core/index.ts"],
+            "@toproc/core/*": ["./src/core/*"],
+            
+            "@toproc/services": ["./src/services/index.ts"],
+            "@toproc/services/*": ["./src/services/*"],
 
-        // "types": ["node"], // Removed to allow auto-discovery of express, etc.
+            "@toproc/config": ["./src/config/index.ts"],
+            "@toproc/config/*": ["./src/config/*"],
 
-        "noEmit": true
+            "@toproc/locales": ["./src/locales/index.ts"],
+            "@toproc/locales/*": ["./src/locales/*"],
+
+            "@toproc/utils": ["./src/utils/index.ts"],
+            "@toproc/utils/*": ["./src/utils/*"],
+
+            "@toproc/controllers": ["./src/api/http/controllers/index.ts"],
+            "@toproc/controllers/*": ["./src/api/http/controllers/*"],
+
+            "@toproc/middleware": ["./src/api/http/middleware/index.ts"],
+            "@toproc/middleware/*": ["./src/api/http/middleware/*"],
+
+            "@toproc/security": ["./src/core/security/index.ts"],
+            "@toproc/security/*": ["./src/core/security/*"],
+
+            "@toproc/transaction": ["./src/core/transaction/index.ts"],
+            "@toproc/transaction/*": ["./src/core/transaction/*"],
+            
+            "@toproc/bo": ["./src/core/business-objects/index.ts"],
+            "@toproc/bo/*": ["./src/core/business-objects/*"],
+            
+            "@toproc/scripts/*": ["./scripts/*"],
+            "@toproc/test/*": ["./test/*"]
+        }
     },
     "include": ["src/**/*.ts", "scripts/**/*.ts", "BO/**/*.ts"],
     "exclude": ["node_modules", "dist", "test", "docs", "public"]
