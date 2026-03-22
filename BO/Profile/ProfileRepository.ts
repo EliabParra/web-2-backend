@@ -31,7 +31,7 @@ export class ProfileRepository implements Types.IProfileRepository {
      */
     async create(data: Partial<Types.Profile>): Promise<Types.Profile> {
         const result = await this.db.query<Types.Profile>(ProfileQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.profile_na,
         ])
         return result.rows[0]
     }
@@ -42,7 +42,7 @@ export class ProfileRepository implements Types.IProfileRepository {
     async update(id: number, data: Partial<Types.Profile>): Promise<Types.Profile | null> {
         const result = await this.db.query<Types.Profile>(ProfileQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.profile_na,
         ])
         return result.rows[0]
     }

@@ -1,21 +1,21 @@
 export const ProfileQueries = {
     findAll: `
-        SELECT * FROM profile
+        SELECT * FROM security.profile
     `,
     findById: `
-        SELECT * FROM profile WHERE id = $1
+        SELECT * FROM security.profile WHERE profile_id = $1
     `,
     create: `
-        INSERT INTO profile (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO security.profile (profile_na) VALUES ($1) RETURNING *
     `,
     update: `
-        UPDATE profile SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE security.profile SET profile_na = $2 WHERE profile_id = $1 RETURNING *
     `,
     delete: `
-        DELETE FROM profile WHERE id = $1
+        DELETE FROM security.profile WHERE profile_id = $1
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM profile WHERE id = $1) as "exists"
+        SELECT EXISTS(SELECT 1 FROM security.profile WHERE profile_id = $1) as "exists"
     `,
 } as const
 

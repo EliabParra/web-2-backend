@@ -13,19 +13,20 @@ export const createProfileSchemas = (messages: ProfileMessagesSet = ProfileMessa
 
     return {
     get: z.object({
-        id: z.coerce.number(),
+        profile_id: z.coerce.number(),
     }),
     getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
+        profile_na: z.string().optional(),
     }),
     create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
+        profile_na: z.string().min(1, validation.name.required),
     }),
     update: z.object({
-        id: z.coerce.number(),
+        profile_id: z.coerce.number(),
+        profile_na: z.string().optional(),
     }),
     delete: z.object({
-        id: z.coerce.number(),
+        profile_id: z.coerce.number(),
     }),
     }
 }

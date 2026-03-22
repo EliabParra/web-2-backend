@@ -1,5 +1,8 @@
 /**
  * Definiciones de tipos para Profile
+ * Entidad:
+ * profile_id: identificador
+ * profile_na: nombre
  */
 
 export namespace Profile {
@@ -8,15 +11,13 @@ export namespace Profile {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        profile_id: number
+        profile_na: string
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        profile_id: number
+        profile_na: string
     }
 
     // ============================================================
@@ -24,23 +25,24 @@ export namespace Profile {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        profile_na: string
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        profile_id: number
+        profile_na?: string
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        profile_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        profile_na?: string
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        profile_id: number
     }
 
     export type RowCount = {

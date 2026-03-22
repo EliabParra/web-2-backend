@@ -34,7 +34,7 @@ export class ProfileBO extends BaseBO {
             params,
             ProfileSchemas.get,
             async (data) => {
-                const result: Types.Profile = await this.service.getById(data.id)
+                const result: Types.Profile = await this.service.getById(data.profile_id)
                 return this.success(result, this.profileMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class ProfileBO extends BaseBO {
             params,
             ProfileSchemas.update,
             async (data) => {
-                const result: Types.Profile = await this.service.update(data.id, data)
+                const result: Types.Profile = await this.service.update(data.profile_id, data)
                 return this.success(result, this.profileMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class ProfileBO extends BaseBO {
             params,
             ProfileSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.profile_id)
                 return this.success(null, this.profileMessages.delete)
             }
         )
