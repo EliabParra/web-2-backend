@@ -1,5 +1,9 @@
 /**
  * Definiciones de tipos para Menu
+ * Entidad:
+ * menu_id: identificador
+ * menu_na: nombre
+ * subsystem_id: subsistema
  */
 
 export namespace Menu {
@@ -8,15 +12,15 @@ export namespace Menu {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        menu_id: number
+        menu_na: string
+        subsystem_id?: number | null
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        menu_id: number
+        menu_na: string
+        subsystem_id?: number | null
     }
 
     // ============================================================
@@ -24,23 +28,27 @@ export namespace Menu {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        menu_na: string
+        subsystem_id?: number | null
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        menu_id: number
+        menu_na?: string
+        subsystem_id?: number | null
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        menu_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        menu_na?: string
+        subsystem_id?: number | null
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        menu_id: number
     }
 
     export type RowCount = {

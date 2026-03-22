@@ -31,7 +31,8 @@ export class MenuRepository implements Types.IMenuRepository {
      */
     async create(data: Partial<Types.Menu>): Promise<Types.Menu> {
         const result = await this.db.query<Types.Menu>(MenuQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.menu_na,
+            data.subsystem_id,
         ])
         return result.rows[0]
     }
@@ -42,7 +43,8 @@ export class MenuRepository implements Types.IMenuRepository {
     async update(id: number, data: Partial<Types.Menu>): Promise<Types.Menu | null> {
         const result = await this.db.query<Types.Menu>(MenuQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.menu_na,
+            data.subsystem_id,
         ])
         return result.rows[0]
     }

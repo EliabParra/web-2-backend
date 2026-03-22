@@ -34,7 +34,7 @@ export class MenuBO extends BaseBO {
             params,
             MenuSchemas.get,
             async (data) => {
-                const result: Types.Menu = await this.service.getById(data.id)
+                const result: Types.Menu = await this.service.getById(data.menu_id)
                 return this.success(result, this.menuMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class MenuBO extends BaseBO {
             params,
             MenuSchemas.update,
             async (data) => {
-                const result: Types.Menu = await this.service.update(data.id, data)
+                const result: Types.Menu = await this.service.update(data.menu_id, data)
                 return this.success(result, this.menuMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class MenuBO extends BaseBO {
             params,
             MenuSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.menu_id)
                 return this.success(null, this.menuMessages.delete)
             }
         )

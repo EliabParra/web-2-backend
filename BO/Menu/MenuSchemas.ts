@@ -13,19 +13,23 @@ export const createMenuSchemas = (messages: MenuMessagesSet = MenuMessages.es) =
 
     return {
     get: z.object({
-        id: z.coerce.number(),
+        menu_id: z.coerce.number(),
     }),
     getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
+        menu_na: z.string().optional(),
+        subsystem_id: z.number().int().optional().nullable(),
     }),
     create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
+        menu_na: z.string().min(1, validation.name.required),
+        subsystem_id: z.number().int().min(1, validation.subsystem.min).optional().nullable(),
     }),
     update: z.object({
-        id: z.coerce.number(),
+        menu_id: z.coerce.number(),
+        menu_na: z.string().optional(),
+        subsystem_id: z.number().int().optional().nullable(),
     }),
     delete: z.object({
-        id: z.coerce.number(),
+        menu_id: z.coerce.number(),
     }),
     }
 }

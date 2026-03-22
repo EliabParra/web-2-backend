@@ -18,6 +18,12 @@ export const MenuMessages = {
         validation: {
             requiredField: 'Campo requerido',
             invalidFormat: 'Formato inválido',
+            name: {
+                required: 'El nombre es requerido',
+            },
+            subsystem: {
+                min: 'El subsistema debe ser mayor a 0',
+            },
         },
     },
     en: {
@@ -39,6 +45,12 @@ export const MenuMessages = {
         validation: {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
+            name: {
+                required: 'Name is required',
+            },
+            subsystem: {
+                min: 'Subsystem must be greater than 0',
+            },
         },
     }
 }
