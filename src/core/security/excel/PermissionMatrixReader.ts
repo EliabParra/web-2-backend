@@ -12,7 +12,6 @@ import type {
     MethodRow,
     MenuRow,
     OptionRow,
-    PermissionRow,
     AssignmentRow,
     ProfileIdRow,
     SubsystemIdRow,
@@ -165,52 +164,102 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
         let skipped = 0
 
         for (const { row, data } of rows) {
-            const parsed = this.validateRow<UserRow>(UserRowSchema, data, SHEET_DEFINITIONS.USERS.name, row)
+            const parsed = this.validateRow<UserRow>(
+                UserRowSchema,
+                data,
+                SHEET_DEFINITIONS.USERS.name,
+                row
+            )
             if (!parsed) continue
 
-            try {
-                const profileRes = await this.db.query<ProfileIdRow>(
-                    ExcelQueries.FIND_PROFILE_BY_NAME, [parsed.profile_na]
+            const userNames = this.splitCsv(parsed.user_na)
+            const profileNames = this.splitCsv(parsed.profile_na)
+
+            if (userNames.length === 0) {
+                this.addError(
+                    SHEET_DEFINITIONS.USERS.name,
+                    row,
+                    'user_na',
+                    'user_na es requerido'
                 )
+                continue
+            }
 
-                if (profileRes.rows.length === 0) {
-                    this.addError(SHEET_DEFINITIONS.USERS.name, row, 'profile_na', `Perfil "${parsed.profile_na}" no existe`)
-                    continue
-                }
+            if (profileNames.length === 0) {
+                this.addError(
+                    SHEET_DEFINITIONS.USERS.name,
+                    row,
+                    'profile_na',
+                    'profile_na es requerido'
+                )
+                continue
+            }
 
+            try {
                 const bcrypt = await import('bcrypt')
                 // TODO(REVERT_NAMING): Revert user_pw to user_pw
                 const hashedPassword = await bcrypt.default.hash(parsed.user_pw, 10)
 
-                const res = await this.db.query<{ [key: string]: unknown; user_id: number }>(
-                    ExcelQueries.INSERT_USER,
-                    [parsed.user_na, hashedPassword]
-                )
+                for (const userName of userNames) {
+                    const res = await this.db.query<{ [key: string]: unknown; user_id: number }>(
+                        ExcelQueries.INSERT_USER,
+                        [userName, hashedPassword]
+                    )
 
-                // TODO(REVERT_NAMING): Singular tables & N:M profiles
-                const userId =
-                    res.rows.length > 0
-                        ? Number(res.rows[0].user_id)
-                        : Number(
-                              (
-                                  await this.db.query<{ user_id: number }>(ExcelQueries.FIND_USER_BY_NAME, [
-                                      parsed.user_na,
-                                  ])
-                              ).rows[0]?.user_id
-                          )
+                    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+                    const userId =
+                        res.rows.length > 0
+                            ? Number(res.rows[0].user_id)
+                            : Number(
+                                  (
+                                      await this.db.query<{ user_id: number }>(
+                                          ExcelQueries.FIND_USER_BY_NAME,
+                                          [userName]
+                                      )
+                                  ).rows[0]?.user_id
+                              )
 
-                if (Number.isInteger(userId) && userId > 0) {
-                    await this.db.query(ExcelQueries.INSERT_USER_PROFILE, [
-                        userId,
-                        profileRes.rows[0].profile_id,
-                    ])
-                }
+                    if (!(Number.isInteger(userId) && userId > 0)) {
+                        this.addError(
+                            SHEET_DEFINITIONS.USERS.name,
+                            row,
+                            'user_na',
+                            `No se pudo resolver user_id para "${userName}"`
+                        )
+                        continue
+                    }
 
-                if (res.rows.length > 0) {
-                    inserted++
-                    this.log.debug(`Usuario creado: "${parsed.user_na}" → perfil "${parsed.profile_na}"`)
-                } else {
-                    skipped++
+                    if (res.rows.length > 0) {
+                        inserted++
+                    } else {
+                        skipped++
+                    }
+
+                    for (const profileName of profileNames) {
+                        const profileRes = await this.db.query<ProfileIdRow>(
+                            ExcelQueries.FIND_PROFILE_BY_NAME,
+                            [profileName]
+                        )
+
+                        if (profileRes.rows.length === 0) {
+                            this.addError(
+                                SHEET_DEFINITIONS.USERS.name,
+                                row,
+                                'profile_na',
+                                `Perfil "${profileName}" no existe`
+                            )
+                            continue
+                        }
+
+                        await this.db.query(ExcelQueries.INSERT_USER_PROFILE, [
+                            userId,
+                            profileRes.rows[0].profile_id,
+                        ])
+
+                        this.log.debug(
+                            `Usuario procesado: "${userName}" → perfil "${profileName}"`
+                        )
+                    }
                 }
             } catch (err) {
                 // TODO(REVERT_NAMING): Revert user_na to username
@@ -446,23 +495,72 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
         let skipped = 0
 
         for (const { row, data } of rows) {
-            const parsed = this.validateRow<PermissionRow>(PermissionRowSchema, data, SHEET_DEFINITIONS.PERMISSIONS.name, row)
-            if (!parsed) continue
+            const rawProfiles = this.splitCsv(data.profile_na)
+            const rawObjectMethods = this.splitCsv(data.object_method)
 
-            const [objectName, methodName] = parsed.object_method.split('.')
-
-            try {
-                const res = await this.db.query<ProfileMethodIdRow>(
-                    ExcelQueries.INSERT_PERMISSION, [parsed.profile_na, objectName, methodName]
+            if (rawProfiles.length === 0) {
+                this.addError(
+                    SHEET_DEFINITIONS.PERMISSIONS.name,
+                    row,
+                    'profile_na',
+                    'profile_na es requerido'
                 )
-                if (res.rows.length > 0) {
-                    inserted++
-                    this.log.debug(`Permiso asignado: "${parsed.profile_na}" → "${parsed.object_method}"`)
-                } else {
-                    skipped++
+                continue
+            }
+
+            if (rawObjectMethods.length === 0) {
+                this.addError(
+                    SHEET_DEFINITIONS.PERMISSIONS.name,
+                    row,
+                    'object_method',
+                    'object_method es requerido'
+                )
+                continue
+            }
+
+            for (const profileName of rawProfiles) {
+                for (const objectMethod of rawObjectMethods) {
+                    const omValidation = this.validator.validate<string>(
+                        objectMethod,
+                        ObjectMethodSchema
+                    )
+
+                    if (!omValidation.valid) {
+                        for (const err of omValidation.errors) {
+                            this.addError(
+                                SHEET_DEFINITIONS.PERMISSIONS.name,
+                                row,
+                                'object_method',
+                                err.message
+                            )
+                        }
+                        continue
+                    }
+
+                    const [objectName, methodName] = objectMethod.split('.')
+
+                    try {
+                        const res = await this.db.query<ProfileMethodIdRow>(
+                            ExcelQueries.INSERT_PERMISSION,
+                            [profileName, objectName, methodName]
+                        )
+                        if (res.rows.length > 0) {
+                            inserted++
+                            this.log.debug(
+                                `Permiso asignado: "${profileName}" → "${objectMethod}"`
+                            )
+                        } else {
+                            skipped++
+                        }
+                    } catch (err) {
+                        this.addError(
+                            SHEET_DEFINITIONS.PERMISSIONS.name,
+                            row,
+                            'object_method',
+                            this.errorMessage(err)
+                        )
+                    }
                 }
-            } catch (err) {
-                this.addError(SHEET_DEFINITIONS.PERMISSIONS.name, row, 'object_method', this.errorMessage(err))
             }
         }
 
@@ -594,5 +692,17 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
     /** Extrae mensaje de error de forma segura. */
     private errorMessage(err: unknown): string {
         return err instanceof Error ? err.message : String(err)
+    }
+
+    /**
+     * Divide valores separados por coma y limpia espacios.
+     * Permite representar relaciones N:M en una sola celda cuando es necesario.
+     */
+    private splitCsv(value: string | undefined): string[] {
+        if (!value) return []
+        return value
+            .split(',')
+            .map((v) => v.trim())
+            .filter(Boolean)
     }
 }

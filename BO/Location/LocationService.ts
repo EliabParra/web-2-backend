@@ -39,7 +39,7 @@ export class LocationService extends BOService implements Types.ILocationService
      * Crea nuevo location
      */
     async create(data: Partial<Types.Location>): Promise<Types.Location> {
-        this.log.info('Creando location')
+        this.log.trace('Creando location')
         return this.repo.create(data)
     }
 

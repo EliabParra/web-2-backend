@@ -39,7 +39,7 @@ export class CategoryService extends BOService implements Types.ICategoryService
      * Crea nuevo category
      */
     async create(data: Partial<Types.Category>): Promise<Types.Category> {
-        this.log.info('Creando category')
+        this.log.trace('Creando category')
         return this.repo.create(data)
     }
 

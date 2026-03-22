@@ -1,5 +1,5 @@
 import { BOService } from '@toproc/bo'
-import type { IContainer } from '@toproc/types'
+import { IContainer, IMenuProvider } from '@toproc/types'
 import { MenuRepository, Errors, Types } from './MenuModule.js'
 
 /**
@@ -10,10 +10,12 @@ import { MenuRepository, Errors, Types } from './MenuModule.js'
  */
 export class MenuService extends BOService implements Types.IMenuService {
     private repo: MenuRepository
+    private menuProvider: IMenuProvider
 
     constructor(container: IContainer) {
         super(container)
         this.repo = container.resolve<MenuRepository>('MenuRepository')
+        this.menuProvider = container.resolve<IMenuProvider>('MenuProvider')
     }
 
     /**
@@ -39,7 +41,7 @@ export class MenuService extends BOService implements Types.IMenuService {
      * Crea nuevo menu
      */
     async create(data: Partial<Types.Menu>): Promise<Types.Menu> {
-        this.log.info('Creando menu')
+        this.log.trace('Creando menu')
         return this.repo.create(data)
     }
 

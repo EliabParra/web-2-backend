@@ -39,7 +39,7 @@ export class LapseService extends BOService implements Types.ILapseService {
      * Crea nuevo lapse
      */
     async create(data: Partial<Types.Lapse>): Promise<Types.Lapse> {
-        this.log.info('Creando lapse')
+        this.log.trace('Creando lapse')
         return this.repo.create(data)
     }
 

@@ -39,7 +39,7 @@ export class ObjectService extends BOService implements Types.IObjectService {
      * Crea nuevo object
      */
     async create(data: Partial<Types.Object>): Promise<Types.Object> {
-        this.log.info('Creando object')
+        this.log.trace('Creando object')
         return this.repo.create(data)
     }
 

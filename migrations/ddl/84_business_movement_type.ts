@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.movement_type
- * Generated at: 2026-03-18T02:22:46.215Z
+ * Generated at: 2026-03-22T21:11:06.330Z
  */
 export const MOVEMENT_TYPE_SCHEMA = [
     // Table Definition

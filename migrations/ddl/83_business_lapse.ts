@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.lapse
- * Generated at: 2026-03-18T02:22:46.180Z
+ * Generated at: 2026-03-22T21:11:06.301Z
  */
 export const LAPSE_SCHEMA = [
     // Table Definition

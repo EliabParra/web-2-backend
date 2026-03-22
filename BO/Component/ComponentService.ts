@@ -39,7 +39,7 @@ export class ComponentService extends BOService implements Types.IComponentServi
      * Crea nuevo component
      */
     async create(data: Partial<Types.Component>): Promise<Types.Component> {
-        this.log.info('Creando component')
+        this.log.trace('Creando component')
         return this.repo.create(data)
     }
 

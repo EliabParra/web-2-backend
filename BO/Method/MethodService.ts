@@ -39,7 +39,7 @@ export class MethodService extends BOService implements Types.IMethodService {
      * Crea nuevo method
      */
     async create(data: Partial<Types.Method>): Promise<Types.Method> {
-        this.log.info('Creando method')
+        this.log.trace('Creando method')
         return this.repo.create(data)
     }
 

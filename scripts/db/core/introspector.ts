@@ -31,8 +31,8 @@ export class Introspector {
      */
     async listTables(): Promise<TableInfo[]> {
         const result = await this.db.exeRaw(`
-            SELECT table_schema, table_name 
-            FROM information_schema.tables 
+            SELECT table_schema, table_name
+            FROM information_schema.tables
             WHERE table_type = 'BASE TABLE'
               AND table_schema NOT IN ('pg_catalog', 'information_schema')
             ORDER BY table_schema, table_name
@@ -101,19 +101,19 @@ export class Introspector {
     async calculateTopology(tables: TableInfo[]): Promise<Map<string, number>> {
         const topology = new Map<string, number>()
         const unassigned = new Set(tables.map(t => `${t.table_schema}.${t.table_name}`))
-        
+
         // Cargar todas las dependencias
         const dependencies = new Map<string, string[]>()
-        
+
         for (const t of tables) {
             const tableName = `${t.table_schema}.${t.table_name}`
             const rawFks = await this.getForeignKeys(t.table_schema, t.table_name)
-            
+
             const refs = rawFks.map(fk => {
                 const match = fk.match(/references\s+([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)/i)
                 return match ? match[1] : null
             }).filter(ref => ref !== null && ref !== tableName) as string[]
-            
+
             dependencies.set(tableName, refs)
         }
 
@@ -194,14 +194,14 @@ export class Introspector {
 
         const topology = await this.calculateTopology(tables)
         const generatedFiles: string[] = []
-        
+
         // Sorting tables topologically, then alphabetically
         const sortedTables = [...tables].sort((a, b) => {
             const keyA = `${a.table_schema}.${a.table_name}`
             const keyB = `${b.table_schema}.${b.table_name}`
             const levelA = topology.get(keyA) || 0
             const levelB = topology.get(keyB) || 0
-            
+
             if (levelA !== levelB) return levelA - levelB
             return keyA.localeCompare(keyB)
         })
@@ -247,7 +247,11 @@ export class Introspector {
                                 `      📝 Found ${data.length} records in ${table.table_name} (Manual Table)`
                                     .gray
                             )
-                            const priority = this.getTablePriority(table.table_name)
+                            const priority = this.getTablePriority(
+                                table.table_schema,
+                                table.table_name,
+                                topology
+                            )
                             const dataContent = this.generateDataFile(
                                 table.table_schema,
                                 table.table_name,
@@ -281,7 +285,11 @@ export class Introspector {
                 const data = await this.getData(table.table_schema, table.table_name)
                 if (data.length > 0) {
                     console.log(`      📝 Found ${data.length} records in ${table.table_name}`.gray)
-                    const priority = this.getTablePriority(table.table_name)
+                    const priority = this.getTablePriority(
+                        table.table_schema,
+                        table.table_name,
+                        topology
+                    )
                     const dataContent = this.generateDataFile(
                         table.table_schema,
                         table.table_name,
@@ -413,13 +421,13 @@ export class Introspector {
             JOIN information_schema.constraint_column_usage AS ccu
                 ON ccu.constraint_name = tc.constraint_name
                 AND ccu.table_schema = tc.table_schema
-            WHERE tc.constraint_type = 'FOREIGN KEY' 
+            WHERE tc.constraint_type = 'FOREIGN KEY'
               AND tc.table_schema = $1
               AND tc.table_name = $2;
             `,
             [schema, table]
         )
-        
+
         return result.rows.map(
             (r: any) => `foreign key (${r.column_name}) references ${r.foreign_schema}.${r.foreign_table} (${r.foreign_column})`
         )
@@ -500,26 +508,19 @@ ${parts.join('\n')}
      * Returns a sort priority for data files based on dependencies.
      * Lower number = Earlier execution.
      */
-    private getTablePriority(tableName: string): string {
-        const priorities: Record<string, string> = {
-            // Level 1: Independent
-            profiles: '010',
-            objects: '020',
+    private getTablePriority(
+        schemaName: string,
+        tableName: string,
+        topology: Map<string, number>
+    ): string {
+        const key = `${schemaName}.${tableName}`
+        const level = topology.get(key)
 
-            // Level 2: Depend on Level 1
-            users: '100', // depends on profiles
-            methods: '110', // depends on objects
-
-            // Level 3: Depend on Level 2
-            user_profiles: '200', // depends on users, profiles
-            // TODO(REVERT_NAMING): Revert user_device→user_devices
-            user_device: '210', // depends on users
-            permission_methods: '220', // depends on methods, roles(profiles)
-            sessions: '230', // depends on users
-            audit: '240', // depends on users
+        if (typeof level === 'number') {
+            return String(level * 10).padStart(3, '0')
         }
 
-        return priorities[tableName] || '999'
+        return '999'
     }
 
     /**

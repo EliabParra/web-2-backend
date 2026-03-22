@@ -39,7 +39,7 @@ export class UserService extends BOService implements Types.IUserService {
      * Crea nuevo user
      */
     async create(data: Partial<Types.User>): Promise<Types.User> {
-        this.log.info('Creando user')
+        this.log.trace('Creando user')
         return this.repo.create(data)
     }
 

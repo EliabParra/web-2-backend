@@ -230,8 +230,20 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
                 // Validación sí aplica aquí.
             }
 
-            const formulaeList = validationDef.formula 
-                ? [validationDef.formula] 
+            // Campos que soportan listas separadas por coma en importación.
+            // Mantiene dropdown, pero no bloquea escritura manual.
+            const allowCsvInput =
+                (sheet.name === 'Usuarios' && col === 'profile_na') ||
+                (sheet.name === 'Permisos' && (col === 'profile_na' || col === 'object_method'))
+
+            // LibreOffice Calc en varios casos bloquea entradas CSV cuando hay validación de tipo lista,
+            // incluso si en Excel funciona. Para compatibilidad cruzada, no aplicamos validación en estas columnas.
+            if (allowCsvInput) {
+                continue
+            }
+
+            const formulaeList = validationDef.formula
+                ? [validationDef.formula]
                 : [`"${validationDef.list.join(',')}"`];
 
             for (let row = 2; row <= maxRow; row++) {
@@ -242,8 +254,8 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
                     showErrorMessage: validationDef.formula ? true : false,
                     errorStyle: validationDef.formula ? 'stop' : 'warning',
                     errorTitle: validationDef.formula ? 'Valor inválido' : 'Precaución',
-                    error: validationDef.formula 
-                        ? `El valor debe existir en la fila correspondiente de su hoja original.` 
+                    error: validationDef.formula
+                        ? `El valor debe existir en la fila correspondiente de su hoja original.`
                         : `Para methods complejos asegúrese que existe previamente escrito.`,
                 }
             }
@@ -265,6 +277,8 @@ export class PermissionMatrixWriter implements IPermissionMatrixWriter {
             '2. Los campos con dropdown muestran valores existentes en la base de datos.',
             '3. Los valores deben coincidir exactamente (sensible a mayúsculas/minúsculas).',
             '4. En "object_method", use el formato: NombreObjeto.nombreMetodo (ej: Auth.login).',
+            '4.1 En la hoja "Permisos", puede usar comas para múltiples valores en una celda (ej: perfil1, perfil2 o Auth.login, User.get).',
+            '4.2 En la hoja "Usuarios", puede separar por comas en "profile_na" para asignar varios perfiles a un usuario, y también en "user_na" para cargar varios usuarios con la misma contraseña.',
             '5. En "user_pw", ingrese la contraseña en texto plano — será hasheada al importar.',
             '6. Las filas vacías se ignoran, los duplicados se omiten automáticamente.',
             '',

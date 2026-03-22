@@ -39,7 +39,7 @@ export class ReportService extends BOService implements Types.IReportService {
      * Crea nuevo report
      */
     async create(data: Partial<Types.Report>): Promise<Types.Report> {
-        this.log.info('Creando report')
+        this.log.trace('Creando report')
         return this.repo.create(data)
     }
 

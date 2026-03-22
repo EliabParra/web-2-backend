@@ -39,7 +39,7 @@ export class InventoryService extends BOService implements Types.IInventoryServi
      * Crea nuevo inventory
      */
     async create(data: Partial<Types.Inventory>): Promise<Types.Inventory> {
-        this.log.info('Creando inventory')
+        this.log.trace('Creando inventory')
         return this.repo.create(data)
     }
 

@@ -39,7 +39,7 @@ export class OptionService extends BOService implements Types.IOptionService {
      * Crea nuevo option
      */
     async create(data: Partial<Types.Option>): Promise<Types.Option> {
-        this.log.info('Creando option')
+        this.log.trace('Creando option')
         return this.repo.create(data)
     }
 

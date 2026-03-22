@@ -260,7 +260,7 @@ export class ${pascalName}Service extends BOService implements Types.I${pascalNa
      * Crea nuevo ${pascalName.toLowerCase()}
      */
     async create(data: Partial<Types.${pascalName}>): Promise<Types.${pascalName}> {
-        this.log.info('Creando ${pascalName.toLowerCase()}')
+        this.log.trace('Creando ${pascalName.toLowerCase()}')
         return this.repo.create(data)
     }
 

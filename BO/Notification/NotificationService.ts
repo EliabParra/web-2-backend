@@ -39,7 +39,7 @@ export class NotificationService extends BOService implements Types.INotificatio
      * Crea nuevo notification
      */
     async create(data: Partial<Types.Notification>): Promise<Types.Notification> {
-        this.log.info('Creando notification')
+        this.log.trace('Creando notification')
         return this.repo.create(data)
     }
 

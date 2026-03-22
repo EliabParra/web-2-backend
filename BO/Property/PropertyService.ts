@@ -39,7 +39,7 @@ export class PropertyService extends BOService implements Types.IPropertyService
      * Crea nuevo property
      */
     async create(data: Partial<Types.Property>): Promise<Types.Property> {
-        this.log.info('Creando property')
+        this.log.trace('Creando property')
         return this.repo.create(data)
     }
 

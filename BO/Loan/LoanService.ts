@@ -39,7 +39,7 @@ export class LoanService extends BOService implements Types.ILoanService {
      * Crea nuevo loan
      */
     async create(data: Partial<Types.Loan>): Promise<Types.Loan> {
-        this.log.info('Creando loan')
+        this.log.trace('Creando loan')
         return this.repo.create(data)
     }
 

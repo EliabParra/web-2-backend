@@ -39,7 +39,7 @@ export class ProfileService extends BOService implements Types.IProfileService {
      * Crea nuevo profile
      */
     async create(data: Partial<Types.Profile>): Promise<Types.Profile> {
-        this.log.info('Creando profile')
+        this.log.trace('Creando profile')
         return this.repo.create(data)
     }
 

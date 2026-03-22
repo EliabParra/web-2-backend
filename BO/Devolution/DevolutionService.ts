@@ -39,7 +39,7 @@ export class DevolutionService extends BOService implements Types.IDevolutionSer
      * Crea nuevo devolution
      */
     async create(data: Partial<Types.Devolution>): Promise<Types.Devolution> {
-        this.log.info('Creando devolution')
+        this.log.trace('Creando devolution')
         return this.repo.create(data)
     }
 

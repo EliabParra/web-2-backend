@@ -39,7 +39,7 @@ export class EquipmentService extends BOService implements Types.IEquipmentServi
      * Crea nuevo equipment
      */
     async create(data: Partial<Types.Equipment>): Promise<Types.Equipment> {
-        this.log.info('Creando equipment')
+        this.log.trace('Creando equipment')
         return this.repo.create(data)
     }
 

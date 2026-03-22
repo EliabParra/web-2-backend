@@ -39,7 +39,7 @@ export class SubsystemService extends BOService implements Types.ISubsystemServi
      * Crea nuevo subsystem
      */
     async create(data: Partial<Types.Subsystem>): Promise<Types.Subsystem> {
-        this.log.info('Creando subsystem')
+        this.log.trace('Creando subsystem')
         return this.repo.create(data)
     }
 
