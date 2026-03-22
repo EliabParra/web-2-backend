@@ -1,21 +1,21 @@
 export const LapseQueries = {
     findAll: `
-        SELECT * FROM lapse
+        SELECT * FROM business.lapse
     `,
     findById: `
-        SELECT * FROM lapse WHERE id = $1
+        SELECT * FROM business.lapse WHERE lapse_id = $1
     `,
     create: `
-        INSERT INTO lapse (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO business.lapse (lapse_de, lapse_act, lapse_start_dt, lapse_close_dt) VALUES ($1, $2, $3, $4) RETURNING *
     `,
     update: `
-        UPDATE lapse SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE business.lapse SET lapse_de = $2, lapse_act = $3, lapse_start_dt = $4, lapse_close_dt = $5 WHERE lapse_id = $1 RETURNING *
     `,
     delete: `
-        DELETE FROM lapse WHERE id = $1
+        DELETE FROM business.lapse WHERE lapse_id = $1
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM lapse WHERE id = $1) as "exists"
+        SELECT EXISTS(SELECT 1 FROM business.lapse WHERE lapse_id = $1) as "exists"
     `,
 } as const
 

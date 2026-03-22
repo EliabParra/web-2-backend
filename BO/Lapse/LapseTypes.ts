@@ -1,5 +1,11 @@
 /**
  * Definiciones de tipos para Lapse
+ * Entidad:
+ * lapse_id: identificador
+ * lapse_de: descripcion
+ * lapse_act: activo
+ * lapse_start_dt: fecha inicio
+ * lapse_close_dt: fecha cierre
  */
 
 export namespace Lapse {
@@ -8,15 +14,19 @@ export namespace Lapse {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        lapse_id: number
+        lapse_de: string
+        lapse_act?: boolean | null
+        lapse_start_dt?: string | Date | null
+        lapse_close_dt?: string | Date | null
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        lapse_id: number
+        lapse_de: string
+        lapse_act?: boolean | null
+        lapse_start_dt?: string | Date | null
+        lapse_close_dt?: string | Date | null
     }
 
     // ============================================================
@@ -24,23 +34,33 @@ export namespace Lapse {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        lapse_de: string
+        lapse_act?: boolean | null
+        lapse_start_dt?: string | Date | null
+        lapse_close_dt?: string | Date | null
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        lapse_id: number
+        lapse_de?: string
+        lapse_act?: boolean | null
+        lapse_start_dt?: string | Date | null
+        lapse_close_dt?: string | Date | null
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        lapse_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        lapse_de?: string
+        lapse_act?: boolean | null
+        lapse_start_dt?: string | Date | null
+        lapse_close_dt?: string | Date | null
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        lapse_id: number
     }
 
     export type RowCount = {

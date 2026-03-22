@@ -18,6 +18,9 @@ export const LapseMessages = {
         validation: {
             requiredField: 'Campo requerido',
             invalidFormat: 'Formato inválido',
+            description: {
+                required: 'La descripción es requerida',
+            },
         },
     },
     en: {
@@ -39,6 +42,9 @@ export const LapseMessages = {
         validation: {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
+            description: {
+                required: 'Description is required',
+            },
         },
     }
 }

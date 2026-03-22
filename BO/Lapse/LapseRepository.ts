@@ -31,7 +31,10 @@ export class LapseRepository implements Types.ILapseRepository {
      */
     async create(data: Partial<Types.Lapse>): Promise<Types.Lapse> {
         const result = await this.db.query<Types.Lapse>(LapseQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.lapse_de,
+            data.lapse_act,
+            data.lapse_start_dt,
+            data.lapse_close_dt,
         ])
         return result.rows[0]
     }
@@ -42,7 +45,10 @@ export class LapseRepository implements Types.ILapseRepository {
     async update(id: number, data: Partial<Types.Lapse>): Promise<Types.Lapse | null> {
         const result = await this.db.query<Types.Lapse>(LapseQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.lapse_de,
+            data.lapse_act,
+            data.lapse_start_dt,
+            data.lapse_close_dt,
         ])
         return result.rows[0]
     }

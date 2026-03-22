@@ -34,7 +34,7 @@ export class LapseBO extends BaseBO {
             params,
             LapseSchemas.get,
             async (data) => {
-                const result: Types.Lapse = await this.service.getById(data.id)
+                const result: Types.Lapse = await this.service.getById(data.lapse_id)
                 return this.success(result, this.lapseMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class LapseBO extends BaseBO {
             params,
             LapseSchemas.update,
             async (data) => {
-                const result: Types.Lapse = await this.service.update(data.id, data)
+                const result: Types.Lapse = await this.service.update(data.lapse_id, data)
                 return this.success(result, this.lapseMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class LapseBO extends BaseBO {
             params,
             LapseSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.lapse_id)
                 return this.success(null, this.lapseMessages.delete)
             }
         )

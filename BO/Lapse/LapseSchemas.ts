@@ -10,22 +10,33 @@ export type LapseMessagesSet = typeof LapseMessages.es
 
 export const createLapseSchemas = (messages: LapseMessagesSet = LapseMessages.es) => {
     const validation = messages.validation ?? LapseMessages.es.validation
+    const dateOrString = z.union([z.string(), z.date()]).optional().nullable()
 
     return {
     get: z.object({
-        id: z.coerce.number(),
+        lapse_id: z.coerce.number(),
     }),
     getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
+        lapse_de: z.string().optional(),
+        lapse_act: z.coerce.boolean().optional().nullable(),
+        lapse_start_dt: dateOrString,
+        lapse_close_dt: dateOrString,
     }),
     create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
+        lapse_de: z.string().min(1, validation.description.required),
+        lapse_act: z.coerce.boolean().optional().nullable(),
+        lapse_start_dt: dateOrString,
+        lapse_close_dt: dateOrString,
     }),
     update: z.object({
-        id: z.coerce.number(),
+        lapse_id: z.coerce.number(),
+        lapse_de: z.string().optional(),
+        lapse_act: z.coerce.boolean().optional().nullable(),
+        lapse_start_dt: dateOrString,
+        lapse_close_dt: dateOrString,
     }),
     delete: z.object({
-        id: z.coerce.number(),
+        lapse_id: z.coerce.number(),
     }),
     }
 }
