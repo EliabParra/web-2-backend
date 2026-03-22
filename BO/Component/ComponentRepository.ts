@@ -31,7 +31,9 @@ export class ComponentRepository implements Types.IComponentRepository {
      */
     async create(data: Partial<Types.Component>): Promise<Types.Component> {
         const result = await this.db.query<Types.Component>(ComponentQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.item_cod,
+            data.item_na,
+            data.category_id,
         ])
         return result.rows[0]
     }
@@ -42,7 +44,9 @@ export class ComponentRepository implements Types.IComponentRepository {
     async update(id: number, data: Partial<Types.Component>): Promise<Types.Component | null> {
         const result = await this.db.query<Types.Component>(ComponentQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.item_cod,
+            data.item_na,
+            data.category_id,
         ])
         return result.rows[0]
     }

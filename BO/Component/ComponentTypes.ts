@@ -1,5 +1,10 @@
 /**
  * Definiciones de tipos para Component
+ * Entidad base: business.item
+ * item_id: identificador
+ * item_cod: codigo
+ * item_na: nombre
+ * category_id: categoria
  */
 
 export namespace Component {
@@ -8,15 +13,17 @@ export namespace Component {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        item_id: number
+        item_cod: number
+        item_na: string
+        category_id: number
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        item_id: number
+        item_cod: number
+        item_na: string
+        category_id: number
     }
 
     // ============================================================
@@ -24,23 +31,30 @@ export namespace Component {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        item_cod: number
+        item_na: string
+        category_id: number
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        item_id: number
+        item_cod?: number
+        item_na?: string
+        category_id?: number
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        item_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        item_cod?: number
+        item_na?: string
+        category_id?: number
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        item_id: number
     }
 
     export type RowCount = {

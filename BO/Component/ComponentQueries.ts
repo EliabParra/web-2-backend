@@ -1,21 +1,66 @@
 export const ComponentQueries = {
     findAll: `
-        SELECT * FROM component
+        SELECT i.*
+        FROM business.item i
+        INNER JOIN business.category c ON c.category_id = i.category_id
+        WHERE c.category_type_id = 2
     `,
     findById: `
-        SELECT * FROM component WHERE id = $1
+        SELECT i.*
+        FROM business.item i
+        INNER JOIN business.category c ON c.category_id = i.category_id
+        WHERE i.item_id = $1
+        AND c.category_type_id = 2
     `,
     create: `
-        INSERT INTO component (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO business.item (item_cod, item_na, category_id)
+        SELECT $1, $2, $3
+        WHERE EXISTS (
+            SELECT 1
+            FROM business.category c
+            WHERE c.category_id = $3
+            AND c.category_type_id = 2
+        )
+        RETURNING *
     `,
     update: `
-        UPDATE component SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE business.item i
+        SET item_cod = $2,
+            item_na = $3,
+            category_id = $4
+        WHERE i.item_id = $1
+        AND EXISTS (
+            SELECT 1
+            FROM business.category current_c
+            WHERE current_c.category_id = i.category_id
+            AND current_c.category_type_id = 2
+        )
+        AND EXISTS (
+            SELECT 1
+            FROM business.category new_c
+            WHERE new_c.category_id = $4
+            AND new_c.category_type_id = 2
+        )
+        RETURNING *
     `,
     delete: `
-        DELETE FROM component WHERE id = $1
+        DELETE FROM business.item i
+        WHERE i.item_id = $1
+        AND EXISTS (
+            SELECT 1
+            FROM business.category c
+            WHERE c.category_id = i.category_id
+            AND c.category_type_id = 2
+        )
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM component WHERE id = $1) as "exists"
+        SELECT EXISTS(
+            SELECT 1
+            FROM business.item i
+            INNER JOIN business.category c ON c.category_id = i.category_id
+            WHERE i.item_id = $1
+            AND c.category_type_id = 2
+        ) as "exists"
     `,
 } as const
 

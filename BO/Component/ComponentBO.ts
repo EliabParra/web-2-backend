@@ -34,7 +34,7 @@ export class ComponentBO extends BaseBO {
             params,
             ComponentSchemas.get,
             async (data) => {
-                const result: Types.Component = await this.service.getById(data.id)
+                const result: Types.Component = await this.service.getById(data.item_id)
                 return this.success(result, this.componentMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class ComponentBO extends BaseBO {
             params,
             ComponentSchemas.update,
             async (data) => {
-                const result: Types.Component = await this.service.update(data.id, data)
+                const result: Types.Component = await this.service.update(data.item_id, data)
                 return this.success(result, this.componentMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class ComponentBO extends BaseBO {
             params,
             ComponentSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.item_id)
                 return this.success(null, this.componentMessages.delete)
             }
         )
