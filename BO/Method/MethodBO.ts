@@ -34,7 +34,7 @@ export class MethodBO extends BaseBO {
             params,
             MethodSchemas.get,
             async (data) => {
-                const result: Types.Method = await this.service.getById(data.id)
+                const result: Types.Method = await this.service.getById(data.method_id)
                 return this.success(result, this.methodMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class MethodBO extends BaseBO {
             params,
             MethodSchemas.update,
             async (data) => {
-                const result: Types.Method = await this.service.update(data.id, data)
+                const result: Types.Method = await this.service.update(data.method_id, data)
                 return this.success(result, this.methodMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class MethodBO extends BaseBO {
             params,
             MethodSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.method_id)
                 return this.success(null, this.methodMessages.delete)
             }
         )

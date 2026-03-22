@@ -31,7 +31,7 @@ export class MethodRepository implements Types.IMethodRepository {
      */
     async create(data: Partial<Types.Method>): Promise<Types.Method> {
         const result = await this.db.query<Types.Method>(MethodQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.method_na,
         ])
         return result.rows[0]
     }
@@ -42,7 +42,7 @@ export class MethodRepository implements Types.IMethodRepository {
     async update(id: number, data: Partial<Types.Method>): Promise<Types.Method | null> {
         const result = await this.db.query<Types.Method>(MethodQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.method_na,
         ])
         return result.rows[0]
     }

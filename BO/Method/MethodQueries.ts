@@ -1,21 +1,21 @@
 export const MethodQueries = {
     findAll: `
-        SELECT * FROM method
+        SELECT * FROM security.method
     `,
     findById: `
-        SELECT * FROM method WHERE id = $1
+        SELECT * FROM security.method WHERE method_id = $1
     `,
     create: `
-        INSERT INTO method (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO security.method (method_na) VALUES ($1) RETURNING *
     `,
     update: `
-        UPDATE method SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE security.method SET method_na = $2 WHERE method_id = $1 RETURNING *
     `,
     delete: `
-        DELETE FROM method WHERE id = $1
+        DELETE FROM security.method WHERE method_id = $1
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM method WHERE id = $1) as "exists"
+        SELECT EXISTS(SELECT 1 FROM security.method WHERE method_id = $1) as "exists"
     `,
 } as const
 

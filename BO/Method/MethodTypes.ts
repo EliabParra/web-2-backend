@@ -1,5 +1,8 @@
 /**
  * Definiciones de tipos para Method
+ * Entidad:
+ * method_id: identificador
+ * method_na: nombre
  */
 
 export namespace Method {
@@ -8,15 +11,13 @@ export namespace Method {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        method_id: number
+        method_na: string
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        method_id: number
+        method_na: string
     }
 
     // ============================================================
@@ -24,23 +25,24 @@ export namespace Method {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        method_na: string
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        method_id: number
+        method_na?: string
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        method_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        method_na?: string
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        method_id: number
     }
 
     export type RowCount = {

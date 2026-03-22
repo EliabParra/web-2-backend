@@ -18,6 +18,9 @@ export const MethodMessages = {
         validation: {
             requiredField: 'Campo requerido',
             invalidFormat: 'Formato inválido',
+            name: {
+                required: 'El nombre es requerido',
+            },
         },
     },
     en: {
@@ -39,6 +42,9 @@ export const MethodMessages = {
         validation: {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
+            name: {
+                required: 'Name is required',
+            },
         },
     }
 }
