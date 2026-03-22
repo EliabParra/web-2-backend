@@ -8,15 +8,36 @@ export namespace User {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        user_id: number
+        user_na: string
+        user_pw: string
+        user_act: boolean
+        user_created_dt?: string | Date
+        user_updated_dt?: string | Date
+        user_last_login_dt?: string | Date | null
+        user_em?: string | null
+        user_em_verified_dt?: string | Date | null
+        user_sol?: boolean | null
+        person_id?: number | null
+        person_ci?: string | null
+        person_na?: string | null
+        person_ln?: string | null
+        person_ph?: string | null
+        person_deg?: string | null
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        user_id: number
+        user_na: string
+        user_act: boolean
+        user_em?: string | null
+        user_sol?: boolean | null
+        person_id?: number | null
+        person_ci?: string | null
+        person_na?: string | null
+        person_ln?: string | null
+        person_ph?: string | null
+        person_deg?: string | null
     }
 
     // ============================================================
@@ -24,23 +45,47 @@ export namespace User {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        user_na: string
+        user_pw: string
+        user_act?: boolean
+        user_em?: string | null
+        user_em_verified_dt?: string | Date | null
+        user_sol?: boolean | null
+        person_ci?: string | null
+        person_na?: string | null
+        person_ln?: string | null
+        person_ph?: string | null
+        person_deg?: string | null
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        user_id: number
+        user_na?: string
+        user_pw?: string
+        user_act?: boolean
+        user_em?: string | null
+        user_em_verified_dt?: string | Date | null
+        user_sol?: boolean | null
+        person_ci?: string | null
+        person_na?: string | null
+        person_ln?: string | null
+        person_ph?: string | null
+        person_deg?: string | null
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        user_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        user_na?: string
+        user_em?: string
+        user_act?: boolean
+        person_na?: string
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        user_id: number
     }
 
     export type RowCount = {

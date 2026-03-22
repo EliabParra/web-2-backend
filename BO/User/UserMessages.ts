@@ -18,6 +18,15 @@ export const UserMessages = {
         validation: {
             requiredField: 'Campo requerido',
             invalidFormat: 'Formato inválido',
+            username: {
+                required: 'El usuario es requerido',
+            },
+            password: {
+                required: 'La contraseña es requerida',
+            },
+            email: {
+                invalid: 'El email no es válido',
+            },
         },
     },
     en: {
@@ -39,6 +48,15 @@ export const UserMessages = {
         validation: {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
+            username: {
+                required: 'Username is required',
+            },
+            password: {
+                required: 'Password is required',
+            },
+            email: {
+                invalid: 'Email is invalid',
+            },
         },
     }
 }

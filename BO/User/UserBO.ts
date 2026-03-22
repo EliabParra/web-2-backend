@@ -34,7 +34,7 @@ export class UserBO extends BaseBO {
             params,
             UserSchemas.get,
             async (data) => {
-                const result: Types.User = await this.service.getById(data.id)
+                const result: Types.User = await this.service.getById(data.user_id)
                 return this.success(result, this.userMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class UserBO extends BaseBO {
             params,
             UserSchemas.update,
             async (data) => {
-                const result: Types.User = await this.service.update(data.id, data)
+                const result: Types.User = await this.service.update(data.user_id, data)
                 return this.success(result, this.userMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class UserBO extends BaseBO {
             params,
             UserSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.user_id)
                 return this.success(null, this.userMessages.delete)
             }
         )

@@ -31,7 +31,17 @@ export class UserRepository implements Types.IUserRepository {
      */
     async create(data: Partial<Types.User>): Promise<Types.User> {
         const result = await this.db.query<Types.User>(UserQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.user_na,
+            data.user_pw,
+            data.user_act,
+            data.user_em,
+            data.user_em_verified_dt,
+            data.user_sol,
+            data.person_ci,
+            data.person_na,
+            data.person_ln,
+            data.person_ph,
+            data.person_deg,
         ])
         return result.rows[0]
     }
@@ -42,7 +52,17 @@ export class UserRepository implements Types.IUserRepository {
     async update(id: number, data: Partial<Types.User>): Promise<Types.User | null> {
         const result = await this.db.query<Types.User>(UserQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.user_na,
+            data.user_pw,
+            data.user_act,
+            data.user_em,
+            data.user_em_verified_dt,
+            data.user_sol,
+            data.person_ci,
+            data.person_na,
+            data.person_ln,
+            data.person_ph,
+            data.person_deg,
         ])
         return result.rows[0]
     }
