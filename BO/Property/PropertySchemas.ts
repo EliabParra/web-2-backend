@@ -13,19 +13,23 @@ export const createPropertySchemas = (messages: PropertyMessagesSet = PropertyMe
 
     return {
     get: z.object({
-        id: z.coerce.number(),
+        property_id: z.coerce.number(),
     }),
     getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
+        property_de: z.string().optional(),
+        property_val: z.coerce.number().int().optional(),
     }),
     create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
+        property_de: z.string().min(1, validation.description.required),
+        property_val: z.coerce.number().int(),
     }),
     update: z.object({
-        id: z.coerce.number(),
+        property_id: z.coerce.number(),
+        property_de: z.string().optional(),
+        property_val: z.coerce.number().int().optional(),
     }),
     delete: z.object({
-        id: z.coerce.number(),
+        property_id: z.coerce.number(),
     }),
     }
 }

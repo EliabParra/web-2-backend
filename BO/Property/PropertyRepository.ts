@@ -31,7 +31,8 @@ export class PropertyRepository implements Types.IPropertyRepository {
      */
     async create(data: Partial<Types.Property>): Promise<Types.Property> {
         const result = await this.db.query<Types.Property>(PropertyQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.property_de,
+            data.property_val,
         ])
         return result.rows[0]
     }
@@ -42,7 +43,8 @@ export class PropertyRepository implements Types.IPropertyRepository {
     async update(id: number, data: Partial<Types.Property>): Promise<Types.Property | null> {
         const result = await this.db.query<Types.Property>(PropertyQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.property_de,
+            data.property_val,
         ])
         return result.rows[0]
     }

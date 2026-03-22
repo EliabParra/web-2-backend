@@ -1,5 +1,9 @@
 /**
  * Definiciones de tipos para Property
+ * Entidad:
+ * property_id: identificador
+ * property_de: descripcion
+ * property_val: valor
  */
 
 export namespace Property {
@@ -8,15 +12,15 @@ export namespace Property {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        property_id: number
+        property_de: string
+        property_val: number
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        property_id: number
+        property_de: string
+        property_val: number
     }
 
     // ============================================================
@@ -24,23 +28,27 @@ export namespace Property {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        property_de: string
+        property_val: number
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        property_id: number
+        property_de?: string
+        property_val?: number
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        property_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        property_de?: string
+        property_val?: number
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        property_id: number
     }
 
     export type RowCount = {

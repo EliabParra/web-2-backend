@@ -1,21 +1,21 @@
 export const PropertyQueries = {
     findAll: `
-        SELECT * FROM property
+        SELECT * FROM business.property
     `,
     findById: `
-        SELECT * FROM property WHERE id = $1
+        SELECT * FROM business.property WHERE property_id = $1
     `,
     create: `
-        INSERT INTO property (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO business.property (property_de, property_val) VALUES ($1, $2) RETURNING *
     `,
     update: `
-        UPDATE property SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE business.property SET property_de = $2, property_val = $3 WHERE property_id = $1 RETURNING *
     `,
     delete: `
-        DELETE FROM property WHERE id = $1
+        DELETE FROM business.property WHERE property_id = $1
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM property WHERE id = $1) as "exists"
+        SELECT EXISTS(SELECT 1 FROM business.property WHERE property_id = $1) as "exists"
     `,
 } as const
 

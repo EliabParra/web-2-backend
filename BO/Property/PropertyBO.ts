@@ -34,7 +34,7 @@ export class PropertyBO extends BaseBO {
             params,
             PropertySchemas.get,
             async (data) => {
-                const result: Types.Property = await this.service.getById(data.id)
+                const result: Types.Property = await this.service.getById(data.property_id)
                 return this.success(result, this.propertyMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class PropertyBO extends BaseBO {
             params,
             PropertySchemas.update,
             async (data) => {
-                const result: Types.Property = await this.service.update(data.id, data)
+                const result: Types.Property = await this.service.update(data.property_id, data)
                 return this.success(result, this.propertyMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class PropertyBO extends BaseBO {
             params,
             PropertySchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.property_id)
                 return this.success(null, this.propertyMessages.delete)
             }
         )
