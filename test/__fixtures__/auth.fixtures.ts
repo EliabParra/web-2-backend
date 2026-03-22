@@ -141,7 +141,7 @@ export const VALID_OTP_ROW = {
 // ─── Insert Results ──────────────────────────────────────────────────────────
 
 /**
- * Resultado de `insertUser` — ID del usuario creado.
+ * Resultado de `insertUserWithPerson` — ID del usuario creado.
  */
 export const INSERT_USER_RESULT = {
     user_id: 10,

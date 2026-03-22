@@ -64,6 +64,15 @@ export class AuthEmailExistsError extends AuthError {
     }
 }
 
+export class AuthUsernameExistsError extends AuthError {
+    constructor(message?: string, username?: string) {
+        super(message ?? defaultMessages.usernameAlreadyExists, 'AUTH_USERNAME_EXISTS', 409, {
+            username,
+        })
+        this.name = 'AuthUsernameExistsError'
+    }
+}
+
 export class AuthAccountDisabledError extends AuthError {
     constructor(message?: string) {
         super(message ?? defaultMessages.accountDisabled, 'AUTH_ACCOUNT_DISABLED', 403)

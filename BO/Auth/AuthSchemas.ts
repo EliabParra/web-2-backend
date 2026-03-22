@@ -15,6 +15,12 @@ export const createAuthSchemas = (messages: AuthMessagesSet = AuthMessages.es) =
         register: z.object({
             email: z.email(validation.emailInvalid),
             password: z.string().min(8, validation.passwordTooShort),
+            user_na: z.string().min(1, validation.usernameRequired).optional(),
+            person_ci: z.string().optional().nullable(),
+            person_na: z.string().optional().nullable(),
+            person_ln: z.string().optional().nullable(),
+            person_ph: z.string().optional().nullable(),
+            person_deg: z.string().optional().nullable(),
             name: z.string().optional(),
         }),
 

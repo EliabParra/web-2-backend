@@ -30,11 +30,17 @@ export const AuthQueries = {
             u.user_created_dt,
             u.user_last_login_dt,
             u.user_sol,
-            u.person_id
+            u.person_id,
+            bp.person_ci,
+            bp.person_na,
+            bp.person_ln,
+            bp.person_ph,
+            bp.person_deg
         FROM security."user" u
+        LEFT JOIN business.person bp ON bp.person_id = u.person_id
         LEFT JOIN security.user_profile p ON u.user_id = p.user_id
         WHERE u.user_em = $1
-        GROUP BY u.user_id, u.user_na, u.user_em, u.user_em_verified_dt, u.user_pw, u.user_act, u.user_created_dt, u.user_last_login_dt, u.user_sol, u.person_id
+        GROUP BY u.user_id, u.user_na, u.user_em, u.user_em_verified_dt, u.user_pw, u.user_act, u.user_created_dt, u.user_last_login_dt, u.user_sol, u.person_id, bp.person_ci, bp.person_na, bp.person_ln, bp.person_ph, bp.person_deg
     `,
 
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
@@ -45,11 +51,22 @@ export const AuthQueries = {
             u.user_em,
             u.user_pw,
             u.user_em_verified_dt,
-            COALESCE(array_agg(p.profile_id) FILTER (WHERE p.profile_id IS NOT NULL), '{}') as profile_ids
+            COALESCE(array_agg(p.profile_id) FILTER (WHERE p.profile_id IS NOT NULL), '{}') as profile_ids,
+            u.user_act,
+            u.user_created_dt,
+            u.user_last_login_dt,
+            u.user_sol,
+            u.person_id,
+            bp.person_ci,
+            bp.person_na,
+            bp.person_ln,
+            bp.person_ph,
+            bp.person_deg
         FROM security."user" u
+        LEFT JOIN business.person bp ON bp.person_id = u.person_id
         LEFT JOIN security.user_profile p ON u.user_id = p.user_id
         WHERE user_na = $1
-        GROUP BY u.user_id, u.user_na, u.user_em, u.user_pw, u.user_em_verified_dt
+        GROUP BY u.user_id, u.user_na, u.user_em, u.user_pw, u.user_em_verified_dt, u.user_act, u.user_created_dt, u.user_last_login_dt, u.user_sol, u.person_id, bp.person_ci, bp.person_na, bp.person_ln, bp.person_ph, bp.person_deg
     `,
 
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
@@ -60,18 +77,56 @@ export const AuthQueries = {
             u.user_em,
             u.user_pw,
             u.user_em_verified_dt,
-            COALESCE(array_agg(p.profile_id) FILTER (WHERE p.profile_id IS NOT NULL), '{}') as profile_ids
+            COALESCE(array_agg(p.profile_id) FILTER (WHERE p.profile_id IS NOT NULL), '{}') as profile_ids,
+            u.user_act,
+            u.user_created_dt,
+            u.user_last_login_dt,
+            u.user_sol,
+            u.person_id,
+            bp.person_ci,
+            bp.person_na,
+            bp.person_ln,
+            bp.person_ph,
+            bp.person_deg
         FROM security."user" u
+        LEFT JOIN business.person bp ON bp.person_id = u.person_id
         LEFT JOIN security.user_profile p ON u.user_id = p.user_id
         WHERE u.user_em = $1
-        GROUP BY u.user_id, u.user_na, u.user_em, u.user_pw, u.user_em_verified_dt
+        GROUP BY u.user_id, u.user_na, u.user_em, u.user_pw, u.user_em_verified_dt, u.user_act, u.user_created_dt, u.user_last_login_dt, u.user_sol, u.person_id, bp.person_ci, bp.person_na, bp.person_ln, bp.person_ph, bp.person_deg
     `,
 
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
-    insertUser: `
-        INSERT INTO security."user" (user_na, user_em, user_pw)
-        VALUES ($1, $2, $3)
-        RETURNING user_id
+    insertUserWithPerson: `
+        WITH created_person AS (
+            INSERT INTO business.person (person_ci, person_na, person_ln, person_ph, person_deg)
+            VALUES ($4, $5, $6, $7, $8)
+            RETURNING person_id, person_ci, person_na, person_ln, person_ph, person_deg
+        ),
+        created_user AS (
+            INSERT INTO security."user" (user_na, user_em, user_pw, person_id)
+            SELECT $1, $2, $3, cp.person_id
+            FROM created_person cp
+            RETURNING *
+        )
+        SELECT
+            cu.user_id,
+            cu.user_na,
+            cu.user_em,
+            cu.user_pw,
+            cu.user_act,
+            cu.user_created_dt,
+            cu.user_updated_dt,
+            cu.user_last_login_dt,
+            cu.user_em_verified_dt,
+            cu.user_sol,
+            cu.person_id,
+            cp.person_ci,
+            cp.person_na,
+            cp.person_ln,
+            cp.person_ph,
+            cp.person_deg
+        FROM created_user cu
+        LEFT JOIN created_person cp ON cp.person_id = cu.person_id
     `,
 
     upsertUserProfile: `

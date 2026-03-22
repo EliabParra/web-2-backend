@@ -15,9 +15,11 @@ export const AuthMessages = {
         sessionExpired: 'Sesión expirada',
         tokenInvalid: 'Token inválido o expirado',
         emailAlreadyExists: 'Ya existe un usuario con este email',
+        usernameAlreadyExists: 'Ya existe un usuario con este nombre de usuario',
         accountDisabled: 'Cuenta deshabilitada',
         validation: {
             loginIdRequired: 'El email o usuario es requerido',
+            usernameRequired: 'El usuario es requerido',
             passwordRequired: 'La contraseña es requerida',
             passwordTooShort: 'La contraseña debe tener al menos 8 caracteres',
             emailRequired: 'El email es requerido',
@@ -45,9 +47,11 @@ export const AuthMessages = {
         sessionExpired: 'Session expired',
         tokenInvalid: 'Invalid or expired token',
         emailAlreadyExists: 'A user with this email already exists',
+        usernameAlreadyExists: 'A user with this username already exists',
         accountDisabled: 'Account disabled',
         validation: {
             loginIdRequired: 'Email or username is required',
+            usernameRequired: 'Username is required',
             passwordRequired: 'Password is required',
             passwordTooShort: 'Password must be at least 8 characters',
             emailRequired: 'Email is required',

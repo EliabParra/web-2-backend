@@ -32,13 +32,33 @@ export class AuthService extends BOService implements Types.IAuthService {
             throw new Errors.AuthEmailExistsError(this.messages.emailAlreadyExists, data.email)
         }
 
+        const derivedUsername =
+            data.user_na?.trim() || data.name?.trim() || data.email.split('@')[0]?.trim() || ''
+        if (!derivedUsername) {
+            throw new Errors.AuthInvalidCredentialsError(this.messages.validation.usernameRequired)
+        }
+
+        const existingUsername = await this.repo.getUserByUsername(derivedUsername)
+        if (existingUsername) {
+            throw new Errors.AuthUsernameExistsError(
+                this.messages.usernameAlreadyExists,
+                derivedUsername
+            )
+        }
+
         const hash = await bcrypt.hash(data.password, 10)
 
-        // TODO(REVERT_NAMING): Revert user_na to data.name, user_em to data.email, user_pw to hash
-        const user = await this.repo.insertUser({
-            user_na: data.name ?? null,
+        const personName = data.person_na ?? data.name ?? null
+
+        const user = await this.repo.insertUserWithPerson({
+            user_na: derivedUsername,
             user_em: data.email,
             user_pw: hash,
+            person_ci: data.person_ci ?? null,
+            person_na: personName,
+            person_ln: data.person_ln ?? null,
+            person_ph: data.person_ph ?? null,
+            person_deg: data.person_deg ?? null,
         })
 
         const sessionProfileId = Number(this.config.auth.sessionProfileId ?? 1)
@@ -51,11 +71,10 @@ export class AuthService extends BOService implements Types.IAuthService {
             await this.sendVerificationEmail(user.user_id, data.email)
         }
 
-        // TODO(REVERT_NAMING): Revert user_em, user_na, user_pw, user_em_verified_dt, user_act, user_created_dt, user_updated_dt
         return this.mapUser({
             ...user,
             user_em: data.email,
-            user_na: data.name ?? '',
+            user_na: derivedUsername,
             user_pw: hash,
             user_em_verified_dt: null,
             user_act: true,
@@ -225,6 +244,11 @@ export class AuthService extends BOService implements Types.IAuthService {
             user_last_login_dt: row.user_last_login_dt ? new Date(row.user_last_login_dt) : null,
             user_sol: row.user_sol,
             person_id: row.person_id,
+            person_ci: row.person_ci ?? null,
+            person_na: row.person_na ?? null,
+            person_ln: row.person_ln ?? null,
+            person_ph: row.person_ph ?? null,
+            person_deg: row.person_deg ?? null,
         }
     }
 }

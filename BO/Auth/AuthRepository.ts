@@ -27,14 +27,19 @@ export class AuthRepository implements Types.IAuthRepository {
     }
 
     // TODO(REVERT_NAMING): Revert user_na to username, user_em to user_email, user_pw to user_password
-    async insertUser(params: Types.InsertUserParams): Promise<Types.UserId> {
-        const r = await this.db.query<Types.UserId>(AuthQueries.insertUser, [
+    async insertUserWithPerson(params: Types.InsertUserWithPersonParams): Promise<Types.UserRow> {
+        const r = await this.db.query<Types.UserRow>(AuthQueries.insertUserWithPerson, [
             params.user_na,
             params.user_em,
             params.user_pw,
+            params.person_ci ?? null,
+            params.person_na ?? null,
+            params.person_ln ?? null,
+            params.person_ph ?? null,
+            params.person_deg ?? null,
         ])
         const row = r.rows[0]
-        if (!row.user_id) throw new Error('insertUser did not return user_id')
+        if (!row.user_id) throw new Error('insertUserWithPerson did not return user_id')
         return row
     }
 

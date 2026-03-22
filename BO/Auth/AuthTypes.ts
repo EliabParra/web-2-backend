@@ -15,6 +15,11 @@ export namespace Auth {
         user_last_login_dt?: string | Date | null
         user_sol?: boolean
         person_id?: number | null
+        person_ci?: string | null
+        person_na?: string | null
+        person_ln?: string | null
+        person_ph?: string | null
+        person_deg?: string | null
     }
 
     // TODO(REVERT_NAMING): Revert one_time_code_id→id, one_time_code_pu→purpose, one_time_code_expires_dt→expires_at, one_time_code_consumed_dt→consumed_at, one_time_code_ac→attempt_count, one_time_code_meta→meta
@@ -38,10 +43,15 @@ export namespace Auth {
     }
 
     // TODO(REVERT_NAMING): Revert user_na→username, user_em→user_email, user_pw→user_password
-    export type InsertUserParams = {
-        user_na: string | null
+    export type InsertUserWithPersonParams = {
+        user_na: string
         user_em: string | null
         user_pw: string
+        person_ci?: string | null
+        person_na?: string | null
+        person_ln?: string | null
+        person_ph?: string | null
+        person_deg?: string | null
     }
 
     // TODO(REVERT_NAMING): Revert password_reset_id→id, password_reset_expires_dt→expires_at, password_reset_used_dt→used_at, password_reset_ac→attempt_count
@@ -94,6 +104,11 @@ export namespace Auth {
         // Additional business fields
         user_sol?: boolean
         person_id?: number | null
+        person_ci?: string | null
+        person_na?: string | null
+        person_ln?: string | null
+        person_ph?: string | null
+        person_deg?: string | null
     }
 
     // TODO(REVERT_NAMING): Revert user_em→user_email, user_act→user_is_active
@@ -102,6 +117,8 @@ export namespace Auth {
         user_em: string
         name?: string // user_na
         user_act: boolean
+        person_na?: string | null
+        person_ln?: string | null
     }
 
     export interface Session {
@@ -126,6 +143,12 @@ export namespace Auth {
     export interface RegisterData {
         email: string
         password: string
+        user_na?: string
+        person_ci?: string | null
+        person_na?: string | null
+        person_ln?: string | null
+        person_ph?: string | null
+        person_deg?: string | null
         name?: string
     }
 
@@ -148,7 +171,7 @@ export namespace Auth {
         getUserByEmail(email: string): Promise<UserRow | null>
         getUserByUsername(username: string): Promise<UserRow | null>
         getUserBaseByEmail(email: string): Promise<UserRow | null>
-        insertUser(params: InsertUserParams): Promise<UserId>
+        insertUserWithPerson(params: InsertUserWithPersonParams): Promise<UserRow>
         upsertUserProfile(params: UserWithProfileId): Promise<boolean>
         setUserEmailVerified(userId: number): Promise<boolean>
         insertPasswordReset(params: PasswordReset): Promise<void>
@@ -178,7 +201,7 @@ export type UserRow = Auth.UserRow
 export type OneTimeCodeRow = Auth.OneTimeCodeRow
 export type UserId = Auth.UserId
 export type UserWithProfileId = Auth.UserWithProfileId
-export type InsertUserParams = Auth.InsertUserParams
+export type InsertUserWithPersonParams = Auth.InsertUserWithPersonParams
 export type PasswordResetRow = Auth.PasswordResetRow
 export type UserPasswordResetParams = Auth.UserPasswordResetParams
 export type PasswordReset = Auth.PasswordReset

@@ -32,7 +32,7 @@ interface MockAuthRepo {
     getUserByEmail: MockFn
     getUserByUsername: MockFn
     getUserBaseByEmail: MockFn
-    insertUser: MockFn
+    insertUserWithPerson: MockFn
     upsertUserProfile: MockFn
     setUserEmailVerified: MockFn
     insertPasswordReset: MockFn
@@ -61,7 +61,7 @@ function createAuthServiceWithMocks(): {
         getUserByEmail: createMockFn(async () => null),
         getUserByUsername: createMockFn(async () => null),
         getUserBaseByEmail: createMockFn(async () => null),
-        insertUser: createMockFn(async () => ({ ...INSERT_USER_RESULT })),
+        insertUserWithPerson: createMockFn(async () => ({ ...INSERT_USER_RESULT })),
         upsertUserProfile: createMockFn(async () => true),
         setUserEmailVerified: createMockFn(async () => true),
         insertPasswordReset: createMockFn(async () => {}),
@@ -119,7 +119,7 @@ describe('AuthService', () => {
 
             // Assert
             assert.equal(result.user_id, INSERT_USER_RESULT.user_id)
-            assert.equal(repo.insertUser.callCount, 1)
+            assert.equal(repo.insertUserWithPerson.callCount, 1)
             assert.equal(repo.upsertUserProfile.callCount, 1)
             assert.equal(repo.insertOneTimeCode.callCount, 1)
             assert.equal(email.sendTemplate.callCount, 1)
@@ -130,7 +130,7 @@ describe('AuthService', () => {
             const repoLocal: MockAuthRepo = {
                 ...repo,
                 getUserBaseByEmail: createMockFn(async () => null),
-                insertUser: createMockFn(async () => ({ ...INSERT_USER_RESULT })),
+                insertUserWithPerson: createMockFn(async () => ({ ...INSERT_USER_RESULT })),
                 upsertUserProfile: createMockFn(async () => true),
                 insertOneTimeCode: createMockFn(async () => true),
             }
