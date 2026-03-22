@@ -71,7 +71,7 @@ export class AuthBO extends BaseBO {
             AuthSchemas.verifyPasswordReset,
             async (data) => {
                 // Just verification of token existence/validity
-                await this.service.verifyPasswordResetToken(data.token)
+                await this.service.verifyPasswordResetToken(data.code)
                 return this.success(null, this.authMessages.tokenValid)
             }
         )
@@ -82,7 +82,7 @@ export class AuthBO extends BaseBO {
             params,
             AuthSchemas.resetPasswordConfirm,
             async (data) => {
-                await this.service.resetPassword(data.token, data.newPassword)
+                await this.service.resetPassword(data.code, data.newPassword)
                 return this.success(null, this.authMessages.passwordChanged)
             }
         )

@@ -240,7 +240,7 @@ describe('AuthBO', () => {
     describe('verifyPasswordReset', () => {
         it('should return 200 when token is valid', async () => {
             // Arrange
-            const params = { token: 'a'.repeat(64) }
+            const params = { code: '123456' }
 
             // Act
             const result = await bo.verifyPasswordReset(params)
@@ -262,7 +262,7 @@ describe('AuthBO', () => {
             const errorBo = new AuthBO(container)
 
             // Act
-            const result = await errorBo.verifyPasswordReset({ token: 'a'.repeat(64) })
+            const result = await errorBo.verifyPasswordReset({ code: '123456' })
 
             // Assert
             assert.equal(result.code, 400)
@@ -304,7 +304,7 @@ describe('AuthBO', () => {
 
         it('should return 400 when new password is too short', async () => {
             // Arrange
-            const params = { token: VALID_RESET_PASSWORD_INPUT.token, newPassword: 'short' }
+            const params = { code: VALID_RESET_PASSWORD_INPUT.code, newPassword: 'short' }
 
             // Act
             const result = await bo.resetPassword(params as Parameters<typeof bo.resetPassword>[0])

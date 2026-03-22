@@ -14,11 +14,11 @@ import { createHash, randomBytes } from 'node:crypto'
 /** Hash bcrypt pre-computado de la contraseña 'Test1234' (4 rounds) */
 export const HASHED_PASSWORD = '$2a$04$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012'
 
-/** Token aleatorio para pruebas (64 hex chars) */
-export const VALID_TOKEN = 'a'.repeat(64)
+/** Código OTP válido para pruebas */
+export const VALID_OTP_CODE = '123456'
 
-/** Hash SHA-256 de `VALID_TOKEN` */
-export const VALID_TOKEN_HASH = createHash('sha256').update(VALID_TOKEN, 'utf8').digest('hex')
+/** Hash SHA-256 de `VALID_OTP_CODE` */
+export const VALID_TOKEN_HASH = createHash('sha256').update(VALID_OTP_CODE, 'utf8').digest('hex')
 
 /** Token inválido para pruebas negativas */
 export const INVALID_TOKEN = 'invalid-token-value'
@@ -88,7 +88,7 @@ export const VALID_REQUEST_PASSWORD_RESET_INPUT = {
  * Input de confirmación de reset de contraseña.
  */
 export const VALID_RESET_PASSWORD_INPUT = {
-    token: VALID_TOKEN,
+    code: VALID_OTP_CODE,
     newPassword: 'NewSecurePass456',
 } as const
 
