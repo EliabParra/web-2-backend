@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.location
- * Generated at: 2026-03-22T21:11:06.315Z
+ * Generated at: 2026-03-22T23:55:31.568Z
  */
 export const LOCATION_SCHEMA = [
     // Table Definition

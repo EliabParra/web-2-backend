@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.item
- * Generated at: 2026-03-22T21:11:06.414Z
+ * Generated at: 2026-03-22T23:55:31.683Z
  */
 export const ITEM_SCHEMA = [
     // Table Definition
