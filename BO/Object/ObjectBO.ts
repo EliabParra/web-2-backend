@@ -34,7 +34,7 @@ export class ObjectBO extends BaseBO {
             params,
             ObjectSchemas.get,
             async (data) => {
-                const result: Types.Object = await this.service.getById(data.id)
+                const result: Types.Object = await this.service.getById(data.object_id)
                 return this.success(result, this.objectMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class ObjectBO extends BaseBO {
             params,
             ObjectSchemas.update,
             async (data) => {
-                const result: Types.Object = await this.service.update(data.id, data)
+                const result: Types.Object = await this.service.update(data.object_id, data)
                 return this.success(result, this.objectMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class ObjectBO extends BaseBO {
             params,
             ObjectSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.object_id)
                 return this.success(null, this.objectMessages.delete)
             }
         )

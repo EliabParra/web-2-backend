@@ -1,5 +1,8 @@
 /**
  * Definiciones de tipos para Object
+ * Entidad:
+ * object_id: identificador
+ * object_na: nombre
  */
 
 export namespace Object {
@@ -8,15 +11,13 @@ export namespace Object {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        object_id: number
+        object_na: string
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        object_id: number
+        object_na: string
     }
 
     // ============================================================
@@ -24,23 +25,24 @@ export namespace Object {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        object_na: string
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        object_id: number
+        object_na?: string
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        object_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        object_na?: string
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        object_id: number
     }
 
     export type RowCount = {

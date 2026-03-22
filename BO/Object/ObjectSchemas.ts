@@ -13,19 +13,20 @@ export const createObjectSchemas = (messages: ObjectMessagesSet = ObjectMessages
 
     return {
     get: z.object({
-        id: z.coerce.number(),
+        object_id: z.coerce.number(),
     }),
     getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
+        object_na: z.string().optional(),
     }),
     create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
+        object_na: z.string().min(1, validation.name.required),
     }),
     update: z.object({
-        id: z.coerce.number(),
+        object_id: z.coerce.number(),
+        object_na: z.string().optional(),
     }),
     delete: z.object({
-        id: z.coerce.number(),
+        object_id: z.coerce.number(),
     }),
     }
 }

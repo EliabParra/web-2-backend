@@ -1,21 +1,21 @@
 export const ObjectQueries = {
     findAll: `
-        SELECT * FROM object
+        SELECT * FROM security.object
     `,
     findById: `
-        SELECT * FROM object WHERE id = $1
+        SELECT * FROM security.object WHERE object_id = $1
     `,
     create: `
-        INSERT INTO object (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO security.object (object_na) VALUES ($1) RETURNING *
     `,
     update: `
-        UPDATE object SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE security.object SET object_na = $2 WHERE object_id = $1 RETURNING *
     `,
     delete: `
-        DELETE FROM object WHERE id = $1
+        DELETE FROM security.object WHERE object_id = $1
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM object WHERE id = $1) as "exists"
+        SELECT EXISTS(SELECT 1 FROM security.object WHERE object_id = $1) as "exists"
     `,
 } as const
 

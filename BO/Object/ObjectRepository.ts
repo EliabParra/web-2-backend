@@ -31,7 +31,7 @@ export class ObjectRepository implements Types.IObjectRepository {
      */
     async create(data: Partial<Types.Object>): Promise<Types.Object> {
         const result = await this.db.query<Types.Object>(ObjectQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.object_na,
         ])
         return result.rows[0]
     }
@@ -42,7 +42,7 @@ export class ObjectRepository implements Types.IObjectRepository {
     async update(id: number, data: Partial<Types.Object>): Promise<Types.Object | null> {
         const result = await this.db.query<Types.Object>(ObjectQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.object_na,
         ])
         return result.rows[0]
     }
