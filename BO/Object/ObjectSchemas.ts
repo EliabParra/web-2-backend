@@ -1,0 +1,40 @@
+import { z } from 'zod'
+import { ObjectMessages } from './ObjectMessages.js'
+
+/**
+ * Schemas Zod para métodos de ObjectBO
+ *
+ * Los mensajes de validación se derivan del set de mensajes del BO.
+ */
+export type ObjectMessagesSet = typeof ObjectMessages.es
+
+export const createObjectSchemas = (messages: ObjectMessagesSet = ObjectMessages.es) => {
+    const validation = messages.validation ?? ObjectMessages.es.validation
+
+    return {
+    get: z.object({
+        id: z.coerce.number(),
+    }),
+    getAll: z.object({
+        // Parámetros de paginación o filtros opcionales
+    }),
+    create: z.object({
+        // TODO: Definir validación. Usa messages.validation.xxx
+    }),
+    update: z.object({
+        id: z.coerce.number(),
+    }),
+    delete: z.object({
+        id: z.coerce.number(),
+    }),
+    }
+}
+
+export const ObjectSchemas = createObjectSchemas(ObjectMessages.es)
+
+// Exporta schemas individuales para inferencia de tipos
+export type GetInput = z.infer<typeof ObjectSchemas.get>
+export type GetAllInput = z.infer<typeof ObjectSchemas.getAll>
+export type CreateInput = z.infer<typeof ObjectSchemas.create>
+export type UpdateInput = z.infer<typeof ObjectSchemas.update>
+export type DeleteInput = z.infer<typeof ObjectSchemas.delete>
