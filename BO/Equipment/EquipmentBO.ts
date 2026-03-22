@@ -34,7 +34,7 @@ export class EquipmentBO extends BaseBO {
             params,
             EquipmentSchemas.get,
             async (data) => {
-                const result: Types.Equipment = await this.service.getById(data.id)
+                const result: Types.Equipment = await this.service.getById(data.item_id)
                 return this.success(result, this.equipmentMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class EquipmentBO extends BaseBO {
             params,
             EquipmentSchemas.update,
             async (data) => {
-                const result: Types.Equipment = await this.service.update(data.id, data)
+                const result: Types.Equipment = await this.service.update(data.item_id, data)
                 return this.success(result, this.equipmentMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class EquipmentBO extends BaseBO {
             params,
             EquipmentSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.item_id)
                 return this.success(null, this.equipmentMessages.delete)
             }
         )

@@ -31,7 +31,9 @@ export class EquipmentRepository implements Types.IEquipmentRepository {
      */
     async create(data: Partial<Types.Equipment>): Promise<Types.Equipment> {
         const result = await this.db.query<Types.Equipment>(EquipmentQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.item_cod,
+            data.item_na,
+            data.category_id,
         ])
         return result.rows[0]
     }
@@ -42,7 +44,9 @@ export class EquipmentRepository implements Types.IEquipmentRepository {
     async update(id: number, data: Partial<Types.Equipment>): Promise<Types.Equipment | null> {
         const result = await this.db.query<Types.Equipment>(EquipmentQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.item_cod,
+            data.item_na,
+            data.category_id,
         ])
         return result.rows[0]
     }

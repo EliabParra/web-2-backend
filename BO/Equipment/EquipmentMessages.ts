@@ -18,6 +18,15 @@ export const EquipmentMessages = {
         validation: {
             requiredField: 'Campo requerido',
             invalidFormat: 'Formato inválido',
+            code: {
+                min: 'El codigo debe ser mayor a 0',
+            },
+            name: {
+                required: 'El nombre es requerido',
+            },
+            category: {
+                min: 'La categoria debe ser mayor a 0',
+            },
         },
     },
     en: {
@@ -39,6 +48,15 @@ export const EquipmentMessages = {
         validation: {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
+            code: {
+                min: 'Code must be greater than 0',
+            },
+            name: {
+                required: 'Name is required',
+            },
+            category: {
+                min: 'Category must be greater than 0',
+            },
         },
     }
 }
