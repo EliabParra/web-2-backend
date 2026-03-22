@@ -31,7 +31,8 @@ export class OptionRepository implements Types.IOptionRepository {
      */
     async create(data: Partial<Types.Option>): Promise<Types.Option> {
         const result = await this.db.query<Types.Option>(OptionQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.option_na,
+            data.method_id,
         ])
         return result.rows[0]
     }
@@ -42,7 +43,8 @@ export class OptionRepository implements Types.IOptionRepository {
     async update(id: number, data: Partial<Types.Option>): Promise<Types.Option | null> {
         const result = await this.db.query<Types.Option>(OptionQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.option_na,
+            data.method_id,
         ])
         return result.rows[0]
     }

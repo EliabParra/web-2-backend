@@ -1,5 +1,9 @@
 /**
  * Definiciones de tipos para Option
+ * Entidad:
+ * option_id: identificador
+ * option_na: nombre
+ * method_id: método asociado
  */
 
 export namespace Option {
@@ -8,15 +12,15 @@ export namespace Option {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        option_id: number
+        option_na: string
+        method_id?: number | null
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        option_id: number
+        option_na: string
+        method_id?: number | null
     }
 
     // ============================================================
@@ -24,23 +28,27 @@ export namespace Option {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        option_na: string
+        method_id?: number | null
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        option_id: number
+        option_na?: string
+        method_id?: number | null
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        option_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        option_na?: string
+        method_id?: number | null
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        option_id: number
     }
 
     export type RowCount = {

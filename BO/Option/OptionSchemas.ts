@@ -13,19 +13,23 @@ export const createOptionSchemas = (messages: OptionMessagesSet = OptionMessages
 
     return {
     get: z.object({
-        id: z.coerce.number(),
+        option_id: z.coerce.number(),
     }),
     getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
+        option_na: z.string().optional(),
+        method_id: z.number().int().optional().nullable(),
     }),
     create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
+        option_na: z.string().min(1, validation.name.required),
+        method_id: z.number().int().min(1, validation.method.min).optional().nullable(),
     }),
     update: z.object({
-        id: z.coerce.number(),
+        option_id: z.coerce.number(),
+        option_na: z.string().optional(),
+        method_id: z.number().int().optional().nullable(),
     }),
     delete: z.object({
-        id: z.coerce.number(),
+        option_id: z.coerce.number(),
     }),
     }
 }

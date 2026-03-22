@@ -10,7 +10,6 @@ export type UserMessagesSet = typeof UserMessages.es
 
 export const createUserSchemas = (messages: UserMessagesSet = UserMessages.es) => {
     const validation = messages.validation ?? UserMessages.es.validation
-    const dateOrString = z.union([z.string(), z.date()]).optional().nullable()
 
     return {
     get: z.object({
@@ -27,7 +26,7 @@ export const createUserSchemas = (messages: UserMessagesSet = UserMessages.es) =
         user_pw: z.string().min(1, validation.password.required),
         user_act: z.coerce.boolean().optional(),
         user_em: z.email(validation.email.invalid).optional().nullable(),
-        user_em_verified_dt: dateOrString,
+        user_em_verified_dt: z.union([z.string(), z.date()]).optional().nullable(),
         user_sol: z.coerce.boolean().optional().nullable(),
         person_ci: z.string().optional().nullable(),
         person_na: z.string().optional().nullable(),
@@ -41,7 +40,7 @@ export const createUserSchemas = (messages: UserMessagesSet = UserMessages.es) =
         user_pw: z.string().optional(),
         user_act: z.coerce.boolean().optional(),
         user_em: z.email(validation.email.invalid).optional().nullable(),
-        user_em_verified_dt: dateOrString,
+        user_em_verified_dt: z.union([z.string(), z.date()]).optional().nullable(),
         user_sol: z.coerce.boolean().optional().nullable(),
         person_ci: z.string().optional().nullable(),
         person_na: z.string().optional().nullable(),

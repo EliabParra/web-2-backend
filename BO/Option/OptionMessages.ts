@@ -18,6 +18,12 @@ export const OptionMessages = {
         validation: {
             requiredField: 'Campo requerido',
             invalidFormat: 'Formato inválido',
+            name: {
+                required: 'El nombre es requerido',
+            },
+            method: {
+                min: 'El método debe ser mayor a 0',
+            },
         },
     },
     en: {
@@ -39,6 +45,12 @@ export const OptionMessages = {
         validation: {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
+            name: {
+                required: 'Name is required',
+            },
+            method: {
+                min: 'Method must be greater than 0',
+            },
         },
     }
 }

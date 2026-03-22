@@ -10,7 +10,6 @@ export type LapseMessagesSet = typeof LapseMessages.es
 
 export const createLapseSchemas = (messages: LapseMessagesSet = LapseMessages.es) => {
     const validation = messages.validation ?? LapseMessages.es.validation
-    const dateOrString = z.union([z.string(), z.date()]).optional().nullable()
 
     return {
     get: z.object({
@@ -19,21 +18,21 @@ export const createLapseSchemas = (messages: LapseMessagesSet = LapseMessages.es
     getAll: z.object({
         lapse_de: z.string().optional(),
         lapse_act: z.coerce.boolean().optional().nullable(),
-        lapse_start_dt: dateOrString,
-        lapse_close_dt: dateOrString,
+        lapse_start_dt: z.union([z.string(), z.date()]).optional().nullable(),
+        lapse_close_dt: z.union([z.string(), z.date()]).optional().nullable(),
     }),
     create: z.object({
         lapse_de: z.string().min(1, validation.description.required),
         lapse_act: z.coerce.boolean().optional().nullable(),
-        lapse_start_dt: dateOrString,
-        lapse_close_dt: dateOrString,
+        lapse_start_dt: z.union([z.string(), z.date()]).optional().nullable(),
+        lapse_close_dt: z.union([z.string(), z.date()]).optional().nullable(),
     }),
     update: z.object({
         lapse_id: z.coerce.number(),
         lapse_de: z.string().optional(),
         lapse_act: z.coerce.boolean().optional().nullable(),
-        lapse_start_dt: dateOrString,
-        lapse_close_dt: dateOrString,
+        lapse_start_dt: z.union([z.string(), z.date()]).optional().nullable(),
+        lapse_close_dt: z.union([z.string(), z.date()]).optional().nullable(),
     }),
     delete: z.object({
         lapse_id: z.coerce.number(),

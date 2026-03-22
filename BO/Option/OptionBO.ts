@@ -34,7 +34,7 @@ export class OptionBO extends BaseBO {
             params,
             OptionSchemas.get,
             async (data) => {
-                const result: Types.Option = await this.service.getById(data.id)
+                const result: Types.Option = await this.service.getById(data.option_id)
                 return this.success(result, this.optionMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class OptionBO extends BaseBO {
             params,
             OptionSchemas.update,
             async (data) => {
-                const result: Types.Option = await this.service.update(data.id, data)
+                const result: Types.Option = await this.service.update(data.option_id, data)
                 return this.success(result, this.optionMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class OptionBO extends BaseBO {
             params,
             OptionSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.option_id)
                 return this.success(null, this.optionMessages.delete)
             }
         )
