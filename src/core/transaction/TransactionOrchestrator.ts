@@ -7,6 +7,7 @@ import {
     AppMessages,
     ISecurityContext,
     IContainer,
+    TransactionRoute,
 } from '@toproc/types'
 import { AuthorizationService } from '@toproc/security'
 
@@ -55,8 +56,7 @@ export class TransactionOrchestrator {
         params: Record<string, unknown>
     ): Promise<unknown> {
         // 1. Resolución
-        // 1. Resolución
-        const route = this.mapper.resolve(tx)
+        const route: TransactionRoute | null = this.mapper.resolve(tx)
 
         if (!route) {
             this.log.warn(`Orchestrator: Transaction not found for TX`, { tx })
@@ -83,12 +83,6 @@ export class TransactionOrchestrator {
         // 4. Ejecución
         try {
             const start = Date.now()
-
-            // Inyectar contexto de seguridad en params (sin sobrescribir si no se desea,
-            // pero idealmente el BO debería recibir el contexto aparte.
-            // Por compatibilidad actual, lo mezclamos o lo pasamos como propiedad oculta/especial
-            // si el BO lo soporta, o confiamos en que 'session' en BO dependencies tiene lo necesario.
-            // Para este refactor mantenemos params como están).
 
             const result = await this.executor.execute(objectName, methodName, params)
 

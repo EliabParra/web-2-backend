@@ -16,3 +16,4 @@ dist/
 .gemini/
 gha-creds-*.json
 scripts/explorer/spec.json
+.nvmrc
