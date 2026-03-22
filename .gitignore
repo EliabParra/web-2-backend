@@ -17,3 +17,7 @@ dist/
 gha-creds-*.json
 scripts/explorer/spec.json
 .nvmrc
+
+# Security matrix exports and office lock artifacts
+security_export_*.xlsx
+.~lock*.xlsx#
