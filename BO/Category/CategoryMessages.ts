@@ -18,6 +18,12 @@ export const CategoryMessages = {
         validation: {
             requiredField: 'Campo requerido',
             invalidFormat: 'Formato inválido',
+            description: {
+                required: 'La descripción es requerida',
+            },
+            categoryType: {
+                min: 'Debe seleccionar un tipo de categoría válido',
+            },
         },
     },
     en: {
@@ -39,6 +45,12 @@ export const CategoryMessages = {
         validation: {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
+            description: {
+                required: 'Description is required',
+            },
+            categoryType: {
+                min: 'Must select a valid category type',
+            },
         },
     }
 }

@@ -13,19 +13,23 @@ export const createCategorySchemas = (messages: CategoryMessagesSet = CategoryMe
 
     return {
     get: z.object({
-        id: z.coerce.number(),
+        category_id: z.coerce.number(),
     }),
     getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
+        category_de: z.string().optional(),
+        category_type_id: z.coerce.number().optional(),
     }),
     create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
+        category_de: z.string().min(1, validation.description.required),
+        category_type_id: z.coerce.number().min(1, validation.categoryType.min),
     }),
     update: z.object({
-        id: z.coerce.number(),
+        category_id: z.coerce.number(),
+        category_de: z.string().optional(),
+        category_type_id: z.coerce.number().optional(),
     }),
     delete: z.object({
-        id: z.coerce.number(),
+        category_id: z.coerce.number(),
     }),
     }
 }

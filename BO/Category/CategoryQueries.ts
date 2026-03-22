@@ -1,21 +1,21 @@
 export const CategoryQueries = {
     findAll: `
-        SELECT * FROM category
+        SELECT * FROM business.category
     `,
     findById: `
-        SELECT * FROM category WHERE id = $1
+        SELECT * FROM business.category WHERE category_id = $1
     `,
     create: `
-        INSERT INTO category (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO business.category (category_de, category_type_id) VALUES ($1, $2) RETURNING *
     `,
     update: `
-        UPDATE category SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE business.category SET category_de = $2, category_type_id = $3 WHERE category_id = $1 RETURNING *
     `,
     delete: `
-        DELETE FROM category WHERE id = $1
+        DELETE FROM business.category WHERE category_id = $1
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM category WHERE id = $1) as "exists"
+        SELECT EXISTS(SELECT 1 FROM business.category WHERE category_id = $1) as "exists"
     `,
 } as const
 

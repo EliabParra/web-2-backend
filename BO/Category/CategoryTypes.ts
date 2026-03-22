@@ -1,5 +1,9 @@
 /**
  * Definiciones de tipos para Category
+ * Entidad:
+ * category_id: identificador
+ * category_de: descripcion
+ * category_type_id: tipo de categoria
  */
 
 export namespace Category {
@@ -8,15 +12,15 @@ export namespace Category {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        category_id: number
+        category_de: string
+        category_type_id: number
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        category_id: number
+        category_de: string
+        category_type_id: number
     }
 
     // ============================================================
@@ -24,23 +28,27 @@ export namespace Category {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        category_de: string
+        category_type_id: number
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        category_id: number
+        category_de?: string
+        category_type_id?: number
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        category_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        category_de?: string
+        category_type_id?: number
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        category_id: number
     }
 
     export type RowCount = {

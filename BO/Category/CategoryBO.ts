@@ -34,7 +34,7 @@ export class CategoryBO extends BaseBO {
             params,
             CategorySchemas.get,
             async (data) => {
-                const result: Types.Category = await this.service.getById(data.id)
+                const result: Types.Category = await this.service.getById(data.category_id)
                 return this.success(result, this.categoryMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class CategoryBO extends BaseBO {
             params,
             CategorySchemas.update,
             async (data) => {
-                const result: Types.Category = await this.service.update(data.id, data)
+                const result: Types.Category = await this.service.update(data.category_id, data)
                 return this.success(result, this.categoryMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class CategoryBO extends BaseBO {
             params,
             CategorySchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.category_id)
                 return this.success(null, this.categoryMessages.delete)
             }
         )

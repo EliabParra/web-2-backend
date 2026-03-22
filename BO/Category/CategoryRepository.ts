@@ -31,7 +31,8 @@ export class CategoryRepository implements Types.ICategoryRepository {
      */
     async create(data: Partial<Types.Category>): Promise<Types.Category> {
         const result = await this.db.query<Types.Category>(CategoryQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.category_de,
+            data.category_type_id,
         ])
         return result.rows[0]
     }
@@ -42,7 +43,8 @@ export class CategoryRepository implements Types.ICategoryRepository {
     async update(id: number, data: Partial<Types.Category>): Promise<Types.Category | null> {
         const result = await this.db.query<Types.Category>(CategoryQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.category_de,
+            data.category_type_id,
         ])
         return result.rows[0]
     }
