@@ -31,7 +31,7 @@ export class SubsystemRepository implements Types.ISubsystemRepository {
      */
     async create(data: Partial<Types.Subsystem>): Promise<Types.Subsystem> {
         const result = await this.db.query<Types.Subsystem>(SubsystemQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.subsystem_na,
         ])
         return result.rows[0]
     }
@@ -42,7 +42,7 @@ export class SubsystemRepository implements Types.ISubsystemRepository {
     async update(id: number, data: Partial<Types.Subsystem>): Promise<Types.Subsystem | null> {
         const result = await this.db.query<Types.Subsystem>(SubsystemQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.subsystem_na,
         ])
         return result.rows[0]
     }

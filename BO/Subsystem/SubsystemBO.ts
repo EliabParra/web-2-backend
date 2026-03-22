@@ -34,7 +34,7 @@ export class SubsystemBO extends BaseBO {
             params,
             SubsystemSchemas.get,
             async (data) => {
-                const result: Types.Subsystem = await this.service.getById(data.id)
+                const result: Types.Subsystem = await this.service.getById(data.subsystem_id)
                 return this.success(result, this.subsystemMessages.get)
             }
         )
@@ -85,7 +85,7 @@ export class SubsystemBO extends BaseBO {
             params,
             SubsystemSchemas.update,
             async (data) => {
-                const result: Types.Subsystem = await this.service.update(data.id, data)
+                const result: Types.Subsystem = await this.service.update(data.subsystem_id, data)
                 return this.success(result, this.subsystemMessages.update)
             }
         )
@@ -102,7 +102,7 @@ export class SubsystemBO extends BaseBO {
             params,
             SubsystemSchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
+                await this.service.delete(data.subsystem_id)
                 return this.success(null, this.subsystemMessages.delete)
             }
         )

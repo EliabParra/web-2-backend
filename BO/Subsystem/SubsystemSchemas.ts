@@ -13,19 +13,20 @@ export const createSubsystemSchemas = (messages: SubsystemMessagesSet = Subsyste
 
     return {
     get: z.object({
-        id: z.coerce.number(),
+        subsystem_id: z.coerce.number(),
     }),
     getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
+        subsystem_na: z.string().optional(),
     }),
     create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
+        subsystem_na: z.string().min(1, validation.name.required),
     }),
     update: z.object({
-        id: z.coerce.number(),
+        subsystem_id: z.coerce.number(),
+        subsystem_na: z.string().optional(),
     }),
     delete: z.object({
-        id: z.coerce.number(),
+        subsystem_id: z.coerce.number(),
     }),
     }
 }

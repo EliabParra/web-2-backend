@@ -1,21 +1,21 @@
 export const SubsystemQueries = {
     findAll: `
-        SELECT * FROM subsystem
+        SELECT * FROM security.subsystem
     `,
     findById: `
-        SELECT * FROM subsystem WHERE id = $1
+        SELECT * FROM security.subsystem WHERE subsystem_id = $1
     `,
     create: `
-        INSERT INTO subsystem (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO security.subsystem (subsystem_na) VALUES ($1) RETURNING *
     `,
     update: `
-        UPDATE subsystem SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE security.subsystem SET subsystem_na = $2 WHERE subsystem_id = $1 RETURNING *
     `,
     delete: `
-        DELETE FROM subsystem WHERE id = $1
+        DELETE FROM security.subsystem WHERE subsystem_id = $1
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM subsystem WHERE id = $1) as "exists"
+        SELECT EXISTS(SELECT 1 FROM security.subsystem WHERE subsystem_id = $1) as "exists"
     `,
 } as const
 

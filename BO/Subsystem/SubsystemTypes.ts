@@ -1,5 +1,8 @@
 /**
  * Definiciones de tipos para Subsystem
+ * Entidad:
+ * subsystem_id: identificador
+ * subsystem_na: nombre
  */
 
 export namespace Subsystem {
@@ -8,15 +11,13 @@ export namespace Subsystem {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        subsystem_id: number
+        subsystem_na: string
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        subsystem_id: number
+        subsystem_na: string
     }
 
     // ============================================================
@@ -24,23 +25,24 @@ export namespace Subsystem {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        subsystem_na: string
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        subsystem_id: number
+        subsystem_na?: string
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        subsystem_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        subsystem_na?: string
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        subsystem_id: number
     }
 
     export type RowCount = {
