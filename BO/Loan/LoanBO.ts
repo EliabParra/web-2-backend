@@ -4,7 +4,9 @@ import { LoanService, LoanMessages, LoanSchemas, Inputs, Types, registerLoan } f
 
 /**
  * Business Object para el dominio Loan.
- *
+ * get y get all requests, y en request prestamo estamos haciendo un movimiento pero como solicitud, hay que llenar movement_type
+ * accept prestamo, reject prestamo, register prestamo, get y get all prestamos, y get user loans para ver prestamos
+ * historicos de un usuario
  * Orquesta transacciones de Loan y expone endpoints de API.
  */
 export class LoanBO extends BaseBO {

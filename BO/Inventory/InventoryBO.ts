@@ -4,7 +4,7 @@ import { InventoryService, InventoryMessages, InventorySchemas, Inputs, Types, r
 
 /**
  * Business Object para el dominio Inventory.
- *
+ * crud pero con cantidades y ubicaciones
  * Orquesta transacciones de Inventory y expone endpoints de API.
  */
 export class InventoryBO extends BaseBO {
