@@ -8,7 +8,7 @@ export const LAPSE_SCHEMA = [
         lapse_id serial primary key,
         lapse_de text not null,
         lapse_act boolean not null default true,
-        lapse_start_dt timestamp with time zone,
-        lapse_close_dt timestamp with time zone
+        lapse_start_dt date,
+        lapse_close_dt date
     );`,
 ]
