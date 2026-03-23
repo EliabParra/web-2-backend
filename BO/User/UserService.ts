@@ -19,8 +19,8 @@ export class UserService extends BOService implements Types.IUserService {
     /**
      * Obtiene todos los users
      */
-    async getAll(): Promise<Types.UserSummary[]> {
-        return this.repo.findAll()
+    async getAll(filters?: Types.GetAllUserInput): Promise<Types.UserSummary[]> {
+        return this.repo.findAll(filters)
     }
 
     /**

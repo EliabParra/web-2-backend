@@ -19,6 +19,11 @@ export const UserQueries = {
             p.person_deg
         FROM security."user" u
         LEFT JOIN business.person p ON p.person_id = u.person_id
+                WHERE ($1::text IS NULL OR LOWER(u.user_na) LIKE ('%' || LOWER($1) || '%'))
+                    AND ($2::text IS NULL OR LOWER(COALESCE(u.user_em, '')) LIKE ('%' || LOWER($2) || '%'))
+                    AND ($3::boolean IS NULL OR u.user_act = $3)
+                    AND ($4::text IS NULL OR LOWER(COALESCE(p.person_na, '')) LIKE ('%' || LOWER($4) || '%'))
+                ORDER BY u.user_id DESC
     `,
     findById: `
         SELECT

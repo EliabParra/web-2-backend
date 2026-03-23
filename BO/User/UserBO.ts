@@ -50,8 +50,8 @@ export class UserBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.UserSummary>>(
             params,
             UserSchemas.getAll,
-            async () => {
-                const result: Array<Types.UserSummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.UserSummary> = await this.service.getAll(data)
                 return this.success(result, this.userMessages.getAll)
             }
         )

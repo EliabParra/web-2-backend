@@ -13,8 +13,13 @@ export class UserRepository implements Types.IUserRepository {
     /**
      * Busca todos los users
      */
-    async findAll(): Promise<Types.UserSummary[]> {
-        const result = await this.db.query<Types.UserSummary>(UserQueries.findAll, [])
+    async findAll(filters?: Types.GetAllUserInput): Promise<Types.UserSummary[]> {
+        const result = await this.db.query<Types.UserSummary>(UserQueries.findAll, [
+            filters?.user_na ?? null,
+            filters?.user_em ?? null,
+            filters?.user_act ?? null,
+            filters?.person_na ?? null,
+        ])
         return result.rows
     }
 

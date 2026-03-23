@@ -101,7 +101,7 @@ export namespace User {
     // ============================================================
 
     export interface Repository {
-        findAll(): Promise<Summary[]>
+        findAll(filters?: GetAllInput): Promise<Summary[]>
         findById(id: number): Promise<Entity | null>
         create(data: Partial<Entity>): Promise<Entity | null>
         update(id: number, data: Partial<Entity>): Promise<Entity | null>
@@ -110,7 +110,7 @@ export namespace User {
     }
 
     export interface Service {
-        getAll(): Promise<Summary[]>
+        getAll(filters?: GetAllInput): Promise<Summary[]>
         getById(id: number): Promise<Entity>
         create(data: Partial<Entity>): Promise<Entity | null>
         update(id: number, data: Partial<Entity>): Promise<Entity>
