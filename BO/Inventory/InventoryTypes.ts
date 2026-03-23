@@ -1,5 +1,11 @@
 /**
  * Definiciones de tipos para Inventory
+ * Entidad:
+ * inventory_id: identificador
+ * inventory_qt: cantidad
+ * inventory_updated_dt: fecha de actualización
+ * location_id: ubicación
+ * item_id: item asociado
  */
 
 export namespace Inventory {
@@ -8,15 +14,33 @@ export namespace Inventory {
     // ============================================================
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        inventory_id: number
+        inventory_qt: number
+        inventory_updated_dt: string | Date
+        location_id: number
+        item_id: number
+
+        // Datos enriquecidos para reglas y vistas
+        category_type_id?: number
+        item_cod?: number
+        item_na?: string
+        location_de?: string
+        location_sh?: number
+        location_dr?: number
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        inventory_id: number
+        inventory_qt: number
+        inventory_updated_dt: string | Date
+        location_id: number
+        item_id: number
+        category_type_id?: number
+        item_cod?: number
+        item_na?: string
+        location_de?: string
+        location_sh?: number
+        location_dr?: number
     }
 
     // ============================================================
@@ -24,23 +48,44 @@ export namespace Inventory {
     // ============================================================
 
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        item_id: number
+        location_id: number
+        inventory_qt: number
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        inventory_id: number
+        inventory_qt?: number
+        location_id?: number
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        inventory_id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        item_id?: number
+        location_id?: number
+        category_type_id?: number
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        inventory_id: number
+    }
+
+    export interface AddStockInput {
+        inventory_id: number
+        quantity: number
+    }
+
+    export interface RemoveStockInput {
+        inventory_id: number
+        quantity: number
+    }
+
+    export interface MoveLocationInput {
+        inventory_id: number
+        location_id: number
     }
 
     export type RowCount = {
@@ -56,20 +101,26 @@ export namespace Inventory {
     // ============================================================
 
     export interface Repository {
-        findAll(): Promise<Summary[]>
+        findAll(filters?: GetAllInput): Promise<Summary[]>
         findById(id: number): Promise<Entity | null>
+        findByItemAndLocation(itemId: number, locationId: number): Promise<Entity | null>
+        findActiveByItem(itemId: number): Promise<Entity | null>
+        getItemCategoryType(itemId: number): Promise<number | null>
         create(data: Partial<Entity>): Promise<Entity | null>
         update(id: number, data: Partial<Entity>): Promise<Entity | null>
-        delete(id: number): Promise<boolean>
+        delete(id: number): Promise<Entity>
         exists(id: number): Promise<boolean>
     }
 
     export interface Service {
-        getAll(): Promise<Summary[]>
+        getAll(filters?: GetAllInput): Promise<Summary[]>
         getById(id: number): Promise<Entity>
         create(data: Partial<Entity>): Promise<Entity | null>
         update(id: number, data: Partial<Entity>): Promise<Entity>
-        delete(id: number): Promise<void>
+        addStock(id: number, quantity: number): Promise<Entity>
+        removeStock(id: number, quantity: number): Promise<Entity>
+        moveLocation(id: number, locationId: number): Promise<Entity>
+        delete(id: number): Promise<Entity>
     }
 }
 
@@ -80,6 +131,9 @@ export type UpdateInventoryInput = Inventory.UpdateInput
 export type GetInventoryInput = Inventory.GetInput
 export type GetAllInventoryInput = Inventory.GetAllInput
 export type DeleteInventoryInput = Inventory.DeleteInput
+export type AddStockInventoryInput = Inventory.AddStockInput
+export type RemoveStockInventoryInput = Inventory.RemoveStockInput
+export type MoveLocationInventoryInput = Inventory.MoveLocationInput
 
 export type RowCountInventory = Inventory.RowCount
 export type ExistsInventory = Inventory.Exists

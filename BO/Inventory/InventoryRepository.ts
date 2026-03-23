@@ -13,8 +13,12 @@ export class InventoryRepository implements Types.IInventoryRepository {
     /**
      * Busca todos los inventorys
      */
-    async findAll(): Promise<Types.InventorySummary[]> {
-        const result = await this.db.query<Types.InventorySummary>(InventoryQueries.findAll, [])
+    async findAll(filters?: Types.GetAllInventoryInput): Promise<Types.InventorySummary[]> {
+        const result = await this.db.query<Types.InventorySummary>(InventoryQueries.findAll, [
+            filters?.item_id ?? null,
+            filters?.location_id ?? null,
+            filters?.category_type_id ?? null,
+        ])
         return result.rows
     }
 
@@ -26,12 +30,35 @@ export class InventoryRepository implements Types.IInventoryRepository {
         return result.rows[0]
     }
 
+    async findByItemAndLocation(itemId: number, locationId: number): Promise<Types.Inventory | null> {
+        const result = await this.db.query<Types.Inventory>(InventoryQueries.findByItemAndLocation, [
+            itemId,
+            locationId,
+        ])
+        return result.rows[0]
+    }
+
+    async findActiveByItem(itemId: number): Promise<Types.Inventory | null> {
+        const result = await this.db.query<Types.Inventory>(InventoryQueries.findActiveByItem, [itemId])
+        return result.rows[0]
+    }
+
+    async getItemCategoryType(itemId: number): Promise<number | null> {
+        const result = await this.db.query<{ category_type_id: number }>(
+            InventoryQueries.getItemCategoryType,
+            [itemId]
+        )
+        return result.rows[0]?.category_type_id ?? null
+    }
+
     /**
      * Crea nuevo inventory
      */
     async create(data: Partial<Types.Inventory>): Promise<Types.Inventory> {
         const result = await this.db.query<Types.Inventory>(InventoryQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.inventory_qt,
+            data.location_id,
+            data.item_id,
         ])
         return result.rows[0]
     }
@@ -42,7 +69,8 @@ export class InventoryRepository implements Types.IInventoryRepository {
     async update(id: number, data: Partial<Types.Inventory>): Promise<Types.Inventory | null> {
         const result = await this.db.query<Types.Inventory>(InventoryQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.inventory_qt,
+            data.location_id,
         ])
         return result.rows[0]
     }
@@ -50,9 +78,9 @@ export class InventoryRepository implements Types.IInventoryRepository {
     /**
      * Elimina inventory
      */
-    async delete(id: number): Promise<boolean> {
-        const result = await this.db.query<Types.RowCountInventory>(InventoryQueries.delete, [id])
-        return result.rowCount !== null && result.rowCount > 0
+    async delete(id: number): Promise<Types.Inventory> {
+        const result = await this.db.query<Types.Inventory>(InventoryQueries.delete, [id])
+        return result.rows[0]
     }
 
     /**

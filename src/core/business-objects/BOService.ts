@@ -1,4 +1,4 @@
-import { IDatabase, ILogger, IConfig, IContainer } from '@toproc/types'
+import { IDatabase, ILogger, IConfig, II18nService, IContainer } from '@toproc/types'
 
 /**
  * Clase base para Servicios de Lógica de Negocio (BOServices).
@@ -10,6 +10,7 @@ export abstract class BOService {
     protected readonly db: IDatabase
     protected readonly log: ILogger
     protected readonly config: IConfig
+    protected readonly i18n: II18nService
 
     constructor(container: IContainer) {
         // Auto-categorization: "AuthService" -> "Auth"
@@ -18,6 +19,7 @@ export abstract class BOService {
         this.log = container.resolve<ILogger>('log').child({ category })
         this.config = container.resolve<IConfig>('config')
         this.db = container.resolve<IDatabase>('db')
+        this.i18n = container.resolve<II18nService>('i18n')
     }
 
     /**

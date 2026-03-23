@@ -34,7 +34,7 @@ export class InventoryBO extends BaseBO {
             params,
             InventorySchemas.get,
             async (data) => {
-                const result: Types.Inventory = await this.service.getById(data.id)
+                const result: Types.Inventory = await this.service.getById(data.inventory_id)
                 return this.success(result, this.inventoryMessages.get)
             }
         )
@@ -50,8 +50,8 @@ export class InventoryBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.InventorySummary>>(
             params,
             InventorySchemas.getAll,
-            async () => {
-                const result: Array<Types.InventorySummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.InventorySummary> = await this.service.getAll(data)
                 return this.success(result, this.inventoryMessages.getAll)
             }
         )
@@ -85,7 +85,7 @@ export class InventoryBO extends BaseBO {
             params,
             InventorySchemas.update,
             async (data) => {
-                const result: Types.Inventory = await this.service.update(data.id, data)
+                const result: Types.Inventory = await this.service.update(data.inventory_id, data)
                 return this.success(result, this.inventoryMessages.update)
             }
         )
@@ -98,12 +98,54 @@ export class InventoryBO extends BaseBO {
      * @returns ApiResponse con el resultado
      */
     async delete(params: Inputs.DeleteInput): Promise<ApiResponse> {
-        return this.exec<Inputs.DeleteInput, void>(
+        return this.exec<Inputs.DeleteInput, Types.Inventory>(
             params,
             InventorySchemas.delete,
             async (data) => {
-                await this.service.delete(data.id)
-                return this.success(null, this.inventoryMessages.delete)
+                const deleted: Types.Inventory = await this.service.delete(data.inventory_id)
+                return this.success(deleted, this.inventoryMessages.delete)
+            }
+        )
+    }
+
+    async addStock(params: Inputs.AddStockInput): Promise<ApiResponse> {
+        return this.exec<Inputs.AddStockInput, Types.Inventory>(
+            params,
+            InventorySchemas.addStock,
+            async (data) => {
+                const result: Types.Inventory = await this.service.addStock(
+                    data.inventory_id,
+                    data.quantity
+                )
+                return this.success(result, this.inventoryMessages.addStock)
+            }
+        )
+    }
+
+    async removeStock(params: Inputs.RemoveStockInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RemoveStockInput, Types.Inventory>(
+            params,
+            InventorySchemas.removeStock,
+            async (data) => {
+                const result: Types.Inventory = await this.service.removeStock(
+                    data.inventory_id,
+                    data.quantity
+                )
+                return this.success(result, this.inventoryMessages.removeStock)
+            }
+        )
+    }
+
+    async moveLocation(params: Inputs.MoveLocationInput): Promise<ApiResponse> {
+        return this.exec<Inputs.MoveLocationInput, Types.Inventory>(
+            params,
+            InventorySchemas.moveLocation,
+            async (data) => {
+                const result: Types.Inventory = await this.service.moveLocation(
+                    data.inventory_id,
+                    data.location_id
+                )
+                return this.success(result, this.inventoryMessages.moveLocation)
             }
         )
     }
