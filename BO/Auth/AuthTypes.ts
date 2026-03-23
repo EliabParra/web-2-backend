@@ -153,7 +153,7 @@ export namespace Auth {
     }
 
     export interface PasswordResetData {
-        token: string
+        code: string
         newPassword: string
     }
 
@@ -180,6 +180,10 @@ export namespace Auth {
         markPasswordResetUsed(resetId: number): Promise<boolean>
         insertOneTimeCode(params: OneTimeCode): Promise<boolean>
         consumeOneTimeCode(codeId: number): Promise<boolean>
+        invalidateActiveOneTimeCodesForUserAndPurpose(
+            userId: number,
+            purpose: string
+        ): Promise<boolean>
         getActiveOneTimeCodeForPurposeAndCodeHash(
             params: GetActiveOneTimeCodeParams
         ): Promise<OneTimeCodeRow | null>
@@ -191,8 +195,8 @@ export namespace Auth {
         requestEmailVerification(identifier: string): Promise<void>
         verifyEmail(code: string): Promise<void>
         requestPasswordReset(email: string): Promise<void>
-        verifyPasswordResetToken(token: string): Promise<void>
-        resetPassword(token: string, newPassword: string): Promise<void>
+        verifyPasswordResetToken(code: string): Promise<void>
+        resetPassword(code: string, newPassword: string): Promise<void>
         requestUsername(email: string): Promise<void>
     }
 }

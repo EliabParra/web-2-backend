@@ -122,18 +122,20 @@ export class AuthService extends BOService implements Types.IAuthService {
         // TODO(REVERT_NAMING): Revert user_em to user_email
         if (!user || !user.user_em) return
 
+        const purpose = String(this.config.auth.passwordResetPurpose ?? 'password_reset')
         const expiresSeconds = 900
 
-        await this.repo.invalidateActivePasswordResetsForUser(user.user_id)
+        await this.repo.invalidateActiveOneTimeCodesForUserAndPurpose(user.user_id, purpose)
 
-        const token = randomBytes(32).toString('hex')
-        const tokenHash = sha256Hex(token)
+        const code = randomInt(100000, 999999).toString()
+        const codeHash = sha256Hex(code)
 
-        await this.repo.insertPasswordReset({
+        await this.repo.insertOneTimeCode({
             userId: user.user_id,
-            tokenHash,
-            sentTo: user.user_em,
+            purpose,
+            codeHash,
             expiresSeconds,
+            meta: { channel: 'email', kind: 'password_reset' },
         })
 
         await this.email.sendTemplate({
@@ -142,43 +144,37 @@ export class AuthService extends BOService implements Types.IAuthService {
             templatePath: 'auth/password-reset.html',
             data: {
                 year: new Date().getFullYear(),
-                frontendUrl: this.config.app.frontendUrl,
                 appName: this.config.app.name,
-                token,
+                code,
             },
         })
     }
 
-    async resetPassword(token: string, newPassword: string): Promise<void> {
-        const tokenHash = sha256Hex(token)
-        const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
+    async resetPassword(code: string, newPassword: string): Promise<void> {
+        const purpose = String(this.config.auth.passwordResetPurpose ?? 'password_reset')
+        const codeHash = sha256Hex(code)
+        const otp = await this.repo.getActiveOneTimeCodeForPurposeAndCodeHash({
+            purpose,
+            codeHash,
+        })
 
-        if (!this.isValidPasswordReset(reset))
+        if (!otp)
             throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
 
         const hash = await bcrypt.hash(newPassword, 10)
-        const validReset = reset
-        await this.repo.updateUserPassword({ userId: validReset.user_id, passwordHash: hash })
-        // TODO(REVERT_NAMING): Revert password_reset_id→id
-        await this.repo.markPasswordResetUsed(validReset.password_reset_id)
+        await this.repo.updateUserPassword({ userId: otp.user_id, passwordHash: hash })
+        await this.repo.consumeOneTimeCode(otp.one_time_code_id)
     }
 
-    async verifyPasswordResetToken(token: string): Promise<void> {
-        const tokenHash = sha256Hex(token)
-        const reset = await this.repo.getPasswordResetByTokenHash(tokenHash)
-        if (!this.isValidPasswordReset(reset))
+    async verifyPasswordResetToken(code: string): Promise<void> {
+        const purpose = String(this.config.auth.passwordResetPurpose ?? 'password_reset')
+        const codeHash = sha256Hex(code)
+        const otp = await this.repo.getActiveOneTimeCodeForPurposeAndCodeHash({
+            purpose,
+            codeHash,
+        })
+        if (!otp)
             throw new Errors.AuthTokenInvalidError(this.messages.tokenInvalid)
-    }
-
-    // TODO(REVERT_NAMING): Revert password_reset_used_dt→used_at, password_reset_expires_dt→expires_at
-    private isValidPasswordReset(reset: Types.PasswordResetRow | null): reset is Types.PasswordResetRow {
-        if (!reset || reset.password_reset_used_dt) return false
-        if (!reset.password_reset_expires_dt) return false
-
-        const expiresAt = new Date(reset.password_reset_expires_dt)
-        if (Number.isNaN(expiresAt.getTime())) return false
-
-        return expiresAt.getTime() > Date.now()
     }
 
     async requestUsername(email: string): Promise<void> {

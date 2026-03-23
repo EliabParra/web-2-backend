@@ -100,6 +100,17 @@ export class AuthRepository implements Types.IAuthRepository {
         return true
     }
 
+    async invalidateActiveOneTimeCodesForUserAndPurpose(
+        userId: number,
+        purpose: string
+    ): Promise<boolean> {
+        await this.db.query(AuthQueries.invalidateActiveOneTimeCodesForUserAndPurpose, [
+            userId,
+            purpose,
+        ])
+        return true
+    }
+
     async getActiveOneTimeCodeForPurposeAndCodeHash(
         params: Types.GetActiveOneTimeCodeParams
     ): Promise<Types.OneTimeCodeRow | null> {

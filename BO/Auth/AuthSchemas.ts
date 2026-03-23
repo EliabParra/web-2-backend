@@ -41,11 +41,11 @@ export const createAuthSchemas = (messages: AuthMessagesSet = AuthMessages.es) =
         }),
 
         verifyPasswordReset: z.object({
-            token: z.string().min(1, validation.tokenRequired),
+            code: z.string().length(6, validation.codeRequired),
         }),
 
         resetPasswordConfirm: z.object({
-            token: z.string().min(1, validation.tokenRequired),
+            code: z.string().length(6, validation.codeRequired),
             newPassword: z.string().min(8, validation.passwordTooShort),
         }),
 

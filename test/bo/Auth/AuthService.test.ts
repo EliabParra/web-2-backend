@@ -41,6 +41,7 @@ interface MockAuthRepo {
     markPasswordResetUsed: MockFn
     insertOneTimeCode: MockFn
     consumeOneTimeCode: MockFn
+    invalidateActiveOneTimeCodesForUserAndPurpose: MockFn
     getActiveOneTimeCodeForPurposeAndCodeHash: MockFn
     updateUserPassword: MockFn
 }
@@ -70,6 +71,7 @@ function createAuthServiceWithMocks(): {
         markPasswordResetUsed: createMockFn(async () => true),
         insertOneTimeCode: createMockFn(async () => true),
         consumeOneTimeCode: createMockFn(async () => true),
+        invalidateActiveOneTimeCodesForUserAndPurpose: createMockFn(async () => true),
         getActiveOneTimeCodeForPurposeAndCodeHash: createMockFn(async () => null),
         updateUserPassword: createMockFn(async () => true),
     }
@@ -257,7 +259,7 @@ describe('AuthService', () => {
     // ── requestPasswordReset ─────────────────────────────────────────────
 
     describe('requestPasswordReset', () => {
-        it('should invalidate old resets and send email when user exists', async () => {
+        it('should invalidate old otp codes and send email when user exists', async () => {
             // Arrange
             repo.getUserByEmail = createMockFn(async () => ({ ...VALID_USER_ROW }))
 
@@ -265,8 +267,8 @@ describe('AuthService', () => {
             await service.requestPasswordReset('test@example.com')
 
             // Assert
-            assert.equal(repo.invalidateActivePasswordResetsForUser.callCount, 1)
-            assert.equal(repo.insertPasswordReset.callCount, 1)
+            assert.equal(repo.invalidateActiveOneTimeCodesForUserAndPurpose.callCount, 1)
+            assert.equal(repo.insertOneTimeCode.callCount, 1)
             assert.equal(email.sendTemplate.callCount, 1)
         })
 
@@ -278,8 +280,8 @@ describe('AuthService', () => {
             await service.requestPasswordReset('nonexistent@example.com')
 
             // Assert
-            assert.equal(repo.invalidateActivePasswordResetsForUser.callCount, 0)
-            assert.equal(repo.insertPasswordReset.callCount, 0)
+            assert.equal(repo.invalidateActiveOneTimeCodesForUserAndPurpose.callCount, 0)
+            assert.equal(repo.insertOneTimeCode.callCount, 0)
             assert.equal(email.sendTemplate.callCount, 0)
         })
     })
@@ -287,60 +289,27 @@ describe('AuthService', () => {
     // ── resetPassword ────────────────────────────────────────────────────
 
     describe('resetPassword', () => {
-        it('should update password and mark reset as used when token is valid', async () => {
+        it('should update password and consume otp when code is valid', async () => {
             // Arrange
-            repo.getPasswordResetByTokenHash = createMockFn(
-                async () => ({ ...VALID_PASSWORD_RESET_ROW })
+            repo.getActiveOneTimeCodeForPurposeAndCodeHash = createMockFn(
+                async () => ({ ...VALID_OTP_ROW, one_time_code_pu: 'password_reset' })
             )
 
             // Act
-            await service.resetPassword('a'.repeat(64), 'NewPassword123')
+            await service.resetPassword('123456', 'NewPassword123')
 
             // Assert
             assert.equal(repo.updateUserPassword.callCount, 1)
-            assert.equal(repo.markPasswordResetUsed.callCount, 1)
+            assert.equal(repo.consumeOneTimeCode.callCount, 1)
         })
 
         it('should throw AuthTokenInvalidError when reset token is not found', async () => {
             // Arrange
-            repo.getPasswordResetByTokenHash = createMockFn(async () => null)
+            repo.getActiveOneTimeCodeForPurposeAndCodeHash = createMockFn(async () => null)
 
             // Act & Assert
             await assert.rejects(
-                () => service.resetPassword('bad-token', 'NewPassword123'),
-                (error: unknown) => {
-                    assert.ok(error instanceof AuthTokenInvalidError)
-                    return true
-                }
-            )
-        })
-
-        it('should throw AuthTokenInvalidError when reset token was already used', async () => {
-            // Arrange
-            repo.getPasswordResetByTokenHash = createMockFn(
-                async () => ({ ...USED_PASSWORD_RESET_ROW })
-            )
-
-            // Act & Assert
-            await assert.rejects(
-                () => service.resetPassword('a'.repeat(64), 'NewPassword123'),
-                (error: unknown) => {
-                    assert.ok(error instanceof AuthTokenInvalidError)
-                    return true
-                }
-            )
-        })
-
-        it('should throw AuthTokenInvalidError when reset token is expired', async () => {
-            // Arrange
-            repo.getPasswordResetByTokenHash = createMockFn(async () => ({
-                ...VALID_PASSWORD_RESET_ROW,
-                password_reset_expires_dt: new Date(Date.now() - 60_000),
-            }))
-
-            // Act & Assert
-            await assert.rejects(
-                () => service.resetPassword('a'.repeat(64), 'NewPassword123'),
+                () => service.resetPassword('000000', 'NewPassword123'),
                 (error: unknown) => {
                     assert.ok(error instanceof AuthTokenInvalidError)
                     return true
@@ -352,40 +321,23 @@ describe('AuthService', () => {
     // ── verifyPasswordResetToken ─────────────────────────────────────────
 
     describe('verifyPasswordResetToken', () => {
-        it('should resolve when token is valid and not used', async () => {
+        it('should resolve when code is valid', async () => {
             // Arrange
-            repo.getPasswordResetByTokenHash = createMockFn(
-                async () => ({ ...VALID_PASSWORD_RESET_ROW })
+            repo.getActiveOneTimeCodeForPurposeAndCodeHash = createMockFn(
+                async () => ({ ...VALID_OTP_ROW, one_time_code_pu: 'password_reset' })
             )
 
             // Act & Assert — no throw
-            await service.verifyPasswordResetToken('a'.repeat(64))
+            await service.verifyPasswordResetToken('123456')
         })
 
-        it('should throw AuthTokenInvalidError when token is not found', async () => {
+        it('should throw AuthTokenInvalidError when code is not found', async () => {
             // Arrange
-            repo.getPasswordResetByTokenHash = createMockFn(async () => null)
+            repo.getActiveOneTimeCodeForPurposeAndCodeHash = createMockFn(async () => null)
 
             // Act & Assert
             await assert.rejects(
-                () => service.verifyPasswordResetToken('bad-token'),
-                (error: unknown) => {
-                    assert.ok(error instanceof AuthTokenInvalidError)
-                    return true
-                }
-            )
-        })
-
-        it('should throw AuthTokenInvalidError when token is expired', async () => {
-            // Arrange
-            repo.getPasswordResetByTokenHash = createMockFn(async () => ({
-                ...VALID_PASSWORD_RESET_ROW,
-                password_reset_expires_dt: new Date(Date.now() - 60_000),
-            }))
-
-            // Act & Assert
-            await assert.rejects(
-                () => service.verifyPasswordResetToken('a'.repeat(64)),
+                () => service.verifyPasswordResetToken('000000'),
                 (error: unknown) => {
                     assert.ok(error instanceof AuthTokenInvalidError)
                     return true

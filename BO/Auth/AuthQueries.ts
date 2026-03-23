@@ -190,6 +190,15 @@ export const AuthQueries = {
         WHERE one_time_code_id = $1
     `,
 
+    invalidateActiveOneTimeCodesForUserAndPurpose: `
+        UPDATE security.one_time_code
+        SET one_time_code_consumed_dt = NOW()
+        WHERE user_id = $1
+        AND one_time_code_pu = $2
+        AND one_time_code_consumed_dt IS NULL
+        AND one_time_code_expires_dt > NOW()
+    `,
+
     getActiveOneTimeCodeForPurposeAndCodeHash: `
         SELECT * FROM security.one_time_code
         WHERE one_time_code_pu = $1
