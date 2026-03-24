@@ -63,8 +63,30 @@ export class ProfileSeeder {
             console.log(`   ✅ Admin profile (id=${adminProfileId})`.green)
         }
 
+        await this.syncProfileSequence()
+
         console.log(`   📊 Profiles seeded: ${created}`.gray)
         return { created }
+    }
+
+    /**
+     * Aligns identity sequence with the current max(profile_id).
+     * Prevents duplicate key errors after explicit ID inserts during seeding.
+     */
+    private async syncProfileSequence(): Promise<void> {
+        const seqResult = await this.db.exeRaw(
+            `SELECT pg_get_serial_sequence('security.profile', 'profile_id') AS seq_name`
+        )
+
+        const seqName = seqResult.rows[0]?.seq_name
+        if (!seqName) return
+
+        await this.db.exeRaw(
+            `SELECT setval($1::regclass, COALESCE((SELECT MAX(profile_id) FROM security.profile), 0) + 1, false)`,
+            [seqName]
+        )
+
+        console.log('   🔁 Profile sequence synced'.gray)
     }
 
     /**

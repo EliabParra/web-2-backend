@@ -5,6 +5,12 @@ import { ProfileSeeder } from '../../../scripts/db/seeders/profiles.js'
 // Mock Database
 const createMockDb = () => ({
     exeRaw: mock.fn(async (sql: string, params?: any[]) => {
+        if (sql.includes('pg_get_serial_sequence')) {
+            return { rows: [{ seq_name: 'security.profile_profile_id_seq' }], rowCount: 1 }
+        }
+        if (sql.includes('setval(')) {
+            return { rows: [{ setval: 3 }], rowCount: 1 }
+        }
         return { rows: [{ profile_id: params?.[0] }], rowCount: 1 }
     }),
 })
@@ -21,8 +27,8 @@ describe('ProfileSeeder', () => {
 
         assert.strictEqual(result.created, 2)
 
-        // Verify both profiles were created
-        assert.strictEqual(mockDb.exeRaw.mock.calls.length, 2)
+        // Verify two inserts + sequence sync (get sequence + setval)
+        assert.strictEqual(mockDb.exeRaw.mock.calls.length, 4)
 
         // Verify new schema columns used (profile_id, profile_na)
         const firstCall = mockDb.exeRaw.mock.calls[0].arguments[0] as string
@@ -41,6 +47,9 @@ describe('ProfileSeeder', () => {
         })
 
         assert.strictEqual(result.created, 3)
+
+        // Verify three inserts + sequence sync
+        assert.strictEqual(mockDb.exeRaw.mock.calls.length, 5)
     })
 
     it('should grant permissions to profile using profile_method table', async () => {
