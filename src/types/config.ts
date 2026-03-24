@@ -114,6 +114,8 @@ export interface LogConfig {
 export interface AuthConfig {
     /** ID del perfil público (usuarios no autenticados) */
     publicProfileId?: number
+    /** Modo de resolución de perfiles en autorización transaccional */
+    profileResolutionMode?: 'active' | 'union'
     /** ID del perfil de sesión activa */
     sessionProfileId?: number
     /** Longitud del salt para bcrypt */

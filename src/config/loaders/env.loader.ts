@@ -70,6 +70,7 @@ export class EnvLoader {
                 loginId: env.AUTH_LOGIN_ID as any,
                 login2StepNewDevice: envBool(env.AUTH_LOGIN_2STEP_NEW_DEVICE),
                 publicProfileId: envInt(env.AUTH_PUBLIC_PROFILE_ID),
+                profileResolutionMode: env.AUTH_PROFILE_RESOLUTION_MODE as any,
                 sessionProfileId: envInt(env.AUTH_SESSION_PROFILE_ID),
                 requireEmailVerification: envBool(env.AUTH_REQUIRE_EMAIL_VERIFICATION),
 

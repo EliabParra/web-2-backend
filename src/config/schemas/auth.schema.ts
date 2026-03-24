@@ -4,6 +4,7 @@ export const AuthConfigSchema = z.object({
     loginId: z.enum(['email', 'username']).default('email'),
     login2StepNewDevice: z.boolean().default(false),
     publicProfileId: z.number().int().default(999),
+    profileResolutionMode: z.enum(['active', 'union']).default('active'),
     sessionProfileId: z.number().int().default(1),
     requireEmailVerification: z.boolean().default(false),
 

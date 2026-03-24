@@ -43,6 +43,8 @@ export class TransactionController {
             // 1. Determinar profileIds
             const hasSession = this.session.sessionExists(req)
             const publicProfileId = Number(this.config.auth?.publicProfileId)
+            const profileResolutionMode =
+                this.config.auth?.profileResolutionMode === 'union' ? 'union' : 'active'
 
             const rawSessionProfileIds = req.session?.profileIds
             const sessionProfileIds =
@@ -57,13 +59,22 @@ export class TransactionController {
                     : null
 
             effectiveProfileIds =
-                hasSession && activeProfileId != null
-                    ? [activeProfileId]
+                hasSession && profileResolutionMode === 'active'
+                    ? activeProfileId != null
+                        ? [activeProfileId]
+                        : []
                     : hasSession
                       ? sessionProfileIds
                     : Number.isInteger(publicProfileId) && publicProfileId > 0
                       ? [publicProfileId]
                       : []
+
+            if (hasSession && effectiveProfileIds.length === 0) {
+                res.status(this.i18n.messages.errors.client.permissionDenied.code).send(
+                    this.i18n.messages.errors.client.permissionDenied
+                )
+                return
+            }
 
             if (!hasSession && effectiveProfileIds.length === 0) {
                 res.status(this.i18n.messages.errors.client.login.code).send(

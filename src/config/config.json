@@ -18,6 +18,7 @@
     },
     "auth": {
         "loginId": "email",
+        "profileResolutionMode": "active",
         "requireEmailVerification": true
     },
     "email": {
