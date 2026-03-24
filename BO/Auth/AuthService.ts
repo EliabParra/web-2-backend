@@ -22,6 +22,24 @@ export class AuthService extends BOService implements Types.IAuthService {
         return this.i18n.use(AuthMessages)
     }
 
+    private async resolveSessionProfileId(): Promise<number> {
+        const configuredId = Number(this.config.auth.sessionProfileId)
+        if (Number.isInteger(configuredId) && configuredId > 0) {
+            const existingId = await this.repo.getProfileIdById(configuredId)
+            if (existingId) return existingId
+            this.log.warn(
+                `AUTH sessionProfileId=${configuredId} no existe en security.profile; fallback a profile_na='session'.`
+            )
+        }
+
+        const sessionProfileId = await this.repo.getProfileIdByName('session')
+        if (sessionProfileId) return sessionProfileId
+
+        throw new Error(
+            "No se encontró perfil de sesión. Configura AUTH_SESSION_PROFILE_ID válido o crea profile_na='session'."
+        )
+    }
+
     async register(data: Types.RegisterData): Promise<Types.User> {
         this.log.trace('Creating new user: ' + data.email)
 
@@ -59,7 +77,7 @@ export class AuthService extends BOService implements Types.IAuthService {
             person_deg: data.person_deg ?? null,
         })
 
-        const sessionProfileId = Number(this.config.auth.sessionProfileId ?? 1)
+        const sessionProfileId = await this.resolveSessionProfileId()
         await this.repo.upsertUserProfile({
             userId: user.user_id,
             profileId: sessionProfileId,

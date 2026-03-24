@@ -885,6 +885,13 @@ export class SecurityManager {
     private async manageBOs(): Promise<void> {
         console.log(colors.cyan('\n   🧩 Sincronización de Business Objects\n'))
 
+        const adminProfileId = await this.getProfileIdByName('admin')
+        if (!adminProfileId) {
+            console.log(colors.red("   ❌ No existe el perfil 'admin'."))
+            console.log(colors.gray('      Crea el perfil admin antes de sincronizar permisos de BOs.'))
+            return
+        }
+
         // 1. Discover BOs del código
         const boRoot = path.resolve(process.cwd(), 'BO')
         const codeBOs = await this.discoverBOsFromCode(boRoot)
@@ -1024,12 +1031,16 @@ export class SecurityManager {
                     nextTx++
                 }
 
-                // Grant to profile 1 (admin)
+                // Grant to admin profile (resolved by name, not hardcoded id)
                 const existPerm = await this.db.exeRaw(
-                    'SELECT 1 FROM security.profile_method WHERE profile_id = 1 AND method_id = $1', [methodId]
+                    'SELECT 1 FROM security.profile_method WHERE profile_id = $1 AND method_id = $2',
+                    [adminProfileId, methodId]
                 )
                 if ((existPerm.rowCount ?? 0) === 0) {
-                    await this.db.exeRaw('INSERT INTO security.profile_method (profile_id, method_id) VALUES (1, $1)', [methodId])
+                    await this.db.exeRaw(
+                        'INSERT INTO security.profile_method (profile_id, method_id) VALUES ($1, $2)',
+                        [adminProfileId, methodId]
+                    )
                 }
 
                 console.log(colors.green(`   ✔ ${fullMethod}`))
@@ -1168,5 +1179,16 @@ export class SecurityManager {
             objectName: row.object_na,
             methodName: row.method_na,
         }))
+    }
+
+    /** Resuelve profile_id por profile_na para evitar IDs hardcodeados. */
+    private async getProfileIdByName(profileName: string): Promise<number | null> {
+        const result = await this.db.exeRaw(
+            'SELECT profile_id FROM security.profile WHERE profile_na = $1 LIMIT 1',
+            [profileName]
+        )
+
+        const profileId = Number(result.rows[0]?.profile_id)
+        return Number.isInteger(profileId) && profileId > 0 ? profileId : null
     }
 }

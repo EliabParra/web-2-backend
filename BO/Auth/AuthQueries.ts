@@ -95,6 +95,20 @@ export const AuthQueries = {
         GROUP BY u.user_id, u.user_na, u.user_em, u.user_pw, u.user_em_verified_dt, u.user_act, u.user_created_dt, u.user_last_login_dt, u.user_sol, u.person_id, bp.person_ci, bp.person_na, bp.person_ln, bp.person_ph, bp.person_deg
     `,
 
+    getProfileIdById: `
+        SELECT profile_id
+        FROM security.profile
+        WHERE profile_id = $1
+        LIMIT 1
+    `,
+
+    getProfileIdByName: `
+        SELECT profile_id
+        FROM security.profile
+        WHERE profile_na = $1
+        LIMIT 1
+    `,
+
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
     insertUserWithPerson: `
         WITH created_person AS (

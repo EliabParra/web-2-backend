@@ -32,6 +32,8 @@ interface MockAuthRepo {
     getUserByEmail: MockFn
     getUserByUsername: MockFn
     getUserBaseByEmail: MockFn
+    getProfileIdById: MockFn
+    getProfileIdByName: MockFn
     insertUserWithPerson: MockFn
     upsertUserProfile: MockFn
     setUserEmailVerified: MockFn
@@ -62,6 +64,8 @@ function createAuthServiceWithMocks(): {
         getUserByEmail: createMockFn(async () => null),
         getUserByUsername: createMockFn(async () => null),
         getUserBaseByEmail: createMockFn(async () => null),
+        getProfileIdById: createMockFn(async () => 1),
+        getProfileIdByName: createMockFn(async () => 1),
         insertUserWithPerson: createMockFn(async () => ({ ...INSERT_USER_RESULT })),
         upsertUserProfile: createMockFn(async () => true),
         setUserEmailVerified: createMockFn(async () => true),

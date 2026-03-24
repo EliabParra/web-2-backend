@@ -26,6 +26,18 @@ export class AuthRepository implements Types.IAuthRepository {
         return r.rows[0]
     }
 
+    async getProfileIdById(profileId: number): Promise<number | null> {
+        const r = await this.db.query<{ profile_id: number }>(AuthQueries.getProfileIdById, [profileId])
+        const id = r.rows[0]?.profile_id
+        return Number.isInteger(id) ? Number(id) : null
+    }
+
+    async getProfileIdByName(profileName: string): Promise<number | null> {
+        const r = await this.db.query<{ profile_id: number }>(AuthQueries.getProfileIdByName, [profileName])
+        const id = r.rows[0]?.profile_id
+        return Number.isInteger(id) ? Number(id) : null
+    }
+
     // TODO(REVERT_NAMING): Revert user_na to username, user_em to user_email, user_pw to user_password
     async insertUserWithPerson(params: Types.InsertUserWithPersonParams): Promise<Types.UserRow> {
         const r = await this.db.query<Types.UserRow>(AuthQueries.insertUserWithPerson, [

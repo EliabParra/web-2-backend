@@ -171,6 +171,8 @@ export namespace Auth {
         getUserByEmail(email: string): Promise<UserRow | null>
         getUserByUsername(username: string): Promise<UserRow | null>
         getUserBaseByEmail(email: string): Promise<UserRow | null>
+        getProfileIdById(profileId: number): Promise<number | null>
+        getProfileIdByName(profileName: string): Promise<number | null>
         insertUserWithPerson(params: InsertUserWithPersonParams): Promise<UserRow>
         upsertUserProfile(params: UserWithProfileId): Promise<boolean>
         setUserEmailVerified(userId: number): Promise<boolean>
