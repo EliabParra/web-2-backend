@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.devolution_status
- * Generated at: 2026-03-22T23:55:31.781Z
+ * Generated at: 2026-03-23T19:05:33.830Z
  */
 export const DEVOLUTION_STATUS_SCHEMA = [
     // Table Definition

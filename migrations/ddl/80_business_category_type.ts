@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.category_type
- * Generated at: 2026-03-22T23:55:31.511Z
+ * Generated at: 2026-03-23T19:05:33.599Z
  */
 export const CATEGORY_TYPE_SCHEMA = [
     // Table Definition

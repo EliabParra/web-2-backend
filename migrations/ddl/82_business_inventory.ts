@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.inventory
- * Generated at: 2026-03-22T23:55:31.743Z
+ * Generated at: 2026-03-23T19:05:33.797Z
  */
 export const INVENTORY_SCHEMA = [
     // Table Definition

@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.property_item
- * Generated at: 2026-03-22T23:55:31.721Z
+ * Generated at: 2026-03-23T19:05:33.782Z
  */
 export const PROPERTY_ITEM_SCHEMA = [
     // Table Definition
