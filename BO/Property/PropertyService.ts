@@ -19,8 +19,8 @@ export class PropertyService extends BOService implements Types.IPropertyService
     /**
      * Obtiene todos los propertys
      */
-    async getAll(): Promise<Types.PropertySummary[]> {
-        return this.repo.findAll()
+    async getAll(filters?: Types.GetAllPropertyInput): Promise<Types.PropertySummary[]> {
+        return this.repo.findAll(filters)
     }
 
     /**

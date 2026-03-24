@@ -13,8 +13,12 @@ export class LocationRepository implements Types.ILocationRepository {
     /**
      * Busca todos los locations
      */
-    async findAll(): Promise<Types.LocationSummary[]> {
-        const result = await this.db.query<Types.LocationSummary>(LocationQueries.findAll, [])
+    async findAll(filters?: Types.GetAllLocationInput): Promise<Types.LocationSummary[]> {
+        const result = await this.db.query<Types.LocationSummary>(LocationQueries.findAll, [
+            filters?.location_de ?? null,
+            filters?.location_sh ?? null,
+            filters?.location_dr ?? null,
+        ])
         return result.rows
     }
 

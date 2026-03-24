@@ -19,8 +19,8 @@ export class LocationService extends BOService implements Types.ILocationService
     /**
      * Obtiene todos los locations
      */
-    async getAll(): Promise<Types.LocationSummary[]> {
-        return this.repo.findAll()
+    async getAll(filters?: Types.GetAllLocationInput): Promise<Types.LocationSummary[]> {
+        return this.repo.findAll(filters)
     }
 
     /**

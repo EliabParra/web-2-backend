@@ -1,6 +1,10 @@
 export const CategoryQueries = {
     findAll: `
-        SELECT * FROM business.category
+                SELECT *
+                FROM business.category
+                WHERE ($1::text IS NULL OR LOWER(category_de) LIKE ('%' || LOWER($1) || '%'))
+                    AND ($2::int IS NULL OR category_type_id = $2)
+                ORDER BY category_id DESC
     `,
     findById: `
         SELECT * FROM business.category WHERE category_id = $1

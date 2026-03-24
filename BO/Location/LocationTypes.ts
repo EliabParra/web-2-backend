@@ -20,9 +20,10 @@ export namespace Location {
     }
 
     export type Summary = {
-        id: number
-        shelf: number
-        drawer: number
+        location_id: number
+        location_de: string
+        location_sh: number
+        location_dr: number
     }
 
     // ============================================================
@@ -30,30 +31,30 @@ export namespace Location {
     // ============================================================
 
     export interface CreateInput {
-        description: string
-        shelf: number
-        drawer: number
+        location_de: string
+        location_sh: number
+        location_dr: number
     }
 
     export interface UpdateInput {
-        id: number
-        description?: string
-        shelf?: number
-        drawer?: number
+        location_id: number
+        location_de?: string
+        location_sh?: number
+        location_dr?: number
     }
 
     export interface GetInput {
-        id: number
+        location_id: number
     }
 
     export interface GetAllInput {
-        description?: string
-        shelf?: number
-        drawer?: number
+        location_de?: string
+        location_sh?: number
+        location_dr?: number
     }
 
     export interface DeleteInput {
-        id: number
+        location_id: number
     }
 
     export type RowCount = {
@@ -69,7 +70,7 @@ export namespace Location {
     // ============================================================
 
     export interface Repository {
-        findAll(): Promise<Summary[]>
+        findAll(filters?: GetAllInput): Promise<Summary[]>
         findById(id: number): Promise<Entity | null>
         create(data: Partial<Entity>): Promise<Entity | null>
         update(id: number, data: Partial<Entity>): Promise<Entity | null>
@@ -78,7 +79,7 @@ export namespace Location {
     }
 
     export interface Service {
-        getAll(): Promise<Summary[]>
+        getAll(filters?: GetAllInput): Promise<Summary[]>
         getById(id: number): Promise<Entity>
         create(data: Partial<Entity>): Promise<Entity | null>
         update(id: number, data: Partial<Entity>): Promise<Entity>

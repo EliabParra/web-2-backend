@@ -4,6 +4,10 @@ export const EquipmentQueries = {
         FROM business.item i
         INNER JOIN business.category c ON c.category_id = i.category_id
         WHERE c.category_type_id = 1
+          AND ($1::int IS NULL OR i.item_cod = $1)
+          AND ($2::text IS NULL OR LOWER(i.item_na) LIKE ('%' || LOWER($2) || '%'))
+          AND ($3::int IS NULL OR i.category_id = $3)
+        ORDER BY i.item_id DESC
     `,
     findById: `
         SELECT i.*

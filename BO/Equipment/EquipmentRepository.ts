@@ -13,8 +13,12 @@ export class EquipmentRepository implements Types.IEquipmentRepository {
     /**
      * Busca todos los equipments
      */
-    async findAll(): Promise<Types.EquipmentSummary[]> {
-        const result = await this.db.query<Types.EquipmentSummary>(EquipmentQueries.findAll, [])
+    async findAll(filters?: Types.GetAllEquipmentInput): Promise<Types.EquipmentSummary[]> {
+        const result = await this.db.query<Types.EquipmentSummary>(EquipmentQueries.findAll, [
+            filters?.item_cod ?? null,
+            filters?.item_na ?? null,
+            filters?.category_id ?? null,
+        ])
         return result.rows
     }
 

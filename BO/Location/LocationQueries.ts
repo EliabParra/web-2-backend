@@ -1,6 +1,11 @@
 export const LocationQueries = {
     findAll: `
-        SELECT * FROM business.location
+                SELECT *
+                FROM business.location
+                WHERE ($1::text IS NULL OR LOWER(location_de) LIKE ('%' || LOWER($1) || '%'))
+                    AND ($2::int IS NULL OR location_sh = $2)
+                    AND ($3::int IS NULL OR location_dr = $3)
+                ORDER BY location_id DESC
     `,
     findById: `
         SELECT * FROM business.location WHERE location_id = $1

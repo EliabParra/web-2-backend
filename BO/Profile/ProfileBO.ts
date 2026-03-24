@@ -50,8 +50,8 @@ export class ProfileBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.ProfileSummary>>(
             params,
             ProfileSchemas.getAll,
-            async () => {
-                const result: Array<Types.ProfileSummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.ProfileSummary> = await this.service.getAll(data)
                 return this.success(result, this.profileMessages.getAll)
             }
         )

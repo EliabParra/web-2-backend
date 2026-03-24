@@ -13,8 +13,11 @@ export class PropertyRepository implements Types.IPropertyRepository {
     /**
      * Busca todos los propertys
      */
-    async findAll(): Promise<Types.PropertySummary[]> {
-        const result = await this.db.query<Types.PropertySummary>(PropertyQueries.findAll, [])
+    async findAll(filters?: Types.GetAllPropertyInput): Promise<Types.PropertySummary[]> {
+        const result = await this.db.query<Types.PropertySummary>(PropertyQueries.findAll, [
+            filters?.property_de ?? null,
+            filters?.property_val ?? null,
+        ])
         return result.rows
     }
 

@@ -13,8 +13,10 @@ export class ProfileRepository implements Types.IProfileRepository {
     /**
      * Busca todos los profiles
      */
-    async findAll(): Promise<Types.ProfileSummary[]> {
-        const result = await this.db.query<Types.ProfileSummary>(ProfileQueries.findAll, [])
+    async findAll(filters?: Types.GetAllProfileInput): Promise<Types.ProfileSummary[]> {
+        const result = await this.db.query<Types.ProfileSummary>(ProfileQueries.findAll, [
+            filters?.profile_na ?? null,
+        ])
         return result.rows
     }
 

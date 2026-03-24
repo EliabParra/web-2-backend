@@ -50,8 +50,8 @@ export class CategoryBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.CategorySummary>>(
             params,
             CategorySchemas.getAll,
-            async () => {
-                const result: Array<Types.CategorySummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.CategorySummary> = await this.service.getAll(data)
                 return this.success(result, this.categoryMessages.getAll)
             }
         )

@@ -13,8 +13,11 @@ export class MenuRepository implements Types.IMenuRepository {
     /**
      * Busca todos los menus
      */
-    async findAll(): Promise<Types.MenuSummary[]> {
-        const result = await this.db.query<Types.MenuSummary>(MenuQueries.findAll, [])
+    async findAll(filters?: Types.GetAllMenuInput): Promise<Types.MenuSummary[]> {
+        const result = await this.db.query<Types.MenuSummary>(MenuQueries.findAll, [
+            filters?.menu_na ?? null,
+            filters?.subsystem_id ?? null,
+        ])
         return result.rows
     }
 

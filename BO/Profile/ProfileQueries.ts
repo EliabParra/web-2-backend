@@ -1,6 +1,9 @@
 export const ProfileQueries = {
     findAll: `
-        SELECT * FROM security.profile
+        SELECT *
+        FROM security.profile
+        WHERE ($1::text IS NULL OR LOWER(profile_na) LIKE ('%' || LOWER($1) || '%'))
+        ORDER BY profile_id DESC
     `,
     findById: `
         SELECT * FROM security.profile WHERE profile_id = $1

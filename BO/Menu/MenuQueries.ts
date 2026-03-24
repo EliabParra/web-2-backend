@@ -1,6 +1,10 @@
 export const MenuQueries = {
     findAll: `
-        SELECT * FROM security.menu
+                SELECT *
+                FROM security.menu
+                WHERE ($1::text IS NULL OR LOWER(menu_na) LIKE ('%' || LOWER($1) || '%'))
+                    AND ($2::int IS NULL OR subsystem_id = $2)
+                ORDER BY menu_id DESC
     `,
     findById: `
         SELECT * FROM security.menu WHERE menu_id = $1

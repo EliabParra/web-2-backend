@@ -19,8 +19,8 @@ export class ProfileService extends BOService implements Types.IProfileService {
     /**
      * Obtiene todos los profiles
      */
-    async getAll(): Promise<Types.ProfileSummary[]> {
-        return this.repo.findAll()
+    async getAll(filters?: Types.GetAllProfileInput): Promise<Types.ProfileSummary[]> {
+        return this.repo.findAll(filters)
     }
 
     /**

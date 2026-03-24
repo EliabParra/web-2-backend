@@ -33,8 +33,8 @@ export class LocationBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.LocationSummary>>(
             params,
             LocationSchemas.getAll,
-            async () => {
-                const result: Array<Types.LocationSummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.LocationSummary> = await this.service.getAll(data)
                 return this.success(result, this.locationMessages.getAll)
             }
         )

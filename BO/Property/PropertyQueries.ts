@@ -1,6 +1,10 @@
 export const PropertyQueries = {
     findAll: `
-        SELECT * FROM business.property
+                SELECT *
+                FROM business.property
+                WHERE ($1::text IS NULL OR LOWER(property_de) LIKE ('%' || LOWER($1) || '%'))
+                    AND ($2::int IS NULL OR property_val = $2)
+                ORDER BY property_id DESC
     `,
     findById: `
         SELECT * FROM business.property WHERE property_id = $1

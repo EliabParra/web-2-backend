@@ -19,8 +19,8 @@ export class CategoryService extends BOService implements Types.ICategoryService
     /**
      * Obtiene todos los categorys
      */
-    async getAll(): Promise<Types.CategorySummary[]> {
-        return this.repo.findAll()
+    async getAll(filters?: Types.GetAllCategoryInput): Promise<Types.CategorySummary[]> {
+        return this.repo.findAll(filters)
     }
 
     /**

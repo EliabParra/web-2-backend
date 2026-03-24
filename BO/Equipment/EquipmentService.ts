@@ -19,8 +19,8 @@ export class EquipmentService extends BOService implements Types.IEquipmentServi
     /**
      * Obtiene todos los equipments
      */
-    async getAll(): Promise<Types.EquipmentSummary[]> {
-        return this.repo.findAll()
+    async getAll(filters?: Types.GetAllEquipmentInput): Promise<Types.EquipmentSummary[]> {
+        return this.repo.findAll(filters)
     }
 
     /**

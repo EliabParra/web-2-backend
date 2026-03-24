@@ -21,8 +21,8 @@ export class MenuService extends BOService implements Types.IMenuService {
     /**
      * Obtiene todos los menus
      */
-    async getAll(): Promise<Types.MenuSummary[]> {
-        return this.repo.findAll()
+    async getAll(filters?: Types.GetAllMenuInput): Promise<Types.MenuSummary[]> {
+        return this.repo.findAll(filters)
     }
 
     /**

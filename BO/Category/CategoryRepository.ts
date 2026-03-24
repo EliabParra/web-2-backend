@@ -13,8 +13,11 @@ export class CategoryRepository implements Types.ICategoryRepository {
     /**
      * Busca todos los categorys
      */
-    async findAll(): Promise<Types.CategorySummary[]> {
-        const result = await this.db.query<Types.CategorySummary>(CategoryQueries.findAll, [])
+    async findAll(filters?: Types.GetAllCategoryInput): Promise<Types.CategorySummary[]> {
+        const result = await this.db.query<Types.CategorySummary>(CategoryQueries.findAll, [
+            filters?.category_de ?? null,
+            filters?.category_type_id ?? null,
+        ])
         return result.rows
     }
 

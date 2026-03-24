@@ -50,8 +50,8 @@ export class MenuBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.MenuSummary>>(
             params,
             MenuSchemas.getAll,
-            async () => {
-                const result: Array<Types.MenuSummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.MenuSummary> = await this.service.getAll(data)
                 return this.success(result, this.menuMessages.getAll)
             }
         )
