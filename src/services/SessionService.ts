@@ -24,13 +24,32 @@ export class SessionManager implements types.ISessionService {
     private authCfg: Record<string, unknown>
     private requireEmailVerification: boolean
 
+    private static createNoopRequestContext(): types.IRequestContextService {
+        return {
+            run: <T>(_req: types.AppRequest, fn: () => T) => fn(),
+            hasRequest: () => false,
+            getRequest: () => {
+                throw new Error('Request context is not available')
+            },
+            hasSession: () => false,
+            getSession: () => {
+                throw new Error('Session is not available in current request')
+            },
+            setSession: () => {
+                throw new Error('Session is not available in current request')
+            },
+        }
+    }
+
     constructor(container: types.IContainer) {
         this.db = container.resolve<types.IDatabase>('db')
         this.log = container.resolve<types.ILogger>('log').child({ category: 'Session' })
         this.config = container.resolve<types.IConfig>('config')
         this.i18n = container.resolve<types.II18nService>('i18n')
         this.audit = container.resolve<types.IAuditService>('audit')
-        this.requestContext = container.resolve<types.IRequestContextService>('requestContext')
+        this.requestContext = container.has('requestContext')
+            ? container.resolve<types.IRequestContextService>('requestContext')
+            : SessionManager.createNoopRequestContext()
         this.validator = container.resolve<ValidatorService>('validator')
 
         this.authCfg = (this.config.auth ?? {}) as Record<string, unknown>
