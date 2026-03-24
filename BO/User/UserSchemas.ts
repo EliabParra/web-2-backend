@@ -63,6 +63,14 @@ export const createUserSchemas = (messages: UserMessagesSet = UserMessages.es) =
     delete: z.object({
         user_id: z.coerce.number(),
     }),
+    assignProfile: z.object({
+        user_id: z.coerce.number().int().positive(),
+        profile_id: z.coerce.number().int().positive(),
+    }),
+    revokeProfile: z.object({
+        user_id: z.coerce.number().int().positive(),
+        profile_id: z.coerce.number().int().positive(),
+    }),
     }
 }
 
@@ -74,3 +82,5 @@ export type GetAllInput = z.infer<typeof UserSchemas.getAll>
 export type CreateInput = z.infer<typeof UserSchemas.create>
 export type UpdateInput = z.infer<typeof UserSchemas.update>
 export type DeleteInput = z.infer<typeof UserSchemas.delete>
+export type AssignProfileInput = z.infer<typeof UserSchemas.assignProfile>
+export type RevokeProfileInput = z.infer<typeof UserSchemas.revokeProfile>

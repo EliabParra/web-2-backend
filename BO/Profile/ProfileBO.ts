@@ -107,4 +107,92 @@ export class ProfileBO extends BaseBO {
             }
         )
     }
+
+    async grantPermission(params: Inputs.GrantPermissionInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GrantPermissionInput, boolean>(
+            params,
+            ProfileSchemas.grantPermission,
+            async (data) => {
+                const granted = await this.service.grantPermission(data)
+                return this.success(granted, this.profileMessages.grantPermission)
+            }
+        )
+    }
+
+    async revokePermission(params: Inputs.RevokePermissionInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RevokePermissionInput, boolean>(
+            params,
+            ProfileSchemas.revokePermission,
+            async (data) => {
+                const revoked = await this.service.revokePermission(data)
+                return this.success(revoked, this.profileMessages.revokePermission)
+            }
+        )
+    }
+
+    async assignSubsystem(params: Inputs.AssignSubsystemInput): Promise<ApiResponse> {
+        return this.exec<Inputs.AssignSubsystemInput, null>(
+            params,
+            ProfileSchemas.assignSubsystem,
+            async (data) => {
+                await this.service.assignSubsystem(data)
+                return this.success(null, this.profileMessages.assignSubsystem)
+            }
+        )
+    }
+
+    async revokeSubsystem(params: Inputs.RevokeSubsystemInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RevokeSubsystemInput, null>(
+            params,
+            ProfileSchemas.revokeSubsystem,
+            async (data) => {
+                await this.service.revokeSubsystem(data)
+                return this.success(null, this.profileMessages.revokeSubsystem)
+            }
+        )
+    }
+
+    async assignMenu(params: Inputs.AssignMenuInput): Promise<ApiResponse> {
+        return this.exec<Inputs.AssignMenuInput, null>(
+            params,
+            ProfileSchemas.assignMenu,
+            async (data) => {
+                await this.service.assignMenu(data)
+                return this.success(null, this.profileMessages.assignMenu)
+            }
+        )
+    }
+
+    async revokeMenu(params: Inputs.RevokeMenuInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RevokeMenuInput, null>(
+            params,
+            ProfileSchemas.revokeMenu,
+            async (data) => {
+                await this.service.revokeMenu(data)
+                return this.success(null, this.profileMessages.revokeMenu)
+            }
+        )
+    }
+
+    async assignOption(params: Inputs.AssignOptionInput): Promise<ApiResponse> {
+        return this.exec<Inputs.AssignOptionInput, null>(
+            params,
+            ProfileSchemas.assignOption,
+            async (data) => {
+                await this.service.assignOption(data)
+                return this.success(null, this.profileMessages.assignOption)
+            }
+        )
+    }
+
+    async revokeOption(params: Inputs.RevokeOptionInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RevokeOptionInput, null>(
+            params,
+            ProfileSchemas.revokeOption,
+            async (data) => {
+                await this.service.revokeOption(data)
+                return this.success(null, this.profileMessages.revokeOption)
+            }
+        )
+    }
 }

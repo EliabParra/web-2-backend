@@ -6,6 +6,14 @@ export const ProfileMessages = {
         create: 'Creado exitosamente',
         update: 'Actualizado exitosamente',
         delete: 'Eliminado exitosamente',
+        grantPermission: 'Permiso asignado exitosamente',
+        revokePermission: 'Permiso revocado exitosamente',
+        assignSubsystem: 'Subsistema asignado exitosamente',
+        revokeSubsystem: 'Subsistema revocado exitosamente',
+        assignMenu: 'Menu asignado exitosamente',
+        revokeMenu: 'Menu revocado exitosamente',
+        assignOption: 'Opcion asignada exitosamente',
+        revokeOption: 'Opcion revocada exitosamente',
 
         // Common errors
         notFound: 'Profile no encontrado',
@@ -30,6 +38,14 @@ export const ProfileMessages = {
         create: 'Created successfully',
         update: 'Updated successfully',
         delete: 'Deleted successfully',
+        grantPermission: 'Permission granted successfully',
+        revokePermission: 'Permission revoked successfully',
+        assignSubsystem: 'Subsystem assigned successfully',
+        revokeSubsystem: 'Subsystem revoked successfully',
+        assignMenu: 'Menu assigned successfully',
+        revokeMenu: 'Menu revoked successfully',
+        assignOption: 'Option assigned successfully',
+        revokeOption: 'Option revoked successfully',
 
         // Common errors
         notFound: 'Profile not found',

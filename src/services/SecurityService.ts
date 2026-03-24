@@ -1,5 +1,5 @@
 import type * as types from '@toproc/types'
-import { PermissionMatrixWriter, PermissionMatrixReader } from '@toproc/security'
+import { PermissionMatrixWriter, PermissionMatrixReader, SecurityQueries } from '@toproc/security'
 
 /**
  * Servicio de seguridad y fachada principal del framework.
@@ -313,6 +313,36 @@ export class SecurityService implements types.ISecurityService {
      */
     async revokeOptionFromProfile(profileId: number, optionId: number) {
         return this.menuProvider.revokeOptionFromProfile(profileId, optionId)
+    }
+
+    /**
+     * Asigna un perfil a un usuario.
+     *
+     * @param userId - ID del usuario
+     * @param profileId - ID del perfil
+     * @returns `true` si se registró una nueva asignación
+     */
+    async assignProfileToUser(userId: number, profileId: number): Promise<boolean> {
+        const result = await this.db.query<{ rowCount: number }>(SecurityQueries.ASSIGN_USER_PROFILE, [
+            userId,
+            profileId,
+        ])
+        return result.rowCount !== null && result.rowCount > 0
+    }
+
+    /**
+     * Revoca un perfil de un usuario.
+     *
+     * @param userId - ID del usuario
+     * @param profileId - ID del perfil
+     * @returns `true` si se eliminó una asignación existente
+     */
+    async revokeProfileFromUser(userId: number, profileId: number): Promise<boolean> {
+        const result = await this.db.query<{ rowCount: number }>(SecurityQueries.REVOKE_USER_PROFILE, [
+            userId,
+            profileId,
+        ])
+        return result.rowCount !== null && result.rowCount > 0
     }
 
     // ═══════════════════════════════════════════════════════════════════

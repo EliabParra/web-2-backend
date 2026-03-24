@@ -1,5 +1,5 @@
 import { BOService } from '@toproc/bo'
-import type { IContainer } from '@toproc/types'
+import type { IContainer, ISecurityService } from '@toproc/types'
 import { UserRepository, Errors, Types } from './UserModule.js'
 
 /**
@@ -10,10 +10,12 @@ import { UserRepository, Errors, Types } from './UserModule.js'
  */
 export class UserService extends BOService implements Types.IUserService {
     private repo: UserRepository
+    private security: ISecurityService
 
     constructor(container: IContainer) {
         super(container)
         this.repo = container.resolve<UserRepository>('UserRepository')
+        this.security = container.resolve<ISecurityService>('security')
     }
 
     /**
@@ -65,5 +67,13 @@ export class UserService extends BOService implements Types.IUserService {
             throw new Errors.UserNotFoundError(id)
         }
         this.log.info('Eliminado user ' + id)
+    }
+
+    async assignProfile(data: Types.User.ProfileAssignmentInput): Promise<boolean> {
+        return this.security.assignProfileToUser(data.user_id, data.profile_id)
+    }
+
+    async revokeProfile(data: Types.User.ProfileAssignmentInput): Promise<boolean> {
+        return this.security.revokeProfileFromUser(data.user_id, data.profile_id)
     }
 }

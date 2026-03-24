@@ -6,6 +6,8 @@ export const UserMessages = {
         create: 'Creado exitosamente',
         update: 'Actualizado exitosamente',
         delete: 'Eliminado exitosamente',
+        assignProfile: 'Perfil asignado exitosamente',
+        revokeProfile: 'Perfil revocado exitosamente',
 
         // Common errors
         notFound: 'User no encontrado',
@@ -36,6 +38,8 @@ export const UserMessages = {
         create: 'Created successfully',
         update: 'Updated successfully',
         delete: 'Deleted successfully',
+        assignProfile: 'Profile assigned successfully',
+        revokeProfile: 'Profile revoked successfully',
 
         // Common errors
         notFound: 'User not found',

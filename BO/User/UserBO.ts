@@ -140,4 +140,26 @@ export class UserBO extends BaseBO {
             }
         )
     }
+
+    async assignProfile(params: Inputs.AssignProfileInput): Promise<ApiResponse> {
+        return this.exec<Inputs.AssignProfileInput, boolean>(
+            params,
+            UserSchemas.assignProfile,
+            async (data) => {
+                const assigned = await this.service.assignProfile(data)
+                return this.success(assigned, this.userMessages.assignProfile)
+            }
+        )
+    }
+
+    async revokeProfile(params: Inputs.RevokeProfileInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RevokeProfileInput, boolean>(
+            params,
+            UserSchemas.revokeProfile,
+            async (data) => {
+                const revoked = await this.service.revokeProfile(data)
+                return this.success(revoked, this.userMessages.revokeProfile)
+            }
+        )
+    }
 }

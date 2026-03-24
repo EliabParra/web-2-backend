@@ -45,6 +45,27 @@ export namespace Profile {
         profile_id: number
     }
 
+    export interface PermissionInput {
+        profile_id: number
+        object_na: string
+        method_na: string
+    }
+
+    export interface SubsystemAssignmentInput {
+        profile_id: number
+        subsystem_id: number
+    }
+
+    export interface MenuAssignmentInput {
+        profile_id: number
+        menu_id: number
+    }
+
+    export interface OptionAssignmentInput {
+        profile_id: number
+        option_id: number
+    }
+
     export type RowCount = {
         rowCount: number
     }
@@ -72,6 +93,14 @@ export namespace Profile {
         create(data: Partial<Entity>): Promise<Entity | null>
         update(id: number, data: Partial<Entity>): Promise<Entity>
         delete(id: number): Promise<void>
+        grantPermission(data: PermissionInput): Promise<boolean>
+        revokePermission(data: PermissionInput): Promise<boolean>
+        assignSubsystem(data: SubsystemAssignmentInput): Promise<void>
+        revokeSubsystem(data: SubsystemAssignmentInput): Promise<void>
+        assignMenu(data: MenuAssignmentInput): Promise<void>
+        revokeMenu(data: MenuAssignmentInput): Promise<void>
+        assignOption(data: OptionAssignmentInput): Promise<void>
+        revokeOption(data: OptionAssignmentInput): Promise<void>
     }
 }
 

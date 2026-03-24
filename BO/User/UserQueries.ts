@@ -5,6 +5,7 @@ export const UserQueries = {
             u.user_na,
             u.user_pw,
             u.user_act,
+            COALESCE(array_agg(up.profile_id) FILTER (WHERE up.profile_id IS NOT NULL), '{}') as profile_ids,
             u.user_created_dt,
             u.user_updated_dt,
             u.user_last_login_dt,
@@ -19,14 +20,12 @@ export const UserQueries = {
             p.person_deg
         FROM security."user" u
         LEFT JOIN business.person p ON p.person_id = u.person_id
-                WHERE ($1::text IS NULL OR LOWER(u.user_na) LIKE ('%' || LOWER($1) || '%'))
-                    AND ($2::text IS NULL OR LOWER(COALESCE(u.user_em, '')) LIKE ('%' || LOWER($2) || '%'))
-                    AND ($3::boolean IS NULL OR u.user_act = $3)
-                    AND ($4::text IS NULL OR LOWER(COALESCE(p.person_na, '')) LIKE ('%' || LOWER($4) || '%'))
-                ORDER BY u.user_id DESC
-    `,
-    findById: `
-        SELECT
+        LEFT JOIN security.user_profile up ON up.user_id = u.user_id
+        WHERE ($1::text IS NULL OR LOWER(u.user_na) LIKE ('%' || LOWER($1) || '%'))
+            AND ($2::text IS NULL OR LOWER(COALESCE(u.user_em, '')) LIKE ('%' || LOWER($2) || '%'))
+            AND ($3::boolean IS NULL OR u.user_act = $3)
+            AND ($4::text IS NULL OR LOWER(COALESCE(p.person_na, '')) LIKE ('%' || LOWER($4) || '%'))
+        GROUP BY
             u.user_id,
             u.user_na,
             u.user_pw,
@@ -43,9 +42,48 @@ export const UserQueries = {
             p.person_ln,
             p.person_ph,
             p.person_deg
+        ORDER BY u.user_id DESC
+    `,
+    findById: `
+        SELECT
+            u.user_id,
+            u.user_na,
+            u.user_pw,
+            u.user_act,
+            COALESCE(array_agg(up.profile_id) FILTER (WHERE up.profile_id IS NOT NULL), '{}') as profile_ids,
+            u.user_created_dt,
+            u.user_updated_dt,
+            u.user_last_login_dt,
+            u.user_em,
+            u.user_em_verified_dt,
+            u.user_sol,
+            u.person_id,
+            p.person_ci,
+            p.person_na,
+            p.person_ln,
+            p.person_ph,
+            p.person_deg
         FROM security."user" u
         LEFT JOIN business.person p ON p.person_id = u.person_id
+        LEFT JOIN security.user_profile up ON up.user_id = u.user_id
         WHERE u.user_id = $1
+        GROUP BY
+            u.user_id,
+            u.user_na,
+            u.user_pw,
+            u.user_act,
+            u.user_created_dt,
+            u.user_updated_dt,
+            u.user_last_login_dt,
+            u.user_em,
+            u.user_em_verified_dt,
+            u.user_sol,
+            u.person_id,
+            p.person_ci,
+            p.person_na,
+            p.person_ln,
+            p.person_ph,
+            p.person_deg
     `,
     create: `
         WITH created_person AS (
@@ -79,6 +117,7 @@ export const UserQueries = {
             cu.user_na,
             cu.user_pw,
             cu.user_act,
+            '{}'::integer[] as profile_ids,
             cu.user_created_dt,
             cu.user_updated_dt,
             cu.user_last_login_dt,
@@ -124,6 +163,7 @@ export const UserQueries = {
             uu.user_na,
             uu.user_pw,
             uu.user_act,
+            COALESCE(array_agg(up.profile_id) FILTER (WHERE up.profile_id IS NOT NULL), '{}') as profile_ids,
             uu.user_created_dt,
             uu.user_updated_dt,
             uu.user_last_login_dt,
@@ -138,6 +178,24 @@ export const UserQueries = {
             p.person_deg
         FROM updated_user uu
         LEFT JOIN business.person p ON p.person_id = uu.person_id
+        LEFT JOIN security.user_profile up ON up.user_id = uu.user_id
+        GROUP BY
+            uu.user_id,
+            uu.user_na,
+            uu.user_pw,
+            uu.user_act,
+            uu.user_created_dt,
+            uu.user_updated_dt,
+            uu.user_last_login_dt,
+            uu.user_em,
+            uu.user_em_verified_dt,
+            uu.user_sol,
+            uu.person_id,
+            p.person_ci,
+            p.person_na,
+            p.person_ln,
+            p.person_ph,
+            p.person_deg
     `,
     delete: `
         WITH deleted_user AS (
@@ -155,6 +213,15 @@ export const UserQueries = {
     `,
     exists: `
         SELECT EXISTS(SELECT 1 FROM security."user" WHERE user_id = $1) as "exists"
+    `,
+    assignProfile: `
+        INSERT INTO security.user_profile (user_id, profile_id, assigned_at)
+        VALUES ($1, $2, NOW())
+        ON CONFLICT DO NOTHING
+    `,
+    revokeProfile: `
+        DELETE FROM security.user_profile
+        WHERE user_id = $1 AND profile_id = $2
     `,
 } as const
 

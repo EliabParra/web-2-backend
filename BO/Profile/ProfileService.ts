@@ -1,5 +1,5 @@
 import { BOService } from '@toproc/bo'
-import type { IContainer } from '@toproc/types'
+import type { IContainer, ISecurityService } from '@toproc/types'
 import { ProfileRepository, Errors, Types } from './ProfileModule.js'
 
 /**
@@ -10,10 +10,12 @@ import { ProfileRepository, Errors, Types } from './ProfileModule.js'
  */
 export class ProfileService extends BOService implements Types.IProfileService {
     private repo: ProfileRepository
+    private security: ISecurityService
 
     constructor(container: IContainer) {
         super(container)
         this.repo = container.resolve<ProfileRepository>('ProfileRepository')
+        this.security = container.resolve<ISecurityService>('security')
     }
 
     /**
@@ -65,5 +67,37 @@ export class ProfileService extends BOService implements Types.IProfileService {
             throw new Errors.ProfileNotFoundError(id)
         }
         this.log.info('Eliminado profile ' + id)
+    }
+
+    async grantPermission(data: Types.Profile.PermissionInput): Promise<boolean> {
+        return this.security.grantPermission(data.profile_id, data.object_na, data.method_na)
+    }
+
+    async revokePermission(data: Types.Profile.PermissionInput): Promise<boolean> {
+        return this.security.revokePermission(data.profile_id, data.object_na, data.method_na)
+    }
+
+    async assignSubsystem(data: Types.Profile.SubsystemAssignmentInput): Promise<void> {
+        await this.security.assignSubsystem(data.profile_id, data.subsystem_id)
+    }
+
+    async revokeSubsystem(data: Types.Profile.SubsystemAssignmentInput): Promise<void> {
+        await this.security.revokeSubsystem(data.profile_id, data.subsystem_id)
+    }
+
+    async assignMenu(data: Types.Profile.MenuAssignmentInput): Promise<void> {
+        await this.security.assignMenu(data.profile_id, data.menu_id)
+    }
+
+    async revokeMenu(data: Types.Profile.MenuAssignmentInput): Promise<void> {
+        await this.security.revokeMenu(data.profile_id, data.menu_id)
+    }
+
+    async assignOption(data: Types.Profile.OptionAssignmentInput): Promise<void> {
+        await this.security.assignOptionToProfile(data.profile_id, data.option_id)
+    }
+
+    async revokeOption(data: Types.Profile.OptionAssignmentInput): Promise<void> {
+        await this.security.revokeOptionFromProfile(data.profile_id, data.option_id)
     }
 }

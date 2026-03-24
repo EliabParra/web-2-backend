@@ -50,11 +50,16 @@ export const SecurityQueries = {
     REVOKE_OPTION_FROM_PROFILE:
         'DELETE FROM security.profile_option WHERE profile_id = $1 AND option_id = $2',
 
+    ASSIGN_USER_PROFILE:
+        'INSERT INTO security.user_profile (user_id, profile_id, assigned_at) VALUES ($1, $2, NOW()) ON CONFLICT DO NOTHING',
+    REVOKE_USER_PROFILE:
+        'DELETE FROM security.user_profile WHERE user_id = $1 AND profile_id = $2',
+
     // Load all permissions: profile_id -> object_name.method_na
     LOAD_PERMISSIONS: `
-        SELECT 
+        SELECT
             p.profile_id,
-            o.object_na, 
+            o.object_na,
             m.method_na
         FROM security.profile_method pm
         INNER JOIN security.profile p ON pm.profile_id = p.profile_id

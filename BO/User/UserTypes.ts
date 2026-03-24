@@ -12,6 +12,7 @@ export namespace User {
         user_na: string
         user_pw: string
         user_act: boolean
+        profile_ids?: number[]
         user_created_dt?: string | Date
         user_updated_dt?: string | Date
         user_last_login_dt?: string | Date | null
@@ -30,6 +31,7 @@ export namespace User {
         user_id: number
         user_na: string
         user_act: boolean
+        profile_ids?: number[]
         user_created_dt?: string | Date
         user_updated_dt?: string | Date
         user_last_login_dt?: string | Date | null
@@ -92,6 +94,11 @@ export namespace User {
         user_id: number
     }
 
+    export interface ProfileAssignmentInput {
+        user_id: number
+        profile_id: number
+    }
+
     export type RowCount = {
         rowCount: number
     }
@@ -111,6 +118,8 @@ export namespace User {
         update(id: number, data: Partial<Entity>): Promise<Entity | null>
         delete(id: number): Promise<boolean>
         exists(id: number): Promise<boolean>
+        assignProfile(userId: number, profileId: number): Promise<boolean>
+        revokeProfile(userId: number, profileId: number): Promise<boolean>
     }
 
     export interface Service {
@@ -119,6 +128,8 @@ export namespace User {
         create(data: Partial<Entity>): Promise<Entity | null>
         update(id: number, data: Partial<Entity>): Promise<Entity>
         delete(id: number): Promise<void>
+        assignProfile(data: ProfileAssignmentInput): Promise<boolean>
+        revokeProfile(data: ProfileAssignmentInput): Promise<boolean>
     }
 }
 

@@ -431,6 +431,42 @@ export interface ISecurityService {
      */
     revokePermission(profileId: number, objectName: string, methodName: string): Promise<boolean>
 
+    /**
+     * Construye la estructura de menús accesible por unión de perfiles.
+     */
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+    getMenuStructure(profileIds: number[]): Promise<MenuStructure>
+
+    /** Crea un subsistema. */
+    createSubsystem(name: string): Promise<SecuritySubsystem>
+    /** Elimina un subsistema y recarga estructura. */
+    deleteSubsystem(id: number): Promise<boolean>
+    /** Asigna un subsistema a un perfil. */
+    assignSubsystem(profileId: number, subsystemId: number): Promise<void>
+    /** Revoca un subsistema de un perfil. */
+    revokeSubsystem(profileId: number, subsystemId: number): Promise<void>
+
+    /** Crea un menú en un subsistema. */
+    createMenu(name: string, subsystemId: number): Promise<SecurityMenu>
+    /** Asigna un menú a un perfil. */
+    assignMenu(profileId: number, menuId: number): Promise<void>
+    /** Revoca un menú de un perfil. */
+    revokeMenu(profileId: number, menuId: number): Promise<void>
+
+    /** Crea una opción. */
+    createOption(name: string, methodId?: number): Promise<SecurityOption>
+    /** Enlaza una opción a un menú. */
+    assignOptionToMenu(menuId: number, optionId: number): Promise<void>
+    /** Asigna una opción a un perfil. */
+    assignOptionToProfile(profileId: number, optionId: number): Promise<void>
+    /** Revoca una opción de un perfil. */
+    revokeOptionFromProfile(profileId: number, optionId: number): Promise<void>
+
+    /** Asigna un perfil a un usuario. */
+    assignProfileToUser(userId: number, profileId: number): Promise<boolean>
+    /** Revoca un perfil de un usuario. */
+    revokeProfileFromUser(userId: number, profileId: number): Promise<boolean>
+
     // Excel — Importación / Exportación
 
     /**

@@ -87,4 +87,26 @@ export class UserRepository implements Types.IUserRepository {
         const result = await this.db.query<Types.ExistsUser>(UserQueries.exists, [id])
         return result.rows[0].exists
     }
+
+    /**
+     * Asigna un perfil a un user
+     */
+    async assignProfile(userId: number, profileId: number): Promise<boolean> {
+        const result = await this.db.query<Types.RowCountUser>(UserQueries.assignProfile, [
+            userId,
+            profileId,
+        ])
+        return result.rowCount !== null && result.rowCount > 0
+    }
+
+    /**
+     * Revoca un perfil de un user
+     */
+    async revokeProfile(userId: number, profileId: number): Promise<boolean> {
+        const result = await this.db.query<Types.RowCountUser>(UserQueries.revokeProfile, [
+            userId,
+            profileId,
+        ])
+        return result.rowCount !== null && result.rowCount > 0
+    }
 }

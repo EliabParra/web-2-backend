@@ -28,6 +28,40 @@ export const createProfileSchemas = (messages: ProfileMessagesSet = ProfileMessa
     delete: z.object({
         profile_id: z.coerce.number(),
     }),
+    grantPermission: z.object({
+        profile_id: z.coerce.number().int().positive(),
+        object_na: z.string().min(1),
+        method_na: z.string().min(1),
+    }),
+    revokePermission: z.object({
+        profile_id: z.coerce.number().int().positive(),
+        object_na: z.string().min(1),
+        method_na: z.string().min(1),
+    }),
+    assignSubsystem: z.object({
+        profile_id: z.coerce.number().int().positive(),
+        subsystem_id: z.coerce.number().int().positive(),
+    }),
+    revokeSubsystem: z.object({
+        profile_id: z.coerce.number().int().positive(),
+        subsystem_id: z.coerce.number().int().positive(),
+    }),
+    assignMenu: z.object({
+        profile_id: z.coerce.number().int().positive(),
+        menu_id: z.coerce.number().int().positive(),
+    }),
+    revokeMenu: z.object({
+        profile_id: z.coerce.number().int().positive(),
+        menu_id: z.coerce.number().int().positive(),
+    }),
+    assignOption: z.object({
+        profile_id: z.coerce.number().int().positive(),
+        option_id: z.coerce.number().int().positive(),
+    }),
+    revokeOption: z.object({
+        profile_id: z.coerce.number().int().positive(),
+        option_id: z.coerce.number().int().positive(),
+    }),
     }
 }
 
@@ -39,3 +73,11 @@ export type GetAllInput = z.infer<typeof ProfileSchemas.getAll>
 export type CreateInput = z.infer<typeof ProfileSchemas.create>
 export type UpdateInput = z.infer<typeof ProfileSchemas.update>
 export type DeleteInput = z.infer<typeof ProfileSchemas.delete>
+export type GrantPermissionInput = z.infer<typeof ProfileSchemas.grantPermission>
+export type RevokePermissionInput = z.infer<typeof ProfileSchemas.revokePermission>
+export type AssignSubsystemInput = z.infer<typeof ProfileSchemas.assignSubsystem>
+export type RevokeSubsystemInput = z.infer<typeof ProfileSchemas.revokeSubsystem>
+export type AssignMenuInput = z.infer<typeof ProfileSchemas.assignMenu>
+export type RevokeMenuInput = z.infer<typeof ProfileSchemas.revokeMenu>
+export type AssignOptionInput = z.infer<typeof ProfileSchemas.assignOption>
+export type RevokeOptionInput = z.infer<typeof ProfileSchemas.revokeOption>
