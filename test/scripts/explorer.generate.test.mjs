@@ -97,7 +97,7 @@ test('extractSchemaFieldsFromSource builds lookup metadata from describe and inf
         export const LoanSchemas = {
             create: z.object({
                 user_id: z.coerce.number().describe('lookup=UserBO.getAll;value=user_id;label=user_na'),
-                category: z.string()
+                category_id: z.coerce.number().optional()
             })
         }
     `
@@ -128,8 +128,8 @@ test('extractSchemaFieldsFromSource builds lookup metadata from describe and inf
     assert.equal(fields.user_id.lookup.valueKey, 'user_id')
     assert.equal(fields.user_id.lookup.labelKey, 'user_na')
 
-    assert.equal(fields.category.lookup.tx, 121)
-    assert.equal(fields.category.lookup.name, 'CategoryBO.list')
+    assert.equal(fields.category_id.lookup.tx, 121)
+    assert.equal(fields.category_id.lookup.name, 'CategoryBO.list')
 })
 
 test('extractSchemaFieldsFromSource lookup inference prefers list/getAll over get', () => {
@@ -172,4 +172,56 @@ test('extractSchemaFieldsFromSource lookup inference prefers list/getAll over ge
     const fields = extractSchemaFieldsFromSource(source, 'create', { methods })
     assert.equal(fields.user_id.lookup.tx, 100)
     assert.equal(fields.user_id.lookup.name, 'UserBO.getAll')
+})
+
+test('extractSchemaFieldsFromSource does not infer lookup for non-relational string fields', () => {
+    const source = `
+        import { z } from 'zod'
+        export const LoanSchemas = {
+            create: z.object({
+                movement_ob: z.string(),
+                reason: z.string().optional()
+            })
+        }
+    `
+
+    const methods = [
+        {
+            className: 'CategoryBO',
+            methodName: 'getAll',
+            schemaKey: 'getAll',
+            tx: 88,
+            boFile: 'BO/Category/CategoryBO.ts',
+            schemaContent: '',
+        },
+    ]
+
+    const fields = extractSchemaFieldsFromSource(source, 'create', { methods })
+    assert.equal(fields.movement_ob.lookup, undefined)
+    assert.equal(fields.reason.lookup, undefined)
+})
+
+test('extractSchemaFieldsFromSource does not infer lookup when entity names do not match', () => {
+    const source = `
+        import { z } from 'zod'
+        export const LoanSchemas = {
+            create: z.object({
+                user_id: z.coerce.number()
+            })
+        }
+    `
+
+    const methods = [
+        {
+            className: 'CategoryBO',
+            methodName: 'getAll',
+            schemaKey: 'getAll',
+            tx: 77,
+            boFile: 'BO/Category/CategoryBO.ts',
+            schemaContent: '',
+        },
+    ]
+
+    const fields = extractSchemaFieldsFromSource(source, 'create', { methods })
+    assert.equal(fields.user_id.lookup, undefined)
 })

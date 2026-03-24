@@ -227,6 +227,23 @@ function buildEntityCandidates(fieldName: string): string[] {
     return [...new Set([full, singular, plural, last].filter(Boolean))]
 }
 
+function isLikelyRelationalField(fieldName: string, inferredType: SchemaField['type']): boolean {
+    const normalized = toSnakeCase(fieldName)
+
+    // Strong FK-style naming conventions.
+    if (/_id$/.test(normalized) || /_nu$/.test(normalized) || /_fk$/.test(normalized)) {
+        return true
+    }
+
+    // Relational fields are commonly numeric identifiers.
+    if (inferredType === 'number') {
+        const suffixes = ['_id', '_nu', '_code', '_key']
+        if (suffixes.some((suffix) => normalized.endsWith(suffix))) return true
+    }
+
+    return false
+}
+
 function parseLookupDescriptorFromDescribeText(text: string): LookupDescriptor | null {
     const jsonMatch = text.match(/lookup\s*:\s*(\{[\s\S]*\})/i)
     if (jsonMatch?.[1]) {
@@ -317,12 +334,23 @@ function inferLookupForField(fieldName: string, methods: MethodEntry[]): MethodE
         const methodLower = method.methodName.toLowerCase()
 
         let score = 0
-        if (candidates.includes(objectSnake)) score += 5
-        if (candidates.includes(objectRaw)) score += 5
+        let entityMatchScore = 0
+
+        if (candidates.includes(objectSnake)) entityMatchScore += 5
+        if (candidates.includes(objectRaw)) entityMatchScore += 5
+        score += entityMatchScore
+
+        // Never infer a lookup if no entity-level match exists.
+        if (entityMatchScore === 0) {
+            continue
+        }
 
         const preferredIndex = preferredMethods.findIndex((prefix) => methodLower.startsWith(prefix))
         if (preferredIndex >= 0) {
             score += 28 - Math.min(preferredIndex, 5)
+        } else {
+            // If method intent does not look like listing/catalog, penalize strongly.
+            score -= 12
         }
 
         if (methodLower === 'get' || methodLower.startsWith('getby') || methodLower.startsWith('findby')) {
@@ -360,6 +388,8 @@ function buildLookupSpecForField(
     sourceFile: ts.SourceFile,
     methods: MethodEntry[]
 ): LookupSpec | undefined {
+    const inferredType = inferFieldTypeFromExpression(expression, sourceFile)
+
     const descriptor = extractLookupDescriptorFromExpression(expression, sourceFile)
     if (descriptor?.txName) {
         const method = resolveMethodByName(methods, descriptor.txName)
@@ -373,6 +403,11 @@ function buildLookupSpecForField(
             ...(descriptor.labelKey ? { labelKey: descriptor.labelKey } : {}),
             ...(descriptor.params ? { params: descriptor.params } : {}),
         }
+    }
+
+    // Without explicit descriptor, only infer when the field shape strongly looks relational.
+    if (!isLikelyRelationalField(fieldName, inferredType)) {
+        return undefined
     }
 
     const inferred = inferLookupForField(fieldName, methods)
