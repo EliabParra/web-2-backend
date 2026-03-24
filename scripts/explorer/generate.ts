@@ -11,6 +11,8 @@ const DEFAULT_OUTPUT_PATH = path.resolve(__dirname, 'spec.json')
 interface SchemaField {
     type: string
     optional: boolean
+    enumValues?: Array<string | number | boolean>
+    format?: 'date' | 'datetime'
 }
 
 interface TxSpec {
@@ -69,6 +71,112 @@ function inferLiteralType(expression: ts.Expression): SchemaField['type'] {
         return 'object'
     }
     return 'string'
+}
+
+function extractLiteralValue(expression: ts.Expression): string | number | boolean | null {
+    const node = unwrapExpressionNode(expression)
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text
+    if (ts.isNumericLiteral(node)) return Number(node.text)
+    if (node.kind === ts.SyntaxKind.TrueKeyword) return true
+    if (node.kind === ts.SyntaxKind.FalseKeyword) return false
+    return null
+}
+
+function extractEnumValuesFromExpression(
+    expression: ts.Expression,
+    sourceFile: ts.SourceFile
+): Array<string | number | boolean> | undefined {
+    const node = unwrapExpressionNode(expression)
+    if (!ts.isCallExpression(node)) return undefined
+
+    if (ts.isPropertyAccessExpression(node.expression)) {
+        const methodName = node.expression.name.text
+        const target = unwrapExpressionNode(node.expression.expression)
+
+        if (ts.isIdentifier(target) && target.text === 'z' && methodName === 'enum') {
+            const [firstArg] = node.arguments
+            if (firstArg && ts.isArrayLiteralExpression(firstArg)) {
+                const values = firstArg.elements
+                    .map((el) => extractLiteralValue(el as ts.Expression))
+                    .filter((value): value is string | number | boolean => value !== null)
+                if (values.length > 0) return values
+            }
+        }
+
+        if (ts.isIdentifier(target) && target.text === 'z' && methodName === 'literal') {
+            const [firstArg] = node.arguments
+            if (!firstArg) return undefined
+            const value = extractLiteralValue(firstArg)
+            return value === null ? undefined : [value]
+        }
+
+        if (
+            methodName === 'optional' ||
+            methodName === 'nullable' ||
+            methodName === 'nullish' ||
+            methodName === 'default' ||
+            methodName === 'catch' ||
+            methodName === 'transform' ||
+            methodName === 'refine' ||
+            methodName === 'superRefine' ||
+            methodName === 'pipe' ||
+            methodName === 'brand' ||
+            methodName === 'describe' ||
+            methodName === 'readonly'
+        ) {
+            return extractEnumValuesFromExpression(target, sourceFile)
+        }
+
+        if (methodName === 'or' && node.arguments.length > 0) {
+            const leftValues = extractEnumValuesFromExpression(target, sourceFile) ?? []
+            const rightValues = extractEnumValuesFromExpression(node.arguments[0], sourceFile) ?? []
+            const merged = [...new Set([...leftValues, ...rightValues])]
+            return merged.length > 0 ? merged : undefined
+        }
+    }
+
+    const fallbackText = node.getText(sourceFile)
+    if (/z\.enum\(/.test(fallbackText)) {
+        const match = fallbackText.match(/z\.enum\(\s*\[(.*?)\]\s*\)/)
+        if (match?.[1]) {
+            const values = match[1]
+                .split(',')
+                .map((raw) => raw.trim().replace(/^['"]|['"]$/g, ''))
+                .filter(Boolean)
+            return values.length > 0 ? values : undefined
+        }
+    }
+
+    return undefined
+}
+
+function inferFieldFormatFromExpression(
+    expression: ts.Expression,
+    fieldName: string,
+    sourceFile: ts.SourceFile
+): SchemaField['format'] | undefined {
+    const node = unwrapExpressionNode(expression)
+    const text = node.getText(sourceFile)
+    const lowerFieldName = fieldName.toLowerCase()
+    const lowerText = text.toLowerCase()
+
+    if (
+        /datetime|datetimelocal|date_time|dateTime/.test(lowerText) ||
+        lowerFieldName.endsWith('_datetime') ||
+        lowerFieldName.endsWith('_at')
+    ) {
+        return 'datetime'
+    }
+
+    if (
+        /\bdate\b|coerce\.date/.test(lowerText) ||
+        lowerFieldName.endsWith('_date') ||
+        lowerFieldName.endsWith('_dt')
+    ) {
+        return 'date'
+    }
+
+    return undefined
 }
 
 function inferTypeFromCallExpression(callExpr: ts.CallExpression, sourceFile: ts.SourceFile): SchemaField['type'] {
@@ -341,9 +449,14 @@ export function extractSchemaFieldsFromSource(
         const name = getNameText(prop.name)
         if (!name) continue
 
+        const enumValues = extractEnumValuesFromExpression(prop.initializer, sourceFile)
+        const format = inferFieldFormatFromExpression(prop.initializer, name, sourceFile)
+
         fields[name] = {
             type: inferFieldTypeFromExpression(prop.initializer, sourceFile),
             optional: isOptionalZodExpression(prop.initializer),
+            ...(enumValues ? { enumValues } : {}),
+            ...(format ? { format } : {}),
         }
     }
 

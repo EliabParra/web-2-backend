@@ -191,6 +191,177 @@
 
     let spec = [];
     let activeTx = null;
+    const optionsCache = new Map();
+
+    function escapeHtml(text) {
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function inferFieldWidget(key, meta) {
+        if (Array.isArray(meta.enumValues) && meta.enumValues.length > 0) return 'enum';
+        if (key.endsWith('_id')) return 'lookup';
+        if (meta.type === 'boolean') return 'boolean';
+        if (meta.type === 'array') return 'array';
+        if (meta.type === 'object') return 'object';
+        if (meta.format === 'date') return 'date';
+        if (meta.format === 'datetime') return 'datetime';
+        if (meta.type === 'number') return 'number';
+        return 'text';
+    }
+
+    function createFieldInputMarkup(key, meta, idx) {
+        const widget = inferFieldWidget(key, meta);
+        const optionalBadge = meta.optional
+            ? '<span class="text-[10px] text-slate-600">opcional</span>'
+            : '<span class="text-[10px] text-amber-500/80">requerido</span>';
+
+        if (widget === 'boolean') {
+            return `
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input data-field="${key}" data-widget="boolean" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-accent-500 focus:ring-accent-500/30">
+                    <div>
+                        <span class="text-sm text-slate-300 group-hover:text-white transition-colors">${escapeHtml(key)}</span>
+                        ${optionalBadge}
+                    </div>
+                </label>`;
+        }
+
+        if (widget === 'enum') {
+            const options = meta.enumValues
+                .map((value) => `<option value="${escapeHtml(String(value))}">${escapeHtml(String(value))}</option>`)
+                .join('');
+            return `
+                <label class="block">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-medium text-slate-400">${escapeHtml(key)}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-600 font-mono">enum</span>
+                            ${optionalBadge}
+                        </div>
+                    </div>
+                    <select data-field="${key}" data-widget="enum"
+                        class="w-full bg-slate-800/40 border border-slate-700/40 rounded-lg px-4 py-2.5 text-sm text-white outline-none field-input">
+                        ${meta.optional ? '<option value="">(sin valor)</option>' : ''}
+                        ${options}
+                    </select>
+                </label>`;
+        }
+
+        if (widget === 'lookup') {
+            return `
+                <label class="block">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-medium text-slate-400">${escapeHtml(key)}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-600 font-mono">lookup</span>
+                            ${optionalBadge}
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-[1fr_auto] gap-2">
+                        <select data-field="${key}" data-widget="lookup"
+                            class="w-full bg-slate-800/40 border border-slate-700/40 rounded-lg px-4 py-2.5 text-sm text-white outline-none field-input">
+                            <option value="">Cargando opciones...</option>
+                        </select>
+                        <button type="button" data-lookup-refresh="${key}"
+                            class="px-3 rounded-lg border border-slate-700/50 text-xs text-slate-300 hover:text-white hover:border-slate-600 transition-colors">
+                            Actualizar
+                        </button>
+                    </div>
+                </label>`;
+        }
+
+        if (widget === 'array' || widget === 'object') {
+            const placeholder = widget === 'array'
+                ? '[\n  {\"id\": 1}\n]'
+                : '{\n  \"key\": \"value\"\n}';
+            return `
+                <label class="block">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-medium text-slate-400">${escapeHtml(key)}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-600 font-mono">json-${widget}</span>
+                            ${optionalBadge}
+                        </div>
+                    </div>
+                    <textarea data-field="${key}" data-widget="${widget}" rows="5" placeholder="${placeholder}"
+                        class="w-full bg-slate-800/40 border border-slate-700/40 rounded-lg px-4 py-2.5 text-sm text-white outline-none field-input font-mono resize-y"></textarea>
+                </label>`;
+        }
+
+        const inputType = widget === 'number' ? 'number' : widget === 'date' ? 'date' : widget === 'datetime' ? 'datetime-local' : 'text';
+        return `
+            <label class="block">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-medium text-slate-400">${escapeHtml(key)}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-600 font-mono">${escapeHtml(widget)}</span>
+                        ${optionalBadge}
+                    </div>
+                </div>
+                <input data-field="${key}" data-widget="${widget}" type="${inputType}" placeholder="${escapeHtml(key)}"
+                    class="w-full bg-slate-800/40 border border-slate-700/40 rounded-lg px-4 py-2.5 text-sm text-white outline-none field-input ${widget === 'number' ? 'font-mono' : ''}">
+            </label>`;
+    }
+
+    async function fetchLookupOptions(field, search = '') {
+        const cacheKey = `${field}::${search}`;
+        if (optionsCache.has(cacheKey)) return optionsCache.get(cacheKey);
+
+        const url = `/explorer/options?key=${encodeURIComponent(API_KEY)}&field=${encodeURIComponent(field)}&q=${encodeURIComponent(search)}`;
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const payload = await res.json();
+        const data = Array.isArray(payload?.data) ? payload.data : [];
+        optionsCache.set(cacheKey, data);
+        return data;
+    }
+
+    async function bindLookupSelect(container, field, optional) {
+        const select = container.querySelector(`select[data-field="${field}"]`);
+        const refreshBtn = container.querySelector(`button[data-lookup-refresh="${field}"]`);
+        if (!select) return;
+
+        const load = async (force = false) => {
+            try {
+                if (force) {
+                    for (const key of [...optionsCache.keys()]) {
+                        if (key.startsWith(`${field}::`)) optionsCache.delete(key);
+                    }
+                }
+
+                const items = await fetchLookupOptions(field);
+                const initialOptions = [];
+                if (optional) {
+                    initialOptions.push('<option value="">(sin valor)</option>');
+                } else {
+                    initialOptions.push('<option value="">Selecciona...</option>');
+                }
+
+                if (items.length === 0) {
+                    initialOptions.push('<option value="">Sin datos disponibles</option>');
+                } else {
+                    for (const item of items) {
+                        initialOptions.push(
+                            `<option value="${escapeHtml(String(item.value))}">${escapeHtml(String(item.label))} (${escapeHtml(String(item.value))})</option>`
+                        );
+                    }
+                }
+
+                select.innerHTML = initialOptions.join('');
+            } catch (_err) {
+                select.innerHTML = '<option value="">No se pudieron cargar opciones</option>';
+            }
+        };
+
+        await load();
+        if (refreshBtn) refreshBtn.addEventListener('click', () => load(true));
+    }
 
     function getBadgeClass(name) {
         const bo = name.split('.')[0].toLowerCase();
@@ -250,7 +421,7 @@
         });
     }
 
-    function selectTx(tx) {
+    async function selectTx(tx) {
         activeTx = tx;
         document.getElementById('emptyState').classList.add('hidden');
         document.getElementById('txPanel').classList.remove('hidden');
@@ -281,32 +452,16 @@
                 const div = document.createElement('div');
                 div.className = 'animate-fade-in';
                 div.style.animationDelay = `${idx * 50}ms`;
-
-                if (meta.type === 'boolean') {
-                    div.innerHTML = `
-                        <label class="flex items-center gap-3 cursor-pointer group">
-                            <input data-field="${key}" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-accent-500 focus:ring-accent-500/30">
-                            <div>
-                                <span class="text-sm text-slate-300 group-hover:text-white transition-colors">${key}</span>
-                                ${meta.optional ? '<span class="text-[10px] text-slate-600 ml-2">opcional</span>' : '<span class="text-[10px] text-amber-500/80 ml-2">requerido</span>'}
-                            </div>
-                        </label>`;
-                } else {
-                    div.innerHTML = `
-                        <label class="block">
-                            <div class="flex items-center justify-between mb-1.5">
-                                <span class="text-xs font-medium text-slate-400">${key}</span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[10px] text-slate-600 font-mono">${meta.type}</span>
-                                    ${meta.optional ? '<span class="text-[10px] text-slate-600">opcional</span>' : '<span class="text-[10px] text-amber-500/80">requerido</span>'}
-                                </div>
-                            </div>
-                            <input data-field="${key}" type="${inputType}" placeholder="${key}"
-                                class="w-full bg-slate-800/40 border border-slate-700/40 rounded-lg px-4 py-2.5 text-sm text-white outline-none field-input ${meta.type === 'number' ? 'font-mono' : ''}">
-                        </label>`;
-                }
+                div.innerHTML = createFieldInputMarkup(key, meta, idx);
                 container.appendChild(div);
             });
+
+            for (const [key, meta] of entries) {
+                if (inferFieldWidget(key, meta) === 'lookup') {
+                    const target = container.querySelector(`[data-field="${key}"]`)?.closest('label');
+                    if (target) await bindLookupSelect(target, key, Boolean(meta.optional));
+                }
+            }
         }
 
         // Hide response
@@ -320,14 +475,32 @@
             const key = input.dataset.field;
             const meta = activeTx.payloadSchema[key];
             if (!meta) return;
+            const widget = input.dataset.widget || inferFieldWidget(key, meta);
 
-            if (input.type === 'checkbox') {
+            if (widget === 'boolean') {
                 params[key] = input.checked;
             } else {
-                const val = input.value.trim();
+                const val = String(input.value ?? '').trim();
                 if (val === '' && meta.optional) return;
-                if (meta.type === 'number') {
+
+                if (widget === 'number' || widget === 'lookup') {
                     params[key] = val !== '' ? Number(val) : '';
+                } else if (widget === 'array' || widget === 'object') {
+                    if (val === '' && meta.optional) return;
+                    let parsed;
+                    try {
+                        parsed = JSON.parse(val);
+                    } catch (_err) {
+                        throw new Error(`El campo ${key} debe contener JSON válido.`);
+                    }
+
+                    if (widget === 'array' && !Array.isArray(parsed)) {
+                        throw new Error(`El campo ${key} debe ser un array JSON.`);
+                    }
+                    if (widget === 'object' && (parsed === null || Array.isArray(parsed) || typeof parsed !== 'object')) {
+                        throw new Error(`El campo ${key} debe ser un objeto JSON.`);
+                    }
+                    params[key] = parsed;
                 } else {
                     params[key] = val;
                 }

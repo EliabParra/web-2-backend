@@ -47,6 +47,7 @@ test('extractSchemaFieldsFromSource reads z.object fields even with transformed 
     assert.equal(fields.user_id.optional, true)
     assert.equal(fields.from_dt.type, 'string')
     assert.equal(fields.from_dt.optional, true)
+    assert.equal(fields.from_dt.format, 'datetime')
     assert.equal(fields.details.type, 'array')
 })
 
@@ -83,7 +84,9 @@ test('extractSchemaFieldsFromSource handles wrapped zod expressions and optional
 
     assert.equal(fields.status.type, 'string')
     assert.equal(fields.status.optional, true)
+    assert.deepEqual(fields.status.enumValues, ['A', 'I'])
 
     assert.equal(fields.code.type, 'number')
     assert.equal(fields.code.optional, false)
+    assert.deepEqual(fields.code.enumValues, [99])
 })
