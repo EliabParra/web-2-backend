@@ -292,10 +292,24 @@ function resolveMethodByName(methods: MethodEntry[], name: string): MethodEntry 
 }
 
 function inferLookupForField(fieldName: string, methods: MethodEntry[]): MethodEntry | null {
-    const preferredMethods = ['getAll', 'list', 'search', 'catalog', 'getOptions', 'getCatalog']
+    const preferredMethods = ['getall', 'list', 'search', 'catalog', 'getoptions', 'getcatalog']
     const candidates = buildEntityCandidates(fieldName)
+    const requiredParamsCache = new Map<string, number>()
 
     const scored: Array<{ score: number; method: MethodEntry }> = []
+
+    const getRequiredParamsCount = (method: MethodEntry): number => {
+        const key = `${method.className}.${method.methodName}:${method.schemaKey}`
+        const cached = requiredParamsCache.get(key)
+        if (cached != null) return cached
+
+        const fields = method.schemaContent
+            ? extractSchemaFieldsFromSource(method.schemaContent, method.schemaKey)
+            : {}
+        const count = Object.values(fields).filter((field) => !field.optional).length
+        requiredParamsCache.set(key, count)
+        return count
+    }
 
     for (const method of methods) {
         const objectRaw = getMethodObjectName(method.className).toLowerCase()
@@ -306,8 +320,32 @@ function inferLookupForField(fieldName: string, methods: MethodEntry[]): MethodE
         if (candidates.includes(objectSnake)) score += 5
         if (candidates.includes(objectRaw)) score += 5
 
-        const index = preferredMethods.findIndex((prefix) => methodLower.startsWith(prefix))
-        if (index >= 0) score += 4 - Math.min(index, 3)
+        const preferredIndex = preferredMethods.findIndex((prefix) => methodLower.startsWith(prefix))
+        if (preferredIndex >= 0) {
+            score += 28 - Math.min(preferredIndex, 5)
+        }
+
+        if (methodLower === 'get' || methodLower.startsWith('getby') || methodLower.startsWith('findby')) {
+            score -= 20
+        }
+
+        if (
+            methodLower.startsWith('create') ||
+            methodLower.startsWith('update') ||
+            methodLower.startsWith('delete') ||
+            methodLower.startsWith('register') ||
+            methodLower.startsWith('accept') ||
+            methodLower.startsWith('reject')
+        ) {
+            score -= 25
+        }
+
+        const requiredParams = getRequiredParamsCount(method)
+        if (requiredParams === 0) {
+            score += 8
+        } else {
+            score -= Math.min(requiredParams, 4) * 3
+        }
 
         if (score > 0) scored.push({ score, method })
     }

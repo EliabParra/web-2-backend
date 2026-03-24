@@ -104,7 +104,7 @@
         </aside>
 
         <!-- Main -->
-        <main class="flex-1 flex flex-col overflow-hidden">
+        <main id="mainContent" class="flex-1 flex flex-col overflow-hidden min-w-0">
 
             <!-- Empty state -->
             <div id="emptyState" class="flex-1 flex items-center justify-center">
@@ -175,18 +175,17 @@
                 </div>
             </div>
         </main>
-    </div>
-
-    <section id="debugPanel" class="fixed bottom-4 right-4 w-[min(560px,calc(100vw-2rem))] h-56 bg-slate-950/90 border border-slate-700/60 rounded-xl shadow-2xl shadow-black/40 backdrop-blur-sm z-[80] flex flex-col">
-        <header class="px-3 py-2 border-b border-slate-800/70 flex items-center justify-between">
+        <aside id="debugPanel" class="w-96 max-w-[45vw] border-l border-slate-800/80 bg-slate-950/70 flex flex-col">
+        <header class="px-3 py-2 border-b border-slate-800/70 flex items-center justify-between shrink-0">
             <div class="text-xs text-slate-300 font-semibold tracking-wide">Debug Console</div>
             <div class="flex items-center gap-2">
                 <button id="debugClear" type="button" class="text-[11px] px-2 py-1 rounded border border-slate-700/70 text-slate-300 hover:text-white hover:border-slate-500">Limpiar</button>
-                <button id="debugToggle" type="button" class="text-[11px] px-2 py-1 rounded border border-slate-700/70 text-slate-300 hover:text-white hover:border-slate-500">Ocultar</button>
+                <button id="debugToggle" type="button" class="text-[11px] px-2 py-1 rounded border border-slate-700/70 text-slate-300 hover:text-white hover:border-slate-500">Contraer</button>
             </div>
         </header>
         <div id="debugLog" class="flex-1 overflow-y-auto p-2 font-mono text-[11px] leading-relaxed text-slate-300"></div>
-    </section>
+        </aside>
+    </div>
 
     <!-- Loading overlay -->
     <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[999]">
@@ -234,6 +233,16 @@
             })
             .join('');
         node.scrollTop = node.scrollHeight;
+    }
+
+    function summarizePayload(value, maxLen = 500) {
+        try {
+            const raw = typeof value === 'string' ? value : JSON.stringify(value);
+            if (!raw) return '';
+            return raw.length > maxLen ? `${raw.slice(0, maxLen)}...` : raw;
+        } catch (_err) {
+            return String(value);
+        }
     }
 
     function resolveLookupConfig(key, meta) {
@@ -436,10 +445,30 @@
             credentials: 'include',
             body: JSON.stringify(requestBody),
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        let payload = null;
+        try {
+            payload = await res.json();
+        } catch (_err) {
+            // payload remains null
+        }
 
-        const payload = await res.json();
+        if (!res.ok) {
+            logDebug('error', `lookup http error ${field}`, {
+                tx: lookup.tx,
+                status: res.status,
+                body: summarizePayload(payload),
+            });
+            throw new Error(`HTTP ${res.status} ${payload?.msg || ''}`.trim());
+        }
+
         if (!payload || payload.code >= 400) {
+            logDebug('error', `lookup tx error ${field}`, {
+                tx: lookup.tx,
+                code: payload?.code,
+                msg: payload?.msg,
+                alerts: payload?.alerts,
+                errors: payload?.errors,
+            });
             throw new Error(payload?.msg || `Tx ${lookup.tx} error`);
         }
 
@@ -696,7 +725,15 @@
 
             const elapsed = Math.round(performance.now() - startTime);
             const data = await res.json();
-            logDebug('info', `response tx ${txId}`, { http: res.status, code: data?.code, elapsed });
+            logDebug('info', `response tx ${txId}`, {
+                http: res.status,
+                code: data?.code,
+                elapsed,
+                msg: data?.msg,
+                alerts: data?.alerts,
+                errors: data?.errors,
+                dataPreview: summarizePayload(data?.data),
+            });
 
             responseSection.classList.remove('hidden');
             responseTime.textContent = `${elapsed}ms`;
@@ -756,8 +793,9 @@
             debugCollapsed = !debugCollapsed;
             if (!debugPanel || !debugLog) return;
             debugLog.style.display = debugCollapsed ? 'none' : 'block';
-            debugPanel.style.height = debugCollapsed ? '44px' : '14rem';
-            debugToggle.textContent = debugCollapsed ? 'Mostrar' : 'Ocultar';
+            debugPanel.style.width = debugCollapsed ? '56px' : '';
+            debugPanel.style.maxWidth = debugCollapsed ? '56px' : '';
+            debugToggle.textContent = debugCollapsed ? 'Expandir' : 'Contraer';
         });
 
         debugClear?.addEventListener('click', () => {

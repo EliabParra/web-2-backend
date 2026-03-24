@@ -131,3 +131,45 @@ test('extractSchemaFieldsFromSource builds lookup metadata from describe and inf
     assert.equal(fields.category.lookup.tx, 121)
     assert.equal(fields.category.lookup.name, 'CategoryBO.list')
 })
+
+test('extractSchemaFieldsFromSource lookup inference prefers list/getAll over get', () => {
+    const source = `
+        import { z } from 'zod'
+        export const LoanSchemas = {
+            create: z.object({
+                user_id: z.coerce.number().optional()
+            })
+        }
+    `
+
+    const methods = [
+        {
+            className: 'UserBO',
+            methodName: 'get',
+            schemaKey: 'get',
+            tx: 99,
+            boFile: 'BO/User/UserBO.ts',
+            schemaContent: `
+                export const UserSchemas = {
+                    get: z.object({ user_id: z.coerce.number() })
+                }
+            `,
+        },
+        {
+            className: 'UserBO',
+            methodName: 'getAll',
+            schemaKey: 'getAll',
+            tx: 100,
+            boFile: 'BO/User/UserBO.ts',
+            schemaContent: `
+                export const UserSchemas = {
+                    getAll: z.object({ user_id: z.coerce.number().optional() })
+                }
+            `,
+        },
+    ]
+
+    const fields = extractSchemaFieldsFromSource(source, 'create', { methods })
+    assert.equal(fields.user_id.lookup.tx, 100)
+    assert.equal(fields.user_id.lookup.name, 'UserBO.getAll')
+})
