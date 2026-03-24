@@ -262,6 +262,12 @@ function createDeps() {
             // TODO(REVERT_NAMING): Revert one_time_code→one_time_codes, one_time_code_id→id
             if (sql.includes('INSERT INTO security.one_time_code')) return { rows: [{ one_time_code_id: 1 }] }
 
+            // Perfil de sesión para AuthService.resolveSessionProfileId
+            if (sql.includes('FROM security.profile')) {
+                if (sql.includes('WHERE profile_id = $1')) return { rows: [{ profile_id: 1 }] }
+                if (sql.includes("WHERE profile_na = $1")) return { rows: [{ profile_id: 1 }] }
+            }
+
             return { rows: [] }
         },
     }
