@@ -49,3 +49,41 @@ test('extractSchemaFieldsFromSource reads z.object fields even with transformed 
     assert.equal(fields.from_dt.optional, true)
     assert.equal(fields.details.type, 'array')
 })
+
+test('extractSchemaFieldsFromSource handles wrapped zod expressions and optional chaining', () => {
+    const source = `
+        import { z } from 'zod'
+        const customDate = z.string().refine(Boolean)
+
+        export const LoanSchemas = {
+            create: z.object({
+                amount: z.coerce.number().int().min(1).default(1),
+                enabled: z.boolean().optional().default(true),
+                from_dt: customDate.optional(),
+                meta: z.object({ tags: z.array(z.string()) }).nullable(),
+                status: z.enum(['A', 'I']).nullish(),
+                code: z.literal(99)
+            }).strict()
+        }
+    `
+
+    const fields = extractSchemaFieldsFromSource(source, 'create')
+
+    assert.equal(fields.amount.type, 'number')
+    assert.equal(fields.amount.optional, false)
+
+    assert.equal(fields.enabled.type, 'boolean')
+    assert.equal(fields.enabled.optional, true)
+
+    assert.equal(fields.from_dt.type, 'string')
+    assert.equal(fields.from_dt.optional, true)
+
+    assert.equal(fields.meta.type, 'object')
+    assert.equal(fields.meta.optional, false)
+
+    assert.equal(fields.status.type, 'string')
+    assert.equal(fields.status.optional, true)
+
+    assert.equal(fields.code.type, 'number')
+    assert.equal(fields.code.optional, false)
+})

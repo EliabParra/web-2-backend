@@ -46,7 +46,120 @@ function getNameText(name: ts.PropertyName): string | null {
     return null
 }
 
-function inferFieldTypeFromText(text: string): string {
+function unwrapExpressionNode(expression: ts.Expression): ts.Expression {
+    let current = expression
+    while (ts.isParenthesizedExpression(current) || ts.isAsExpression(current)) {
+        current = current.expression
+    }
+    return current
+}
+
+function getCallName(expr: ts.LeftHandSideExpression): string | null {
+    if (ts.isPropertyAccessExpression(expr)) return expr.name.text
+    if (ts.isIdentifier(expr)) return expr.text
+    return null
+}
+
+function inferLiteralType(expression: ts.Expression): SchemaField['type'] {
+    if (ts.isNumericLiteral(expression)) return 'number'
+    if (expression.kind === ts.SyntaxKind.TrueKeyword || expression.kind === ts.SyntaxKind.FalseKeyword) {
+        return 'boolean'
+    }
+    if (ts.isObjectLiteralExpression(expression) || ts.isArrayLiteralExpression(expression)) {
+        return 'object'
+    }
+    return 'string'
+}
+
+function inferTypeFromCallExpression(callExpr: ts.CallExpression, sourceFile: ts.SourceFile): SchemaField['type'] {
+    const expressionName = getCallName(callExpr.expression)
+
+    if (ts.isPropertyAccessExpression(callExpr.expression)) {
+        const zTarget = callExpr.expression.expression
+
+        if (ts.isIdentifier(zTarget) && zTarget.text === 'z') {
+            if (expressionName === 'array' || expressionName === 'tuple') return 'array'
+            if (expressionName === 'number' || expressionName === 'bigint') return 'number'
+            if (expressionName === 'boolean') return 'boolean'
+            if (expressionName === 'string' || expressionName === 'date' || expressionName === 'datetime') {
+                return 'string'
+            }
+            if (expressionName === 'object' || expressionName === 'record' || expressionName === 'map') {
+                return 'object'
+            }
+            if (expressionName === 'enum' || expressionName === 'nativeEnum') return 'string'
+            if (expressionName === 'literal' && callExpr.arguments[0]) {
+                return inferLiteralType(callExpr.arguments[0])
+            }
+        }
+
+        if (
+            ts.isPropertyAccessExpression(zTarget) &&
+            zTarget.name.text === 'coerce' &&
+            ts.isIdentifier(zTarget.expression) &&
+            zTarget.expression.text === 'z'
+        ) {
+            if (expressionName === 'number' || expressionName === 'bigint') return 'number'
+            if (expressionName === 'boolean') return 'boolean'
+            if (expressionName === 'string' || expressionName === 'date') return 'string'
+        }
+    }
+
+    if (ts.isPropertyAccessExpression(callExpr.expression)) {
+        const methodName = callExpr.expression.name.text
+        const target = unwrapExpressionNode(callExpr.expression.expression)
+
+        if (methodName === 'array') return 'array'
+        if (methodName === 'int' || methodName === 'positive' || methodName === 'min' || methodName === 'max') {
+            return inferFieldTypeFromExpression(target, sourceFile)
+        }
+
+        // Wrapper calls that preserve shape; infer from inner expression.
+        if (
+            methodName === 'optional' ||
+            methodName === 'nullable' ||
+            methodName === 'nullish' ||
+            methodName === 'default' ||
+            methodName === 'catch' ||
+            methodName === 'transform' ||
+            methodName === 'refine' ||
+            methodName === 'superRefine' ||
+            methodName === 'pipe' ||
+            methodName === 'brand' ||
+            methodName === 'describe' ||
+            methodName === 'readonly' ||
+            methodName === 'or' ||
+            methodName === 'and'
+        ) {
+            return inferFieldTypeFromExpression(target, sourceFile)
+        }
+    }
+
+    const fallbackText = callExpr.getText(sourceFile)
+    if (/z\.(array|tuple)|\.array\(/.test(fallbackText)) return 'array'
+    if (/z\.(coerce\.)?number|\.int\(/.test(fallbackText)) return 'number'
+    if (/z\.(coerce\.)?boolean/.test(fallbackText)) return 'boolean'
+    if (/z\.(date|coerce\.date)|datetime|dateTime/.test(fallbackText)) return 'string'
+    if (/z\.(enum|literal)/.test(fallbackText)) return 'string'
+    if (/z\.(object|record|map)/.test(fallbackText)) return 'object'
+    return 'string'
+}
+
+function inferFieldTypeFromExpression(expression: ts.Expression, sourceFile: ts.SourceFile): SchemaField['type'] {
+    const node = unwrapExpressionNode(expression)
+
+    if (ts.isCallExpression(node)) {
+        return inferTypeFromCallExpression(node, sourceFile)
+    }
+
+    if (ts.isObjectLiteralExpression(node)) return 'object'
+    if (ts.isArrayLiteralExpression(node)) return 'array'
+    if (ts.isNumericLiteral(node)) return 'number'
+    if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword) {
+        return 'boolean'
+    }
+
+    const text = node.getText(sourceFile)
     if (/z\.(array|tuple)|\.array\(/.test(text)) return 'array'
     if (/z\.(coerce\.)?number|\.int\(/.test(text)) return 'number'
     if (/z\.(coerce\.)?boolean/.test(text)) return 'boolean'
@@ -56,8 +169,21 @@ function inferFieldTypeFromText(text: string): string {
     return 'string'
 }
 
-function isOptionalZodExpression(text: string): boolean {
-    return text.includes('.optional(') || text.includes('.optional()')
+function isOptionalZodExpression(expression: ts.Expression): boolean {
+    const node = unwrapExpressionNode(expression)
+
+    if (!ts.isCallExpression(node)) return false
+
+    const expr = node.expression
+    if (ts.isPropertyAccessExpression(expr)) {
+        const methodName = expr.name.text
+        if (methodName === 'optional' || methodName === 'nullish') return true
+        return isOptionalZodExpression(expr.expression)
+    }
+
+    if (ts.isIdentifier(expr) && expr.text === 'optional') return true
+
+    return false
 }
 
 function findSchemaKeyInMethod(node: ts.MethodDeclaration): string | null {
@@ -215,10 +341,9 @@ export function extractSchemaFieldsFromSource(
         const name = getNameText(prop.name)
         if (!name) continue
 
-        const text = prop.initializer.getText(sourceFile)
         fields[name] = {
-            type: inferFieldTypeFromText(text),
-            optional: isOptionalZodExpression(text),
+            type: inferFieldTypeFromExpression(prop.initializer, sourceFile),
+            optional: isOptionalZodExpression(prop.initializer),
         }
     }
 
