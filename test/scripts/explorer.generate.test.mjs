@@ -90,3 +90,44 @@ test('extractSchemaFieldsFromSource handles wrapped zod expressions and optional
     assert.equal(fields.code.optional, false)
     assert.deepEqual(fields.code.enumValues, [99])
 })
+
+test('extractSchemaFieldsFromSource builds lookup metadata from describe and inferred method map', () => {
+    const source = `
+        import { z } from 'zod'
+        export const LoanSchemas = {
+            create: z.object({
+                user_id: z.coerce.number().describe('lookup=UserBO.getAll;value=user_id;label=user_na'),
+                category: z.string()
+            })
+        }
+    `
+
+    const methods = [
+        {
+            className: 'UserBO',
+            methodName: 'getAll',
+            schemaKey: 'getAll',
+            tx: 120,
+            boFile: 'BO/User/UserBO.ts',
+            schemaContent: '',
+        },
+        {
+            className: 'CategoryBO',
+            methodName: 'list',
+            schemaKey: 'list',
+            tx: 121,
+            boFile: 'BO/Category/CategoryBO.ts',
+            schemaContent: '',
+        },
+    ]
+
+    const fields = extractSchemaFieldsFromSource(source, 'create', { methods })
+
+    assert.equal(fields.user_id.lookup.tx, 120)
+    assert.equal(fields.user_id.lookup.name, 'UserBO.getAll')
+    assert.equal(fields.user_id.lookup.valueKey, 'user_id')
+    assert.equal(fields.user_id.lookup.labelKey, 'user_na')
+
+    assert.equal(fields.category.lookup.tx, 121)
+    assert.equal(fields.category.lookup.name, 'CategoryBO.list')
+})

@@ -13,6 +13,16 @@ interface SchemaField {
     optional: boolean
     enumValues?: Array<string | number | boolean>
     format?: 'date' | 'datetime'
+    lookup?: LookupSpec
+}
+
+interface LookupSpec {
+    tx: number
+    name: string
+    source: 'describe' | 'inferred'
+    valueKey?: string
+    labelKey?: string
+    params?: Record<string, unknown>
 }
 
 interface TxSpec {
@@ -26,6 +36,19 @@ type MethodInfo = {
     className: string
     methodName: string
     schemaKey: string
+}
+
+type MethodEntry = MethodInfo & {
+    tx: number
+    boFile: string
+    schemaContent: string
+}
+
+type LookupDescriptor = {
+    txName?: string
+    valueKey?: string
+    labelKey?: string
+    params?: Record<string, unknown>
 }
 
 function findBOFiles(dir: string): string[] {
@@ -177,6 +200,151 @@ function inferFieldFormatFromExpression(
     }
 
     return undefined
+}
+
+function toSnakeCase(value: string): string {
+    return value
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .replace(/[^a-zA-Z0-9_]+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toLowerCase()
+}
+
+function getMethodObjectName(className: string): string {
+    return className.replace(/BO$/, '')
+}
+
+function buildEntityCandidates(fieldName: string): string[] {
+    const snake = toSnakeCase(fieldName)
+    const trimmed = snake.replace(/_(id|nu|code|na|name)$/, '')
+    const chunks = trimmed.split('_').filter(Boolean)
+    const full = trimmed || snake
+    const last = chunks.length > 0 ? chunks[chunks.length - 1] : ''
+    const singular = full.endsWith('s') ? full.slice(0, -1) : full
+    const plural = singular.endsWith('s') ? singular : `${singular}s`
+
+    return [...new Set([full, singular, plural, last].filter(Boolean))]
+}
+
+function parseLookupDescriptorFromDescribeText(text: string): LookupDescriptor | null {
+    const jsonMatch = text.match(/lookup\s*:\s*(\{[\s\S]*\})/i)
+    if (jsonMatch?.[1]) {
+        try {
+            const parsed = JSON.parse(jsonMatch[1]) as LookupDescriptor
+            return parsed
+        } catch {
+            // no-op
+        }
+    }
+
+    const plain = text.match(/lookup\s*=\s*([^;\n]+)/i)
+    if (!plain?.[1]) return null
+
+    const descriptor: LookupDescriptor = { txName: plain[1].trim() }
+    const valueKey = text.match(/value\s*=\s*([^;\n]+)/i)?.[1]?.trim()
+    const labelKey = text.match(/label\s*=\s*([^;\n]+)/i)?.[1]?.trim()
+    if (valueKey) descriptor.valueKey = valueKey
+    if (labelKey) descriptor.labelKey = labelKey
+    return descriptor
+}
+
+function extractLookupDescriptorFromExpression(
+    expression: ts.Expression,
+    sourceFile: ts.SourceFile
+): LookupDescriptor | null {
+    const node = unwrapExpressionNode(expression)
+    if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression)) {
+        return null
+    }
+
+    const methodName = node.expression.name.text
+    const target = node.expression.expression
+
+    if (methodName === 'describe' && node.arguments.length > 0) {
+        const [arg] = node.arguments
+        if (arg && (ts.isStringLiteral(arg) || ts.isNoSubstitutionTemplateLiteral(arg))) {
+            return parseLookupDescriptorFromDescribeText(arg.text)
+        }
+    }
+
+    return extractLookupDescriptorFromExpression(target, sourceFile)
+}
+
+function resolveMethodByName(methods: MethodEntry[], name: string): MethodEntry | null {
+    const lowered = name.toLowerCase()
+    const [objectName, methodName] = lowered.split('.')
+
+    for (const method of methods) {
+        const rawObject = getMethodObjectName(method.className).toLowerCase()
+        if (!methodName) {
+            if (`${method.className}.${method.methodName}`.toLowerCase() === lowered) return method
+            continue
+        }
+
+        if (rawObject === objectName && method.methodName.toLowerCase() === methodName) return method
+        if (method.className.toLowerCase() === objectName && method.methodName.toLowerCase() === methodName) {
+            return method
+        }
+    }
+
+    return null
+}
+
+function inferLookupForField(fieldName: string, methods: MethodEntry[]): MethodEntry | null {
+    const preferredMethods = ['getAll', 'list', 'search', 'catalog', 'getOptions', 'getCatalog']
+    const candidates = buildEntityCandidates(fieldName)
+
+    const scored: Array<{ score: number; method: MethodEntry }> = []
+
+    for (const method of methods) {
+        const objectRaw = getMethodObjectName(method.className).toLowerCase()
+        const objectSnake = toSnakeCase(objectRaw)
+        const methodLower = method.methodName.toLowerCase()
+
+        let score = 0
+        if (candidates.includes(objectSnake)) score += 5
+        if (candidates.includes(objectRaw)) score += 5
+
+        const index = preferredMethods.findIndex((prefix) => methodLower.startsWith(prefix))
+        if (index >= 0) score += 4 - Math.min(index, 3)
+
+        if (score > 0) scored.push({ score, method })
+    }
+
+    scored.sort((a, b) => b.score - a.score || a.method.tx - b.method.tx)
+    return scored[0]?.method ?? null
+}
+
+function buildLookupSpecForField(
+    fieldName: string,
+    expression: ts.Expression,
+    sourceFile: ts.SourceFile,
+    methods: MethodEntry[]
+): LookupSpec | undefined {
+    const descriptor = extractLookupDescriptorFromExpression(expression, sourceFile)
+    if (descriptor?.txName) {
+        const method = resolveMethodByName(methods, descriptor.txName)
+        if (!method) return undefined
+
+        return {
+            tx: method.tx,
+            name: `${method.className}.${method.methodName}`,
+            source: 'describe',
+            ...(descriptor.valueKey ? { valueKey: descriptor.valueKey } : {}),
+            ...(descriptor.labelKey ? { labelKey: descriptor.labelKey } : {}),
+            ...(descriptor.params ? { params: descriptor.params } : {}),
+        }
+    }
+
+    const inferred = inferLookupForField(fieldName, methods)
+    if (!inferred) return undefined
+
+    return {
+        tx: inferred.tx,
+        name: `${inferred.className}.${inferred.methodName}`,
+        source: 'inferred',
+    }
 }
 
 function inferTypeFromCallExpression(callExpr: ts.CallExpression, sourceFile: ts.SourceFile): SchemaField['type'] {
@@ -433,7 +601,8 @@ function findSchemaPropertyAssignment(
 
 export function extractSchemaFieldsFromSource(
     sourceText: string,
-    schemaKey: string
+    schemaKey: string,
+    options?: { methods?: MethodEntry[] }
 ): Record<string, SchemaField> {
     const sourceFile = ts.createSourceFile('schema.ts', sourceText, ts.ScriptTarget.Latest, true)
     const fields: Record<string, SchemaField> = {}
@@ -451,12 +620,16 @@ export function extractSchemaFieldsFromSource(
 
         const enumValues = extractEnumValuesFromExpression(prop.initializer, sourceFile)
         const format = inferFieldFormatFromExpression(prop.initializer, name, sourceFile)
+        const lookup = options?.methods
+            ? buildLookupSpecForField(name, prop.initializer, sourceFile, options.methods)
+            : undefined
 
         fields[name] = {
             type: inferFieldTypeFromExpression(prop.initializer, sourceFile),
             optional: isOptionalZodExpression(prop.initializer),
             ...(enumValues ? { enumValues } : {}),
             ...(format ? { format } : {}),
+            ...(lookup ? { lookup } : {}),
         }
     }
 
@@ -549,34 +722,47 @@ export async function generateExplorerSpec(options?: {
     const boFiles = findBOFiles(boDir)
     const txMap = includeDbTxSync ? await loadTxMapFromDb() : new Map<string, number>()
 
-    const specs: TxSpec[] = []
+    const methods: MethodEntry[] = []
     let txCounter = 1
 
     for (const boFile of boFiles) {
         const boContent = fs.readFileSync(boFile, 'utf-8')
-        const methods = extractMethodsFromBoSource(boContent)
-        if (methods.length === 0) continue
+        const methodInfos = extractMethodsFromBoSource(boContent)
+        if (methodInfos.length === 0) continue
 
         const boDirname = path.dirname(boFile)
         const boBaseName = path.basename(boFile, '.ts').replace('BO', '')
         const schemasPath = path.join(boDirname, `${boBaseName}Schemas.ts`)
         const schemaContent = fs.existsSync(schemasPath) ? fs.readFileSync(schemasPath, 'utf-8') : ''
 
-        for (const method of methods) {
-            const payloadSchema = schemaContent
-                ? extractSchemaFieldsFromSource(schemaContent, method.schemaKey)
-                : {}
-
+        for (const method of methodInfos) {
             const tx = resolveTxNumber(txMap, method.className, method.methodName, txCounter)
             txCounter += 1
 
-            specs.push({
+            methods.push({
+                ...method,
                 tx,
-                name: `${method.className}.${method.methodName}`,
-                description: `Auto-generado de ${path.basename(boFile)}`,
-                payloadSchema,
+                boFile,
+                schemaContent,
             })
         }
+    }
+
+    const specs: TxSpec[] = []
+
+    for (const method of methods) {
+        const payloadSchema = method.schemaContent
+            ? extractSchemaFieldsFromSource(method.schemaContent, method.schemaKey, {
+                  methods,
+              })
+            : {}
+
+        specs.push({
+            tx: method.tx,
+            name: `${method.className}.${method.methodName}`,
+            description: `Auto-generado de ${path.basename(method.boFile)}`,
+            payloadSchema,
+        })
     }
 
     specs.sort((a, b) => a.tx - b.tx || a.name.localeCompare(b.name))
