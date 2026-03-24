@@ -391,14 +391,23 @@
         return items
             .map((item) => {
                 if (item == null || typeof item !== 'object') return null;
+                const keys = Object.keys(item);
 
                 const valueCandidates = lookup?.valueKey
                     ? [lookup.valueKey]
-                    : ['id', 'value', 'code', ...Object.keys(item).filter((k) => /_id$/.test(k))];
+                    : ['id', 'value', 'code', ...keys.filter((k) => /_id$/.test(k))];
 
                 const labelCandidates = lookup?.labelKey
                     ? [lookup.labelKey]
-                    : ['name', 'title', 'label', 'description', ...Object.keys(item).filter((k) => /_(na|name)$/.test(k))];
+                    : [
+                        'name',
+                        'title',
+                        'label',
+                        'description',
+                        'de',
+                        'desc',
+                        ...keys.filter((k) => /_(na|name|de|description|desc)$/.test(k)),
+                    ];
 
                 let value;
                 for (const key of valueCandidates) {
@@ -418,7 +427,16 @@
                     }
                 }
 
-                if (label == null) label = value;
+                if (label == null || String(label).trim() === '' || String(label) === String(value)) {
+                    const textLikeKey = keys.find((k) => {
+                        if (/_id$/.test(k)) return false;
+                        const value = item[k];
+                        return typeof value === 'string' && value.trim().length > 0;
+                    });
+                    if (textLikeKey) label = item[textLikeKey];
+                }
+
+                if (label == null || String(label).trim() === '') label = value;
                 return { value, label };
             })
             .filter(Boolean);

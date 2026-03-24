@@ -27,8 +27,8 @@ export class ProfileSeeder {
         // Public profile (for anonymous/unauthenticated users)
         if (publicProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profile (profile_id, profile_na) 
-                 VALUES ($1, 'public') 
+                `INSERT INTO security.profile (profile_id, profile_na)
+                 VALUES ($1, 'public')
                  ON CONFLICT (profile_id) DO UPDATE SET profile_na = COALESCE(security.profile.profile_na, 'public')
                  RETURNING profile_id`,
                 [publicProfileId]
@@ -40,8 +40,8 @@ export class ProfileSeeder {
         // Session profile (for logged-in users)
         if (sessionProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profile (profile_id, profile_na) 
-                 VALUES ($1, 'session') 
+                `INSERT INTO security.profile (profile_id, profile_na)
+                 VALUES ($1, 'session')
                  ON CONFLICT (profile_id) DO UPDATE SET profile_na = COALESCE(security.profile.profile_na, 'session')
                  RETURNING profile_id`,
                 [sessionProfileId]
@@ -53,8 +53,8 @@ export class ProfileSeeder {
         // Admin profile (optional, for super users)
         if (adminProfileId) {
             const r = await this.db.exeRaw(
-                `INSERT INTO security.profile (profile_id, profile_na) 
-                 VALUES ($1, 'admin') 
+                `INSERT INTO security.profile (profile_id, profile_na)
+                 VALUES ($1, 'admin')
                  ON CONFLICT (profile_id) DO UPDATE SET profile_na = COALESCE(security.profile.profile_na, 'admin')
                  RETURNING profile_id`,
                 [adminProfileId]
@@ -98,7 +98,7 @@ export class ProfileSeeder {
         for (const methodId of methodIds) {
             try {
                 await this.db.exeRaw(
-                    `INSERT INTO security.profile_method (profile_id, method_id) 
+                    `INSERT INTO security.profile_method (profile_id, method_id)
                      VALUES ($1, $2) ON CONFLICT DO NOTHING`,
                     [profileId, methodId]
                 )
