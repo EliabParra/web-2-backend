@@ -210,6 +210,21 @@ export class AuthService extends BOService implements Types.IAuthService {
         })
     }
 
+    async switchActiveProfile(data: Types.SwitchActiveProfileData): Promise<void> {
+        const hasProfile = await this.repo.hasUserProfile(data.userId, data.profileId)
+        if (!hasProfile) {
+            throw new Errors.AuthError(
+                this.messages.profileNotAssigned,
+                'AUTH_PROFILE_NOT_ASSIGNED',
+                403,
+                {
+                    userId: data.userId,
+                    profileId: data.profileId,
+                }
+            )
+        }
+    }
+
     private async sendVerificationEmail(userId: number, emailAddr: string) {
         const purpose = String(this.config.auth.emailVerificationPurpose ?? 'email_verification')
         const expiresSeconds = 900

@@ -16,6 +16,8 @@ export const AuthMessages = {
         tokenInvalid: 'Token inválido o expirado',
         emailAlreadyExists: 'Ya existe un usuario con este email',
         usernameAlreadyExists: 'Ya existe un usuario con este nombre de usuario',
+        activeProfileChanged: 'Perfil activo actualizado exitosamente',
+        profileNotAssigned: 'El perfil seleccionado no está asignado al usuario',
         accountDisabled: 'Cuenta deshabilitada',
         validation: {
             loginIdRequired: 'El email o usuario es requerido',
@@ -26,6 +28,7 @@ export const AuthMessages = {
             emailInvalid: 'El email no es válido',
             tokenRequired: 'El token es requerido',
             codeRequired: 'El código es requerido',
+            profileRequired: 'El perfil es requerido',
         },
         welcomeBack: 'Bienvenido de nuevo, {name}',
         verificationSentTo: 'Se envió verificación a {email}',
@@ -48,6 +51,8 @@ export const AuthMessages = {
         tokenInvalid: 'Invalid or expired token',
         emailAlreadyExists: 'A user with this email already exists',
         usernameAlreadyExists: 'A user with this username already exists',
+        activeProfileChanged: 'Active profile updated successfully',
+        profileNotAssigned: 'Selected profile is not assigned to user',
         accountDisabled: 'Account disabled',
         validation: {
             loginIdRequired: 'Email or username is required',
@@ -57,6 +62,7 @@ export const AuthMessages = {
             emailRequired: 'Email is required',
             emailInvalid: 'Email is invalid',
             tokenRequired: 'Token is required',
+            profileRequired: 'Profile is required',
         },
         welcomeBack: 'Welcome back, {name}',
         verificationSentTo: 'Verification sent to {email}',

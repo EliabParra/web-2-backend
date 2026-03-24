@@ -109,6 +109,13 @@ export const AuthQueries = {
         LIMIT 1
     `,
 
+    hasUserProfile: `
+        SELECT 1
+        FROM security.user_profile
+        WHERE user_id = $1 AND profile_id = $2
+        LIMIT 1
+    `,
+
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
     insertUserWithPerson: `
         WITH created_person AS (

@@ -88,6 +88,11 @@ export namespace Auth {
         codeHash: string
     }
 
+    export type SwitchActiveProfileData = {
+        userId: number
+        profileId: number
+    }
+
     // User Interface matching DB schema as requested
     // TODO(REVERT_NAMING): Revert user_em→user_email, user_na→username, user_pw→user_password, user_act→user_is_active, user_created_dt→user_created_at, user_updated_dt→user_updated_at, user_last_login_dt→user_last_login_at, user_em_verified_dt→user_email_verified_at, user_sol→user_solvent
     export interface User {
@@ -173,6 +178,7 @@ export namespace Auth {
         getUserBaseByEmail(email: string): Promise<UserRow | null>
         getProfileIdById(profileId: number): Promise<number | null>
         getProfileIdByName(profileName: string): Promise<number | null>
+        hasUserProfile(userId: number, profileId: number): Promise<boolean>
         insertUserWithPerson(params: InsertUserWithPersonParams): Promise<UserRow>
         upsertUserProfile(params: UserWithProfileId): Promise<boolean>
         setUserEmailVerified(userId: number): Promise<boolean>
@@ -200,6 +206,7 @@ export namespace Auth {
         verifyPasswordResetToken(code: string): Promise<void>
         resetPassword(code: string, newPassword: string): Promise<void>
         requestUsername(email: string): Promise<void>
+        switchActiveProfile(data: SwitchActiveProfileData): Promise<void>
     }
 }
 
@@ -213,6 +220,7 @@ export type UserPasswordResetParams = Auth.UserPasswordResetParams
 export type PasswordReset = Auth.PasswordReset
 export type OneTimeCode = Auth.OneTimeCode
 export type GetActiveOneTimeCodeParams = Auth.GetActiveOneTimeCodeParams
+export type SwitchActiveProfileData = Auth.SwitchActiveProfileData
 export type User = Auth.User
 export type UserSummary = Auth.UserSummary
 export type Session = Auth.Session

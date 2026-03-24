@@ -103,4 +103,30 @@ export class AuthBO extends BaseBO {
             }
         )
     }
+
+    async switchActiveProfile(params: Inputs.SwitchActiveProfileInput): Promise<ApiResponse> {
+        return this.exec<Inputs.SwitchActiveProfileInput, unknown>(
+            params,
+            AuthSchemas.switchActiveProfile,
+            async (data) => {
+                const session = this.getSessionData<{
+                    userId?: number
+                    profileIds?: number[]
+                }>()
+                const userId = Number(session.userId)
+
+                if (!Number.isInteger(userId) || userId <= 0) {
+                    return this.unauthorized()
+                }
+
+                await this.service.switchActiveProfile({ userId, profileId: data.profileId })
+                this.setSessionData({ activeProfileId: data.profileId })
+
+                return this.success(
+                    { activeProfileId: data.profileId },
+                    this.authMessages.activeProfileChanged
+                )
+            }
+        )
+    }
 }

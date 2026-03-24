@@ -57,6 +57,10 @@ export const createAuthSchemas = (messages: AuthMessagesSet = AuthMessages.es) =
         requestUsername: z.object({
             email: z.email(validation.emailInvalid),
         }),
+
+        switchActiveProfile: z.object({
+            profileId: z.number().int().positive(validation.profileRequired),
+        }),
     }
 }
 
@@ -72,3 +76,4 @@ export type VerifyPasswordResetInput = z.infer<typeof AuthSchemas.verifyPassword
 export type ResetPasswordConfirmInput = z.infer<typeof AuthSchemas.resetPasswordConfirm>
 export type ChangePasswordInput = z.infer<typeof AuthSchemas.changePassword>
 export type RequestUsernameInput = z.infer<typeof AuthSchemas.requestUsername>
+export type SwitchActiveProfileInput = z.infer<typeof AuthSchemas.switchActiveProfile>
