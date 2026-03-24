@@ -1,3 +1,5 @@
+import type { MenuStructure } from '@toproc/types'
+
 export namespace Auth {
     // TODO(REVERT_NAMING): Revert user_na→username, user_em→user_email, user_pw→user_password, user_act→user_is_active, user_created_dt→user_created_at, user_updated_dt→user_updated_at, user_last_login_dt→user_last_login_at, user_em_verified_dt→user_email_verified_at, user_sol→user_solvent
     // TODO(REVERT_NAMING): Revert auth columns: password_reset_id→id, password_reset_expires_dt→expires_at, password_reset_used_dt→used_at, password_reset_ac→attempt_count, one_time_code_id→id, one_time_code_pu→purpose, one_time_code_expires_dt→expires_at, one_time_code_consumed_dt→consumed_at, one_time_code_ac→attempt_count, one_time_code_meta→meta
@@ -91,6 +93,27 @@ export namespace Auth {
     export type SwitchActiveProfileData = {
         userId: number
         profileId: number
+    }
+
+    export type SessionContextData = {
+        userId?: number
+        username?: string
+        email?: string
+        profileIds?: number[]
+        activeProfileId?: number
+    }
+
+    export type NavigationResponse = {
+        session: {
+            userId: number
+            username: string | null
+            email: string | null
+            profileIds: number[]
+            activeProfileId: number | null
+            mode: 'active' | 'union'
+            effectiveProfileIds: number[]
+        }
+        navigation: MenuStructure
     }
 
     // User Interface matching DB schema as requested
@@ -221,6 +244,8 @@ export type PasswordReset = Auth.PasswordReset
 export type OneTimeCode = Auth.OneTimeCode
 export type GetActiveOneTimeCodeParams = Auth.GetActiveOneTimeCodeParams
 export type SwitchActiveProfileData = Auth.SwitchActiveProfileData
+export type SessionContextData = Auth.SessionContextData
+export type NavigationResponse = Auth.NavigationResponse
 export type User = Auth.User
 export type UserSummary = Auth.UserSummary
 export type Session = Auth.Session

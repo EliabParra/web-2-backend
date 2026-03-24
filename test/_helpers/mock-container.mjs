@@ -27,6 +27,12 @@ export function createMockContainer(deps = {}) {
         },
         menuProvider: { load: async () => {} },
         authorization: { isAuthorized: () => true },
+        requestContext: {
+            run: (_request, callback) => callback(),
+            getRequest: () => null,
+            getSession: () => null,
+            setSession: () => {},
+        },
         authController: {},
         txController: {},
         probeController: {},

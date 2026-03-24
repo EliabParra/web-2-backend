@@ -104,6 +104,60 @@ export class AuthBO extends BaseBO {
         )
     }
 
+    async getNavigation(params: Inputs.GetNavigationInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GetNavigationInput, unknown>(
+            params,
+            AuthSchemas.getNavigation,
+            async () => {
+                const session = this.getSessionData<Types.SessionContextData>()
+                const userId = Number(session.userId)
+
+                if (!Number.isInteger(userId) || userId <= 0) {
+                    return this.unauthorized()
+                }
+
+                const profileIds = Array.isArray(session.profileIds)
+                    ? session.profileIds.filter((id) => Number.isInteger(id))
+                    : []
+
+                const activeProfileId =
+                    Number.isInteger(session.activeProfileId) &&
+                    profileIds.includes(Number(session.activeProfileId))
+                        ? Number(session.activeProfileId)
+                        : null
+
+                const mode = this.config.auth?.profileResolutionMode === 'union' ? 'union' : 'active'
+                const effectiveProfileIds =
+                    mode === 'active'
+                        ? activeProfileId != null
+                            ? [activeProfileId]
+                            : []
+                        : profileIds
+
+                if (effectiveProfileIds.length === 0) {
+                    return this.forbidden(this.authMessages.profileNotAssigned)
+                }
+
+                const navigation = await this.security.getMenuStructure(effectiveProfileIds)
+
+                const response: Types.NavigationResponse = {
+                    session: {
+                        userId,
+                        username: session.username ? String(session.username) : null,
+                        email: session.email ? String(session.email) : null,
+                        profileIds,
+                        activeProfileId,
+                        mode,
+                        effectiveProfileIds,
+                    },
+                    navigation,
+                }
+
+                return this.success(response, this.authMessages.navigationLoaded)
+            }
+        )
+    }
+
     async switchActiveProfile(params: Inputs.SwitchActiveProfileInput): Promise<ApiResponse> {
         return this.exec<Inputs.SwitchActiveProfileInput, unknown>(
             params,

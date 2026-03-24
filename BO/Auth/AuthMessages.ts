@@ -17,6 +17,7 @@ export const AuthMessages = {
         emailAlreadyExists: 'Ya existe un usuario con este email',
         usernameAlreadyExists: 'Ya existe un usuario con este nombre de usuario',
         activeProfileChanged: 'Perfil activo actualizado exitosamente',
+        navigationLoaded: 'Navegación cargada exitosamente',
         profileNotAssigned: 'El perfil seleccionado no está asignado al usuario',
         accountDisabled: 'Cuenta deshabilitada',
         validation: {
@@ -52,6 +53,7 @@ export const AuthMessages = {
         emailAlreadyExists: 'A user with this email already exists',
         usernameAlreadyExists: 'A user with this username already exists',
         activeProfileChanged: 'Active profile updated successfully',
+        navigationLoaded: 'Navigation loaded successfully',
         profileNotAssigned: 'Selected profile is not assigned to user',
         accountDisabled: 'Account disabled',
         validation: {
