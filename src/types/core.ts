@@ -1,6 +1,6 @@
 import { Pool } from 'pg'
 import type { AppMessages } from '../locales/es.js'
-import type { AppRequest } from './http.js'
+import type { AppRequest, AppSessionData } from './http.js'
 import type { MenuStructure, SecuritySubsystem, SecurityMenu, SecurityOption } from './security.js'
 
 export type { AppMessages }
@@ -710,6 +710,18 @@ export type SessionResult =
       }
 
 /**
+ * Contexto por request para acceso transversal a datos de sesión.
+ */
+export interface IRequestContextService {
+    run<T>(req: AppRequest, fn: () => T): T
+    hasRequest(): boolean
+    getRequest(): AppRequest
+    hasSession(): boolean
+    getSession<T extends AppSessionData = AppSessionData>(): T
+    setSession(patch: Partial<AppSessionData>): void
+}
+
+/**
  * Servicio de gestión de sesiones de usuario.
  */
 export interface ISessionService {
@@ -748,6 +760,21 @@ export interface ISessionService {
      * @param req - Request con la sesión
      */
     getDataSession(req: AppRequest): any
+
+    /**
+     * Obtiene los datos de sesión de la petición actual vía request-context.
+     */
+    getCurrentSession<T extends AppSessionData = AppSessionData>(): T
+
+    /**
+     * Actualiza datos de sesión de la petición actual vía request-context.
+     */
+    setCurrentSession(patch: Partial<AppSessionData>): void
+
+    /**
+     * Indica si hay una sesión disponible en el contexto actual.
+     */
+    hasCurrentSession(): boolean
 
     /**
      * Autentica a un usuario.

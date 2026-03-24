@@ -23,10 +23,10 @@ export type {
 export type {
     AppRequest,
     AppResponse,
+    AppSessionData,
     LoginRequestBody,
     ToProccessRequestBody,
     SessionUser,
-    WithRequest,
 } from './http.js'
 
 // Tipos de configuración
@@ -55,6 +55,7 @@ export type {
     IEmailService,
     IContainer,
     IAuditService,
+    IRequestContextService,
     IWebSocketService,
     SessionResult,
     TxKey,

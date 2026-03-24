@@ -372,6 +372,20 @@ export abstract class BaseBO {
     }
 
     /**
+     * Obtiene la sesión de la petición actual desde request-context.
+     */
+    protected getSessionData<T extends Record<string, unknown> = Record<string, unknown>>(): T {
+        return this.session.getCurrentSession<T>()
+    }
+
+    /**
+     * Actualiza parcialmente la sesión de la petición actual.
+     */
+    protected setSessionData(patch: Record<string, unknown>): void {
+        this.session.setCurrentSession(patch)
+    }
+
+    /**
      * Normaliza parámetros de paginación.
      */
     protected parsePagination(

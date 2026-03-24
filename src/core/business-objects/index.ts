@@ -20,5 +20,4 @@ export type {
     TransactionRoute,
     TxKey,
     AppMessages,
-    WithRequest,
 } from '@toproc/types'

@@ -45,9 +45,22 @@ export class TransactionController {
             const publicProfileId = Number(this.config.auth?.publicProfileId)
 
             const rawSessionProfileIds = req.session?.profileIds
-            effectiveProfileIds =
+            const sessionProfileIds =
                 hasSession && Array.isArray(rawSessionProfileIds)
                     ? rawSessionProfileIds.filter((id) => Number.isInteger(id))
+                    : []
+            const rawActiveProfileId = req.session?.activeProfileId
+            const activeProfileId =
+                Number.isInteger(rawActiveProfileId) &&
+                sessionProfileIds.includes(rawActiveProfileId as number)
+                    ? (rawActiveProfileId as number)
+                    : null
+
+            effectiveProfileIds =
+                hasSession && activeProfileId != null
+                    ? [activeProfileId]
+                    : hasSession
+                      ? sessionProfileIds
                     : Number.isInteger(publicProfileId) && publicProfileId > 0
                       ? [publicProfileId]
                       : []
@@ -110,17 +123,6 @@ export class TransactionController {
                 params && typeof params === 'object' && !Array.isArray(params)
                     ? { ...params }
                     : { value: params }
-
-            // NOTA: Para AuthBO old-style que espera params._request
-            // Lo inyectamos aquí o confiamos en que AuthBO se actualice.
-            // Por seguridad, inyectamos en un campo reservado.
-            effectiveParams._request = {
-                ip: req.ip ?? null,
-                userAgent: req.get?.('User-Agent') ?? null,
-                // Inyectamos el request completo (oculto) si se necesita
-                // ADVERTENCIA: Usar con precaución, acopla el BO a Express
-                req,
-            }
 
             // 4. Ejecutar vía Orchestrator
             // Orchestrator maneja: Resolución, Validación Ruta, Autorización, Ejecución, Auditoría.

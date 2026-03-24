@@ -8,16 +8,20 @@
 import { Request, Response } from 'express'
 import 'express-session'
 
+export interface AppSessionData {
+    userId?: number
+    username?: string
+    // TODO(REVERT_NAMING): Singular tables & N:M profiles
+    profileIds?: number[]
+    activeProfileId?: number
+    email?: string
+    csrfToken?: string
+    [key: string]: unknown
+}
+
 // Augmentación de express-session
 declare module 'express-session' {
-    interface SessionData {
-        userId?: number
-        username?: string
-        // TODO(REVERT_NAMING): Singular tables & N:M profiles
-        profileIds?: number[]
-        email?: string
-        csrfToken?: string
-    }
+    interface SessionData extends AppSessionData {}
 }
 
 /**
@@ -63,15 +67,4 @@ export interface SessionUser {
     profileIds: number[]
     profileName: string
     email: string
-}
-
-/**
- * Tipo para inyectar el request en los parámetros de la transacción.
- */
-export type WithRequest<T> = T & {
-    _request?: {
-        ip?: string | null
-        userAgent?: string | null
-        req?: AppRequest
-    }
 }

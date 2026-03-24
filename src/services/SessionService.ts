@@ -18,6 +18,7 @@ export class SessionManager implements types.ISessionService {
     private config: types.IConfig
     private i18n: types.II18nService
     private audit: types.IAuditService
+    private requestContext: types.IRequestContextService
     private validator: ValidatorService
 
     private authCfg: Record<string, unknown>
@@ -29,6 +30,7 @@ export class SessionManager implements types.ISessionService {
         this.config = container.resolve<types.IConfig>('config')
         this.i18n = container.resolve<types.II18nService>('i18n')
         this.audit = container.resolve<types.IAuditService>('audit')
+        this.requestContext = container.resolve<types.IRequestContextService>('requestContext')
         this.validator = container.resolve<ValidatorService>('validator')
 
         this.authCfg = (this.config.auth ?? {}) as Record<string, unknown>
@@ -112,6 +114,18 @@ export class SessionManager implements types.ISessionService {
      */
     getDataSession(req: types.AppRequest): any {
         return req.session ? { ...req.session } : {}
+    }
+
+    getCurrentSession<T extends types.AppSessionData = types.AppSessionData>(): T {
+        return this.requestContext.getSession<T>()
+    }
+
+    setCurrentSession(patch: Partial<types.AppSessionData>): void {
+        this.requestContext.setSession(patch)
+    }
+
+    hasCurrentSession(): boolean {
+        return this.requestContext.hasSession()
     }
 
     /**
@@ -202,7 +216,9 @@ export class SessionManager implements types.ISessionService {
             req.session.userId = user.user_id
             req.session.username = user.user_na
             // TODO(REVERT_NAMING): Singular tables & N:M profiles
-            req.session.profileIds = Array.isArray(user.profile_ids) ? user.profile_ids : []
+            const profileIds = Array.isArray(user.profile_ids) ? user.profile_ids : []
+            req.session.profileIds = profileIds
+            req.session.activeProfileId = profileIds[0]
             req.session.email = user.user_em
         }
     }

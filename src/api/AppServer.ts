@@ -133,6 +133,9 @@ export class AppServer {
         // 1. Session Middleware
         middlewares.applySessionMiddleware(this.app, this.container)
 
+        // 1.1 Request Context Middleware (ALS)
+        middlewares.applyRequestContext(this.app, this.container)
+
         // 2. Session Adapter
         const sessionAdapter = {
             sessionExists: (req: AppRequest) => this.session.sessionExists(req),
