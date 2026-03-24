@@ -98,14 +98,14 @@ export interface CorsConfig {
  * Configuración del logger.
  */
 export interface LogConfig {
-    /** Nivel de log: 'debug', 'info', 'warn', 'error' */
-    minLevel?: 'debug' | 'info' | 'warn' | 'error'
+    /** Nivel de log: 'trace', 'debug', 'info', 'warn', 'error', 'critical' */
+    minLevel?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'critical'
     /** Formato de salida */
     format?: 'json' | 'text' | 'pretty'
     /** Incluir timestamp */
     timestamp?: boolean
     /** Niveles por categoría/módulo */
-    categories?: Record<string, 'debug' | 'info' | 'warn' | 'error'>
+    categories?: Record<string, 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'critical'>
 }
 
 /**

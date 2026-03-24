@@ -7,8 +7,8 @@
         "path": "../../BO/"
     },
     "log": {
-        "minLevel": "debug",
-        "format": "text",
+        "minLevel": "trace",
+        "format": "pretty",
         "categories": {
             "Database": "warn"
         }

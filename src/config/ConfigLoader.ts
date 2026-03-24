@@ -32,8 +32,9 @@ export class ConfigLoader {
         } catch (error) {
             if (error instanceof ZodError) {
                 console.error('\n❌ Invalid Configuration:')
-                const zodError = error as any
-                zodError.errors.forEach((err: any) => {
+                const zodError = error as ZodError
+                const issues = zodError.issues ?? (error as any).errors ?? []
+                issues.forEach((err: any) => {
                     console.error(`  - ${err.path.join('.')}: ${err.message}`)
                 })
                 process.exit(1)

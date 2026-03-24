@@ -1,10 +1,12 @@
 import { z } from 'zod'
 
+const LogLevelSchema = z.enum(['trace', 'debug', 'info', 'warn', 'error', 'critical'])
+
 export const LogConfigSchema = z.object({
     format: z.enum(['text', 'json', 'pretty']).default('text'),
-    minLevel: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+    minLevel: LogLevelSchema.default('info'),
     timestamp: z.boolean().default(true),
-    categories: z.record(z.string(), z.enum(['debug', 'info', 'warn', 'error'])).optional(),
+    categories: z.record(z.string(), LogLevelSchema).optional(),
 })
 
 export type LogConfig = z.infer<typeof LogConfigSchema>

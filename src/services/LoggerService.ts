@@ -45,8 +45,8 @@ export class LoggerService implements ILogger {
             }
         }
 
-        // Colors only in text mode
-        this.useColors = this.format === 'text'
+        // Colors in text and pretty mode
+        this.useColors = this.format !== 'json'
     }
 
     /**
@@ -188,6 +188,8 @@ export class LoggerService implements ILogger {
                 ...(hasCtx ? { ctx: mergedCtx } : {}),
             }
             console.log(JSON.stringify(entry))
+        } else if (this.format === 'pretty') {
+            this.logPretty(level, timestamp, msg, mergedCtx)
         } else {
             // Text format
             const levelLabel = LogLevel[level].padEnd(5)
@@ -222,6 +224,72 @@ export class LoggerService implements ILogger {
             }
 
             console.log(formattedMsg)
+        }
+    }
+
+    private logPretty(level: LogLevel, timestamp: string, msg: string, mergedCtx: object): void {
+        const levelLabel = LogLevel[level].padEnd(8)
+        const category = (mergedCtx as { category?: unknown }).category
+        const categoryText =
+            typeof category === 'string' && category.trim() ? ` [${category.trim()}]` : ''
+
+        let header = `${timestamp} ${levelLabel}${categoryText} ${msg}`
+        if (this.useColors) {
+            header = this.colorizeByLevel(header, level)
+        }
+
+        console.log(header)
+
+        if (Object.keys(mergedCtx).length === 0) return
+
+        const formattedCtx = this.stringifyContext(mergedCtx)
+        if (!formattedCtx) return
+
+        const ctxLines = formattedCtx
+            .split('\n')
+            .map((line) => `  ${line}`)
+            .join('\n')
+
+        console.log(this.useColors ? ctxLines.gray : ctxLines)
+    }
+
+    private stringifyContext(ctx: object): string {
+        try {
+            return JSON.stringify(
+                ctx,
+                (_key, value) => {
+                    if (value instanceof Error) {
+                        return {
+                            name: value.name,
+                            message: value.message,
+                            stack: value.stack,
+                        }
+                    }
+                    return value
+                },
+                2
+            )
+        } catch {
+            return ''
+        }
+    }
+
+    private colorizeByLevel(text: string, level: LogLevel): string {
+        switch (level) {
+            case LogLevel.TRACE:
+                return text.gray
+            case LogLevel.DEBUG:
+                return text.magenta
+            case LogLevel.INFO:
+                return text.blue
+            case LogLevel.WARN:
+                return text.yellow
+            case LogLevel.ERROR:
+                return text.red
+            case LogLevel.CRITICAL:
+                return text.bgRed.white
+            default:
+                return text
         }
     }
 
