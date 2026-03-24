@@ -1,4 +1,5 @@
 import { BaseBO } from '@toproc/bo'
+import { formatCaracasDateTime } from '@toproc/utils'
 import type { IContainer, ApiResponse } from '@toproc/types'
 import { UserService, UserMessages, UserSchemas, Inputs, Types, registerUser } from './UserModule.js'
 
@@ -23,6 +24,10 @@ export class UserBO extends BaseBO {
         return this.i18n.use(UserMessages)
     }
 
+    private formatDateTime(value: unknown): unknown {
+        return formatCaracasDateTime(value, this.i18n.currentLocale) ?? value
+    }
+
     /**
      * Operación Get
      *
@@ -35,7 +40,14 @@ export class UserBO extends BaseBO {
             UserSchemas.get,
             async (data) => {
                 const result: Types.User = await this.service.getById(data.user_id)
-                return this.success(result, this.userMessages.get)
+                const formatted: Types.User = {
+                    ...result,
+                    user_created_dt: this.formatDateTime(result.user_created_dt) as string,
+                    user_updated_dt: this.formatDateTime(result.user_updated_dt) as string,
+                    user_last_login_dt: this.formatDateTime(result.user_last_login_dt) as string,
+                    user_em_verified_dt: this.formatDateTime(result.user_em_verified_dt) as string,
+                }
+                return this.success(formatted, this.userMessages.get)
             }
         )
     }
@@ -52,7 +64,14 @@ export class UserBO extends BaseBO {
             UserSchemas.getAll,
             async (data) => {
                 const result: Array<Types.UserSummary> = await this.service.getAll(data)
-                return this.success(result, this.userMessages.getAll)
+                const formatted = result.map((item) => ({
+                    ...item,
+                    user_created_dt: this.formatDateTime(item.user_created_dt) as string,
+                    user_updated_dt: this.formatDateTime(item.user_updated_dt) as string,
+                    user_last_login_dt: this.formatDateTime(item.user_last_login_dt) as string,
+                    user_em_verified_dt: this.formatDateTime(item.user_em_verified_dt) as string,
+                }))
+                return this.success(formatted, this.userMessages.getAll)
             }
         )
     }
@@ -69,7 +88,14 @@ export class UserBO extends BaseBO {
             UserSchemas.create,
             async (data) => {
                 const result: Types.User = await this.service.create(data)
-                return this.created(result, this.userMessages.create)
+                const formatted: Types.User = {
+                    ...result,
+                    user_created_dt: this.formatDateTime(result.user_created_dt) as string,
+                    user_updated_dt: this.formatDateTime(result.user_updated_dt) as string,
+                    user_last_login_dt: this.formatDateTime(result.user_last_login_dt) as string,
+                    user_em_verified_dt: this.formatDateTime(result.user_em_verified_dt) as string,
+                }
+                return this.created(formatted, this.userMessages.create)
             }
         )
     }
@@ -86,7 +112,14 @@ export class UserBO extends BaseBO {
             UserSchemas.update,
             async (data) => {
                 const result: Types.User = await this.service.update(data.user_id, data)
-                return this.success(result, this.userMessages.update)
+                const formatted: Types.User = {
+                    ...result,
+                    user_created_dt: this.formatDateTime(result.user_created_dt) as string,
+                    user_updated_dt: this.formatDateTime(result.user_updated_dt) as string,
+                    user_last_login_dt: this.formatDateTime(result.user_last_login_dt) as string,
+                    user_em_verified_dt: this.formatDateTime(result.user_em_verified_dt) as string,
+                }
+                return this.success(formatted, this.userMessages.update)
             }
         )
     }

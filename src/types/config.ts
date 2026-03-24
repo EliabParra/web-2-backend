@@ -28,6 +28,12 @@ export interface AppConfig {
     bodyLimit?: string
     /** Configuración de trust proxy para Express */
     trustProxy?: number | boolean | string
+    /** Zona horaria de presentación para usuario final */
+    timeZone?: string
+    /** Formato por defecto para campos de solo fecha */
+    dateFormat?: string
+    /** Formato por defecto para campos de fecha-hora */
+    dateTimeFormat?: string
 }
 
 /**

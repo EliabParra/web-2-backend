@@ -1,12 +1,10 @@
 import { BaseBO } from '@toproc/bo'
+import { formatCaracasDateTime } from '@toproc/utils'
 import type { IContainer, ApiResponse } from '@toproc/types'
 import { LoanService, LoanMessages, LoanSchemas, Inputs, Types, registerLoan } from './LoanModule.js'
 
 /**
  * Business Object para el dominio Loan.
- * get y get all requests, y en request prestamo estamos haciendo un movimiento pero como solicitud, hay que llenar movement_type
- * accept prestamo, reject prestamo, register prestamo, get y get all prestamos, y get user loans para ver prestamos
- * historicos de un usuario
  * Orquesta transacciones de Loan y expone endpoints de API.
  */
 export class LoanBO extends BaseBO {
@@ -25,87 +23,162 @@ export class LoanBO extends BaseBO {
         return this.i18n.use(LoanMessages)
     }
 
-    /**
-     * Operación Get
-     *
-     * @param params - Parámetros de la solicitud
-     * @returns ApiResponse con el resultado
-     */
-    async get(params: Inputs.GetInput): Promise<ApiResponse> {
-        return this.exec<Inputs.GetInput, Types.Loan>(
+    private formatDateTime(value: unknown): unknown {
+        return formatCaracasDateTime(value, this.i18n.currentLocale) ?? value
+    }
+
+    private formatTrace(trace?: Types.TraceEntry[]): Types.TraceEntry[] | undefined {
+        if (!trace) return trace
+        return trace.map((entry) => ({
+            ...entry,
+            at: this.formatDateTime(entry.at) as string,
+        }))
+    }
+
+    async getRequest(params: Inputs.GetRequestInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GetRequestInput, Types.Request>(
             params,
-            LoanSchemas.get,
+            LoanSchemas.getRequest,
             async (data) => {
-                const result: Types.Loan = await this.service.getById(data.id)
-                return this.success(result, this.loanMessages.get)
+                const result: Types.RequestDetail = await this.service.getRequest(data)
+                const formatted: Types.RequestDetail = {
+                    ...result,
+                    movement_booking_dt: this.formatDateTime(result.movement_booking_dt) as string,
+                    movement_estimated_return_dt: this.formatDateTime(
+                        result.movement_estimated_return_dt
+                    ) as string,
+                    trace: this.formatTrace(result.trace),
+                }
+                return this.success(formatted, this.loanMessages.getRequest)
             }
         )
     }
 
-    /**
-     * Operación GetAll
-     *
-     * @param params - Parámetros de la solicitud
-     * @returns ApiResponse con el resultado
-     */
-    async getAll(params: Inputs.GetAllInput): Promise<ApiResponse> {
-        return this.exec<Inputs.GetAllInput, Array<Types.LoanSummary>>(
+    async getAllRequests(params: Inputs.GetAllRequestsInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GetAllRequestsInput, Array<Types.RequestSummary>>(
             params,
-            LoanSchemas.getAll,
-            async () => {
-                const result: Array<Types.LoanSummary> = await this.service.getAll()
-                return this.success(result, this.loanMessages.getAll)
+            LoanSchemas.getAllRequests,
+            async (data) => {
+                const result: Array<Types.RequestSummary> = await this.service.getAllRequests(data)
+                const formatted = result.map((item) => ({
+                    ...item,
+                    movement_booking_dt: this.formatDateTime(item.movement_booking_dt) as string,
+                    movement_estimated_return_dt: this.formatDateTime(
+                        item.movement_estimated_return_dt
+                    ) as string,
+                }))
+                return this.success(formatted, this.loanMessages.getAllRequests)
             }
         )
     }
 
-    /**
-     * Operación Create
-     *
-     * @param params - Parámetros de la solicitud
-     * @returns ApiResponse con el resultado
-     */
-    async create(params: Inputs.CreateInput): Promise<ApiResponse> {
-        return this.exec<Inputs.CreateInput, Types.Loan>(
+    async requestLoan(params: Inputs.RequestLoanInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RequestLoanInput, Types.Request>(
             params,
-            LoanSchemas.create,
+            LoanSchemas.requestLoan,
             async (data) => {
-                const result: Types.Loan = await this.service.create(data)
-                return this.created(result, this.loanMessages.create)
+                const result = await this.service.requestLoan(data)
+                return this.created(result, this.loanMessages.requestLoan)
             }
         )
     }
 
-    /**
-     * Operación Update
-     *
-     * @param params - Parámetros de la solicitud
-     * @returns ApiResponse con el resultado
-     */
-    async update(params: Inputs.UpdateInput): Promise<ApiResponse> {
-        return this.exec<Inputs.UpdateInput, Types.Loan>(
+    async acceptRequestLoan(params: Inputs.AcceptRequestLoanInput): Promise<ApiResponse> {
+        return this.exec<Inputs.AcceptRequestLoanInput, Types.Request>(
             params,
-            LoanSchemas.update,
+            LoanSchemas.acceptRequestLoan,
             async (data) => {
-                const result: Types.Loan = await this.service.update(data.id, data)
-                return this.success(result, this.loanMessages.update)
+                const result = await this.service.acceptRequestLoan(data)
+                const formatted = {
+                    ...result,
+                    movement_booking_dt: this.formatDateTime(result.movement_booking_dt) as string,
+                    movement_estimated_return_dt: this.formatDateTime(
+                        result.movement_estimated_return_dt
+                    ) as string,
+                }
+                return this.success(formatted, this.loanMessages.acceptRequestLoan)
             }
         )
     }
 
-    /**
-     * Operación Delete
-     *
-     * @param params - Parámetros de la solicitud
-     * @returns ApiResponse con el resultado
-     */
-    async delete(params: Inputs.DeleteInput): Promise<ApiResponse> {
-        return this.exec<Inputs.DeleteInput, void>(
+    async rejectRequestLoan(params: Inputs.RejectRequestLoanInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RejectRequestLoanInput, Types.Request>(
             params,
-            LoanSchemas.delete,
+            LoanSchemas.rejectRequestLoan,
             async (data) => {
-                await this.service.delete(data.id)
-                return this.success(null, this.loanMessages.delete)
+                const result = await this.service.rejectRequestLoan(data)
+                const formatted = {
+                    ...result,
+                    movement_booking_dt: this.formatDateTime(result.movement_booking_dt) as string,
+                    movement_estimated_return_dt: this.formatDateTime(
+                        result.movement_estimated_return_dt
+                    ) as string,
+                }
+                return this.success(formatted, this.loanMessages.rejectRequestLoan)
+            }
+        )
+    }
+
+    async getLoan(params: Inputs.GetLoanInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GetLoanInput, Types.LoanDetail>(
+            params,
+            LoanSchemas.getLoan,
+            async (data) => {
+                const result = await this.service.getLoan(data)
+                const formatted: Types.LoanDetail = {
+                    ...result,
+                    movement_booking_dt: this.formatDateTime(result.movement_booking_dt) as string,
+                    movement_estimated_return_dt: this.formatDateTime(
+                        result.movement_estimated_return_dt
+                    ) as string,
+                    details: (result.details ?? []).map((detail) => ({
+                        ...detail,
+                        movement_detail_dt: this.formatDateTime(detail.movement_detail_dt) as string,
+                    })),
+                    trace: this.formatTrace(result.trace),
+                }
+                return this.success(formatted, this.loanMessages.getLoan)
+            }
+        )
+    }
+
+    async getAllLoans(params: Inputs.GetAllLoansInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GetAllLoansInput, Array<Types.LoanSummary>>(
+            params,
+            LoanSchemas.getAllLoans,
+            async (data) => {
+                const result = await this.service.getAllLoans(data)
+                const formatted = result.map((item) => ({
+                    ...item,
+                    movement_booking_dt: this.formatDateTime(item.movement_booking_dt) as string,
+                    movement_estimated_return_dt: this.formatDateTime(
+                        item.movement_estimated_return_dt
+                    ) as string,
+                }))
+                return this.success(formatted, this.loanMessages.getAllLoans)
+            }
+        )
+    }
+
+    async registerLoan(params: Inputs.RegisterLoanInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RegisterLoanInput, Types.LoanDetail>(
+            params,
+            LoanSchemas.registerLoan,
+            async (data) => {
+                const result = await this.service.registerLoan(data)
+                const formatted: Types.LoanDetail = {
+                    ...result,
+                    movement_booking_dt: this.formatDateTime(result.movement_booking_dt) as string,
+                    movement_estimated_return_dt: this.formatDateTime(
+                        result.movement_estimated_return_dt
+                    ) as string,
+                    details: (result.details ?? []).map((detail) => ({
+                        ...detail,
+                        movement_detail_dt: this.formatDateTime(detail.movement_detail_dt) as string,
+                    })),
+                    trace: this.formatTrace(result.trace),
+                }
+                return this.success(formatted, this.loanMessages.registerLoan)
             }
         )
     }

@@ -1,5 +1,6 @@
 import { deepMerge } from '@toproc/config'
 import type { AppMessages, LocalizedMessage, II18nService } from '@toproc/types'
+import { CARACAS_TIME_ZONE } from '@toproc/utils'
 
 /**
  * Servicio de internacionalización (I18n).
@@ -113,7 +114,13 @@ export class I18nService implements II18nService {
      * @returns String fecha formateada.
      */
     formatDate(date: Date | number, options?: Intl.DateTimeFormatOptions): string {
-        return new Intl.DateTimeFormat(this.currentLocale, options).format(date)
+        return new Intl.DateTimeFormat(this.currentLocale, {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            timeZone: CARACAS_TIME_ZONE,
+            ...options,
+        }).format(date)
     }
 
     /**

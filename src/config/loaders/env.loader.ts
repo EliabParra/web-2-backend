@@ -20,6 +20,9 @@ export class EnvLoader {
                 lang: env.APP_LANG as any,
                 frontendMode: env.APP_FRONTEND_MODE as any,
                 frontendUrl: env.APP_FRONTEND_URL,
+                timeZone: env.APP_TIME_ZONE,
+                dateFormat: env.APP_DATE_FORMAT,
+                dateTimeFormat: env.APP_DATETIME_FORMAT,
                 trustProxy:
                     env.APP_TRUST_PROXY === 'true'
                         ? true

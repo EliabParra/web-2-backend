@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { normalizeDateOnlyInput } from '@toproc/utils'
 import { LapseMessages } from './LapseMessages.js'
 
 /**
@@ -10,6 +11,17 @@ export type LapseMessagesSet = typeof LapseMessages.es
 
 export const createLapseSchemas = (messages: LapseMessagesSet = LapseMessages.es) => {
     const validation = messages.validation ?? LapseMessages.es.validation
+    const dateOnlyInput = z.union([z.string(), z.date()]).transform((value, ctx) => {
+        const normalized = normalizeDateOnlyInput(value)
+        if (!normalized) {
+            ctx.addIssue({
+                code: 'custom',
+                message: validation.invalidFormat,
+            })
+            return z.NEVER
+        }
+        return normalized
+    })
 
     return {
     get: z.object({
@@ -18,21 +30,21 @@ export const createLapseSchemas = (messages: LapseMessagesSet = LapseMessages.es
     getAll: z.object({
         lapse_de: z.string().optional(),
         lapse_act: z.coerce.boolean().optional().nullable(),
-        lapse_start_dt: z.union([z.string(), z.date()]).optional().nullable(),
-        lapse_close_dt: z.union([z.string(), z.date()]).optional().nullable(),
+        lapse_start_dt: dateOnlyInput.optional().nullable(),
+        lapse_close_dt: dateOnlyInput.optional().nullable(),
     }),
     create: z.object({
         lapse_de: z.string().min(1, validation.description.required),
         lapse_act: z.coerce.boolean().optional().nullable(),
-        lapse_start_dt: z.union([z.string(), z.date()]).optional().nullable(),
-        lapse_close_dt: z.union([z.string(), z.date()]).optional().nullable(),
+        lapse_start_dt: dateOnlyInput.optional().nullable(),
+        lapse_close_dt: dateOnlyInput.optional().nullable(),
     }),
     update: z.object({
         lapse_id: z.coerce.number(),
         lapse_de: z.string().optional(),
         lapse_act: z.coerce.boolean().optional().nullable(),
-        lapse_start_dt: z.union([z.string(), z.date()]).optional().nullable(),
-        lapse_close_dt: z.union([z.string(), z.date()]).optional().nullable(),
+        lapse_start_dt: dateOnlyInput.optional().nullable(),
+        lapse_close_dt: dateOnlyInput.optional().nullable(),
     }),
     delete: z.object({
         lapse_id: z.coerce.number(),

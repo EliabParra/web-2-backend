@@ -9,6 +9,9 @@ export const AppConfigSchema = z.object({
     frontendUrl: z.url().optional(),
     trustProxy: z.union([z.boolean(), z.number(), z.string()]).default(false),
     lang: z.enum(['es', 'en']).default('es'),
+    timeZone: z.string().default('America/Caracas'),
+    dateFormat: z.string().default('dd/MM/yyyy'),
+    dateTimeFormat: z.string().default('dd/MM/yyyy HH:mm:ss'),
 })
 
 export type AppConfig = z.infer<typeof AppConfigSchema>

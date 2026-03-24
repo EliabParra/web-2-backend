@@ -1,4 +1,5 @@
 import { BaseBO } from '@toproc/bo'
+import { formatCaracasDate } from '@toproc/utils'
 import type { IContainer, ApiResponse } from '@toproc/types'
 import { LapseService, LapseMessages, LapseSchemas, Inputs, Types, registerLapse } from './LapseModule.js'
 
@@ -23,6 +24,10 @@ export class LapseBO extends BaseBO {
         return this.i18n.use(LapseMessages)
     }
 
+    private formatDate(value: unknown): unknown {
+        return formatCaracasDate(value, this.i18n.currentLocale) ?? value
+    }
+
     /**
      * Operación Get
      *
@@ -35,7 +40,12 @@ export class LapseBO extends BaseBO {
             LapseSchemas.get,
             async (data) => {
                 const result: Types.Lapse = await this.service.getById(data.lapse_id)
-                return this.success(result, this.lapseMessages.get)
+                const formatted: Types.Lapse = {
+                    ...result,
+                    lapse_start_dt: this.formatDate(result.lapse_start_dt) as string,
+                    lapse_close_dt: this.formatDate(result.lapse_close_dt) as string,
+                }
+                return this.success(formatted, this.lapseMessages.get)
             }
         )
     }
@@ -50,9 +60,14 @@ export class LapseBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.LapseSummary>>(
             params,
             LapseSchemas.getAll,
-            async () => {
-                const result: Array<Types.LapseSummary> = await this.service.getAll()
-                return this.success(result, this.lapseMessages.getAll)
+            async (data) => {
+                const result: Array<Types.LapseSummary> = await this.service.getAll(data)
+                const formatted = result.map((item) => ({
+                    ...item,
+                    lapse_start_dt: this.formatDate(item.lapse_start_dt) as string,
+                    lapse_close_dt: this.formatDate(item.lapse_close_dt) as string,
+                }))
+                return this.success(formatted, this.lapseMessages.getAll)
             }
         )
     }
@@ -69,7 +84,12 @@ export class LapseBO extends BaseBO {
             LapseSchemas.create,
             async (data) => {
                 const result: Types.Lapse = await this.service.create(data)
-                return this.created(result, this.lapseMessages.create)
+                const formatted: Types.Lapse = {
+                    ...result,
+                    lapse_start_dt: this.formatDate(result.lapse_start_dt) as string,
+                    lapse_close_dt: this.formatDate(result.lapse_close_dt) as string,
+                }
+                return this.created(formatted, this.lapseMessages.create)
             }
         )
     }
@@ -86,7 +106,12 @@ export class LapseBO extends BaseBO {
             LapseSchemas.update,
             async (data) => {
                 const result: Types.Lapse = await this.service.update(data.lapse_id, data)
-                return this.success(result, this.lapseMessages.update)
+                const formatted: Types.Lapse = {
+                    ...result,
+                    lapse_start_dt: this.formatDate(result.lapse_start_dt) as string,
+                    lapse_close_dt: this.formatDate(result.lapse_close_dt) as string,
+                }
+                return this.success(formatted, this.lapseMessages.update)
             }
         )
     }

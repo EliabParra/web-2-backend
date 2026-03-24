@@ -30,7 +30,11 @@ export namespace User {
         user_id: number
         user_na: string
         user_act: boolean
+        user_created_dt?: string | Date
+        user_updated_dt?: string | Date
+        user_last_login_dt?: string | Date | null
         user_em?: string | null
+        user_em_verified_dt?: string | Date | null
         user_sol?: boolean | null
         person_id?: number | null
         person_ci?: string | null
