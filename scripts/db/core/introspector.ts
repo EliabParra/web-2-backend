@@ -15,6 +15,14 @@ interface ColumnInfo {
     column_default: string | null
 }
 
+interface IntrospectOptions {
+    withData?: boolean
+    includeSecurityData?: boolean
+    securityDataTables?: string[]
+    includeTables?: string[]
+    excludeTables?: string[]
+}
+
 /**
  * Introspector class - Reads database schema and generates TypeScript files.
  * Implements "DB -> Code" synchronization.
@@ -25,6 +33,76 @@ export class Introspector {
         private ddlDir: string,
         private dmlDir: string
     ) {}
+
+    private toTableKey(schema: string, table: string): string {
+        return `${schema}.${table}`.toLowerCase()
+    }
+
+    private normalizeFilterItems(items: string[] | undefined): string[] {
+        return (items || []).map((item) => item.trim().toLowerCase()).filter(Boolean)
+    }
+
+    private matchesFilter(tableKey: string, tableName: string, filters: string[]): boolean {
+        if (filters.length === 0) return true
+
+        return filters.some((filter) => {
+            if (filter.includes('.')) return filter === tableKey
+            return filter === tableName
+        })
+    }
+
+    private shouldProcessByFilters(
+        tableKey: string,
+        tableName: string,
+        includeFilters: string[],
+        excludeFilters: string[]
+    ): boolean {
+        const included =
+            includeFilters.length === 0 || this.matchesFilter(tableKey, tableName, includeFilters)
+        if (!included) return false
+
+        if (excludeFilters.length === 0) return true
+        return !this.matchesFilter(tableKey, tableName, excludeFilters)
+    }
+
+    private resolveSecuritySelectionKeys(securityDataTables: string[] | undefined): Set<string> {
+        const selected = new Set<string>()
+
+        for (const item of this.normalizeFilterItems(securityDataTables)) {
+            if (item.includes('.')) {
+                selected.add(item)
+            } else {
+                selected.add(`security.${item}`)
+            }
+        }
+
+        return selected
+    }
+
+    private expandSecurityDependencies(
+        selectedKeys: Set<string>,
+        dependencies: Map<string, string[]>,
+        availableTables: Set<string>
+    ): Set<string> {
+        const expanded = new Set<string>(selectedKeys)
+        const queue = [...selectedKeys]
+
+        while (queue.length > 0) {
+            const current = queue.shift() as string
+            const refs = dependencies.get(current) || []
+
+            for (const ref of refs) {
+                if (!ref.startsWith('security.')) continue
+                if (!availableTables.has(ref)) continue
+                if (expanded.has(ref)) continue
+
+                expanded.add(ref)
+                queue.push(ref)
+            }
+        }
+
+        return expanded
+    }
 
     /**
      * Lists all user tables in the database (excludes system schemas).
@@ -98,24 +176,14 @@ export class Introspector {
     /**
      * Obtiene el índice topológico de las tablas basándose en sus dependencias foráneas.
      */
-    async calculateTopology(tables: TableInfo[]): Promise<Map<string, number>> {
+    async calculateTopology(
+        tables: TableInfo[],
+        dependenciesInput?: Map<string, string[]>
+    ): Promise<Map<string, number>> {
         const topology = new Map<string, number>()
         const unassigned = new Set(tables.map(t => `${t.table_schema}.${t.table_name}`))
 
-        // Cargar todas las dependencias
-        const dependencies = new Map<string, string[]>()
-
-        for (const t of tables) {
-            const tableName = `${t.table_schema}.${t.table_name}`
-            const rawFks = await this.getForeignKeys(t.table_schema, t.table_name)
-
-            const refs = rawFks.map(fk => {
-                const match = fk.match(/references\s+([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)/i)
-                return match ? match[1] : null
-            }).filter(ref => ref !== null && ref !== tableName) as string[]
-
-            dependencies.set(tableName, refs)
-        }
+        const dependencies = dependenciesInput || (await this.getTableDependencies(tables))
 
         // Resolución de Niveles Iterativa DAG
         let currentLevel = 0
@@ -145,6 +213,26 @@ export class Introspector {
         });
 
         return topology
+    }
+
+    async getTableDependencies(tables: TableInfo[]): Promise<Map<string, string[]>> {
+        const dependencies = new Map<string, string[]>()
+
+        for (const t of tables) {
+            const tableName = this.toTableKey(t.table_schema, t.table_name)
+            const rawFks = await this.getForeignKeys(t.table_schema, t.table_name)
+
+            const refs = rawFks
+                .map((fk) => {
+                    const match = fk.match(/references\s+([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)/i)
+                    return match ? match[1].toLowerCase() : null
+                })
+                .filter((ref) => ref !== null && ref !== tableName) as string[]
+
+            dependencies.set(tableName, refs)
+        }
+
+        return dependencies
     }
 
     /**
@@ -183,17 +271,32 @@ export class Introspector {
      * Skips tables that are already defined in MANUALLY managed files.
      * Updates tables that are in AUTO-GENERATED files.
      */
-    async introspectAll(options: { withData?: boolean } = {}): Promise<string[]> {
+    async introspectAll(options: IntrospectOptions = {}): Promise<string[]> {
         console.log('\n🔍 Introspecting database...'.cyan)
 
         const tables = await this.listTables()
         const existingTables = await this.scanExistingSchemas()
+        const includeFilters = this.normalizeFilterItems(options.includeTables)
+        const excludeFilters = this.normalizeFilterItems(options.excludeTables)
+        const dependencies = await this.getTableDependencies(tables)
+        const tableKeySet = new Set(tables.map((t) => this.toTableKey(t.table_schema, t.table_name)))
 
         console.log(`📊 Found ${tables.length} tables in DB.`.gray)
         console.log(`📂 Found ${existingTables.size} tables already defined in code.`.gray)
 
-        const topology = await this.calculateTopology(tables)
+        const topology = await this.calculateTopology(tables, dependencies)
         const generatedFiles: string[] = []
+        const selectedSecurityData = this.expandSecurityDependencies(
+            this.resolveSecuritySelectionKeys(options.securityDataTables),
+            dependencies,
+            tableKeySet
+        )
+
+        if (selectedSecurityData.size > 0) {
+            console.log(
+                `🔐 Security data scope: ${Array.from(selectedSecurityData).sort().join(', ')}`.gray
+            )
+        }
 
         // Sorting tables topologically, then alphabetically
         const sortedTables = [...tables].sort((a, b) => {
@@ -207,11 +310,53 @@ export class Introspector {
         })
 
         for (const table of sortedTables) {
-            if (table.table_schema === 'security') {
-                console.log(
-                    `   ⏭️  Ignoring Security table: ${table.table_schema}.${table.table_name}`
-                        .yellow
+            const tableKey = this.toTableKey(table.table_schema, table.table_name)
+            const isSecurityTable = table.table_schema === 'security'
+
+            if (
+                !this.shouldProcessByFilters(
+                    tableKey,
+                    table.table_name.toLowerCase(),
+                    includeFilters,
+                    excludeFilters
                 )
+            ) {
+                console.log(`   ⏭️  Filtered out: ${tableKey}`.yellow)
+                continue
+            }
+
+            if (table.table_schema === 'security') {
+                const shouldExportSecurityData =
+                    options.withData === true &&
+                    (options.includeSecurityData === true || selectedSecurityData.has(tableKey))
+
+                if (shouldExportSecurityData) {
+                    const data = await this.getData(table.table_schema, table.table_name)
+                    if (data.length > 0) {
+                        console.log(
+                            `      📝 Found ${data.length} records in ${table.table_name} (Security Data)`
+                                .gray
+                        )
+                        const priority = this.getTablePriority(
+                            table.table_schema,
+                            table.table_name,
+                            topology
+                        )
+                        const dataContent = this.generateDataFile(
+                            table.table_schema,
+                            table.table_name,
+                            data
+                        )
+                        const dataFilename = `90_data_${priority}_${table.table_schema}_${table.table_name}.ts`
+                        const dataFilepath = path.join(this.dmlDir, dataFilename)
+
+                        await fs.writeFile(dataFilepath, dataContent, 'utf-8')
+                        console.log(`   ✅ Generated Security Data: ${dataFilename}`.green)
+                        generatedFiles.push(dataFilepath)
+                    }
+                } else {
+                    console.log(`   ⏭️  Ignoring Security table DDL: ${tableKey}`.yellow)
+                }
                 continue
             }
 
@@ -224,7 +369,7 @@ export class Introspector {
                 continue
             }
 
-            const key = `${table.table_schema}.${table.table_name}`.toLowerCase()
+            const key = tableKey
             const existingFile = existingTables.get(key)
             let shouldProcess = true
 
@@ -315,7 +460,7 @@ export class Introspector {
             )
 
             // Determine filename: Use existing if available, else new standardized name
-            const topLevel = topology.get(`${table.table_schema}.${table.table_name}`) || 0
+            const topLevel = topology.get(tableKey) || 0
             const prefixTopological = 80 + topLevel // 80, 81, 82 ...
             const filename = existingFile || `${prefixTopological}_${table.table_schema}_${table.table_name}.ts`
             const filepath = path.join(this.ddlDir, filename)

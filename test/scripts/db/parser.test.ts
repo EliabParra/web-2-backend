@@ -101,4 +101,34 @@ describe('CLI Parser', () => {
         assert.strictEqual(result.security?.registerBo, true)
         assert.strictEqual(result.app?.interactive, false)
     })
+
+    it('should parse security data flags for introspect', () => {
+        const result = parseCliArgs([
+            'introspect',
+            '--data',
+            '--security-data',
+            '--security-data-tables',
+            'profile,user_profile',
+        ])
+
+        assert.strictEqual(result.security?.introspectData, true)
+        assert.strictEqual(result.security?.introspectSecurityData, true)
+        assert.deepStrictEqual(result.security?.introspectSecurityTables, ['profile', 'user_profile'])
+    })
+
+    it('should parse include/exclude table filters', () => {
+        const result = parseCliArgs([
+            'introspect',
+            '--include-tables',
+            'business.person,security.profile',
+            '--exclude-tables',
+            'security.audit_log',
+        ])
+
+        assert.deepStrictEqual(result.security?.introspectIncludeTables, [
+            'business.person',
+            'security.profile',
+        ])
+        assert.deepStrictEqual(result.security?.introspectExcludeTables, ['security.audit_log'])
+    })
 })

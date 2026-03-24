@@ -1,5 +1,9 @@
 import { describe, it, mock } from 'node:test'
 import assert from 'node:assert'
+import 'colors'
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
 import { Introspector } from '../../../scripts/db/core/introspector.js'
 
 // Mock Database
@@ -171,7 +175,7 @@ describe('Introspector', () => {
                 column_default: null,
             },
         ]
-        
+
         const foreignKeys = [
             'foreign key (category_type_id) references business.category_type (category_type_id)'
         ]
@@ -184,5 +188,219 @@ describe('Introspector', () => {
             `Expected trailing comma after last column but got: ${content}`)
         assert.ok(content.includes('foreign key (category_type_id) references business.category_type (category_type_id)'),
             `Expected foreign key constraint but got: ${content}`)
+    })
+
+    it('should optionally export security data files without generating security DDL', async () => {
+        const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'introspector-'))
+        const ddlDir = path.join(tmpRoot, 'ddl')
+        const dmlDir = path.join(tmpRoot, 'dml')
+        await fs.mkdir(ddlDir, { recursive: true })
+        await fs.mkdir(dmlDir, { recursive: true })
+
+        const db = {
+            exeRaw: mock.fn(async (sql: string, params?: any[]) => {
+                if (sql.includes('information_schema.tables')) {
+                    return {
+                        rows: [
+                            { table_schema: 'public', table_name: 'config' },
+                            { table_schema: 'security', table_name: 'profile' },
+                        ],
+                        rowCount: 2,
+                    }
+                }
+
+                if (sql.includes('information_schema.columns')) {
+                    const table = params?.[1]
+                    if (table === 'config') {
+                        return {
+                            rows: [
+                                {
+                                    column_name: 'id',
+                                    data_type: 'integer',
+                                    is_nullable: 'NO',
+                                    column_default: null,
+                                },
+                                {
+                                    column_name: 'name',
+                                    data_type: 'text',
+                                    is_nullable: 'NO',
+                                    column_default: null,
+                                },
+                            ],
+                            rowCount: 2,
+                        }
+                    }
+
+                    if (table === 'profile') {
+                        return {
+                            rows: [
+                                {
+                                    column_name: 'profile_id',
+                                    data_type: 'integer',
+                                    is_nullable: 'NO',
+                                    column_default: null,
+                                },
+                                {
+                                    column_name: 'profile_na',
+                                    data_type: 'text',
+                                    is_nullable: 'NO',
+                                    column_default: null,
+                                },
+                            ],
+                            rowCount: 2,
+                        }
+                    }
+                }
+
+                if (sql.includes('FROM   pg_index i')) {
+                    const regclass = params?.[0]
+                    if (regclass === 'public.config') {
+                        return { rows: [{ attname: 'id' }], rowCount: 1 }
+                    }
+                    if (regclass === 'security.profile') {
+                        return { rows: [{ attname: 'profile_id' }], rowCount: 1 }
+                    }
+                }
+
+                if (sql.includes('information_schema.table_constraints')) {
+                    return { rows: [], rowCount: 0 }
+                }
+
+                if (sql.includes('FROM pg_indexes')) {
+                    return { rows: [], rowCount: 0 }
+                }
+
+                if (sql.includes('SELECT * FROM public.config')) {
+                    return { rows: [{ id: 1, name: 'main' }], rowCount: 1 }
+                }
+
+                if (sql.includes('SELECT * FROM security.profile')) {
+                    return {
+                        rows: [{ profile_id: 1, profile_na: 'admin' }],
+                        rowCount: 1,
+                    }
+                }
+
+                return { rows: [], rowCount: 0 }
+            }),
+        }
+
+        const introspector = new Introspector(db as any, ddlDir, dmlDir)
+        const generated = await introspector.introspectAll({
+            withData: true,
+            securityDataTables: ['profile'],
+        })
+
+        const generatedNames = generated.map((file) => path.basename(file))
+
+        assert.ok(
+            generatedNames.some((name) => name.includes('public_config') && !name.startsWith('90_data_')),
+            `Expected public DDL file but got: ${generatedNames.join(', ')}`
+        )
+        assert.ok(
+            generatedNames.some((name) => name.includes('public_config') && name.startsWith('90_data_')),
+            `Expected public data file but got: ${generatedNames.join(', ')}`
+        )
+        assert.ok(
+            generatedNames.some((name) => name.includes('security_profile') && name.startsWith('90_data_')),
+            `Expected security data file but got: ${generatedNames.join(', ')}`
+        )
+        assert.ok(
+            !generatedNames.some((name) => name.includes('security_profile') && !name.startsWith('90_data_')),
+            `Did not expect security DDL file: ${generatedNames.join(', ')}`
+        )
+
+        await fs.rm(tmpRoot, { recursive: true, force: true })
+    })
+
+    it('should introspect only selected includeTables', async () => {
+        const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'introspector-include-'))
+        const ddlDir = path.join(tmpRoot, 'ddl')
+        const dmlDir = path.join(tmpRoot, 'dml')
+        await fs.mkdir(ddlDir, { recursive: true })
+        await fs.mkdir(dmlDir, { recursive: true })
+
+        const db = {
+            exeRaw: mock.fn(async (sql: string, params?: any[]) => {
+                if (sql.includes('information_schema.tables')) {
+                    return {
+                        rows: [
+                            { table_schema: 'public', table_name: 'group' },
+                            { table_schema: 'public', table_name: 'item' },
+                        ],
+                        rowCount: 2,
+                    }
+                }
+
+                if (sql.includes('information_schema.columns')) {
+                    const table = params?.[1]
+                    if (table === 'group') {
+                        return {
+                            rows: [
+                                {
+                                    column_name: 'group_id',
+                                    data_type: 'integer',
+                                    is_nullable: 'NO',
+                                    column_default: null,
+                                },
+                            ],
+                            rowCount: 1,
+                        }
+                    }
+
+                    if (table === 'item') {
+                        return {
+                            rows: [
+                                {
+                                    column_name: 'item_id',
+                                    data_type: 'integer',
+                                    is_nullable: 'NO',
+                                    column_default: null,
+                                },
+                            ],
+                            rowCount: 1,
+                        }
+                    }
+                }
+
+                if (sql.includes('FROM   pg_index i')) {
+                    const regclass = params?.[0]
+                    if (regclass === 'public.group') {
+                        return { rows: [{ attname: 'group_id' }], rowCount: 1 }
+                    }
+                    if (regclass === 'public.item') {
+                        return { rows: [{ attname: 'item_id' }], rowCount: 1 }
+                    }
+                }
+
+                if (sql.includes('information_schema.table_constraints')) {
+                    return { rows: [], rowCount: 0 }
+                }
+
+                if (sql.includes('FROM pg_indexes')) {
+                    return { rows: [], rowCount: 0 }
+                }
+
+                return { rows: [], rowCount: 0 }
+            }),
+        }
+
+        const introspector = new Introspector(db as any, ddlDir, dmlDir)
+        const generated = await introspector.introspectAll({
+            includeTables: ['public.group'],
+            withData: false,
+        })
+
+        const generatedNames = generated.map((file) => path.basename(file))
+        assert.ok(
+            generatedNames.some((name) => name.includes('public_group')),
+            `Expected selected table output but got: ${generatedNames.join(', ')}`
+        )
+        assert.ok(
+            !generatedNames.some((name) => name.includes('public_item')),
+            `Did not expect non-selected table output: ${generatedNames.join(', ')}`
+        )
+
+        await fs.rm(tmpRoot, { recursive: true, force: true })
     })
 })

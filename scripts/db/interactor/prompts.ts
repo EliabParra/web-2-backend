@@ -68,4 +68,29 @@ export class Interactor {
 
         return result as string
     }
+
+    async multiselect(
+        question: string,
+        options: string[],
+        initialValues: string[] = []
+    ): Promise<string[]> {
+        const clackOptions = options.map((opt) => ({
+            value: opt,
+            label: opt,
+        }))
+
+        const result = await p.multiselect({
+            message: question,
+            options: clackOptions,
+            initialValues,
+            required: false,
+        })
+
+        if (p.isCancel(result)) {
+            p.cancel('Operation cancelled.')
+            process.exit(0)
+        }
+
+        return result as string[]
+    }
 }

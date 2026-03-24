@@ -48,6 +48,10 @@ export interface SecurityConfig {
     txStart?: number
     pruneMethods?: boolean
     introspectData?: boolean // New option
+    introspectSecurityData?: boolean
+    introspectSecurityTables?: string[]
+    introspectIncludeTables?: string[]
+    introspectExcludeTables?: string[]
 
     seedPublicAuthPerms?: boolean
     includeEmail?: boolean

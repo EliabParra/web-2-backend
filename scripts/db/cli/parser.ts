@@ -57,6 +57,15 @@ export function parseCliArgs(
         return typeof v === 'string' ? v : undefined
     }
 
+    const parseCsvList = (value: string | undefined): string[] | undefined => {
+        if (!value) return undefined
+        const items = value
+            .split(',')
+            .map((item) => item.trim().toLowerCase())
+            .filter(Boolean)
+        return items.length > 0 ? items : undefined
+    }
+
     // Build config
     const config: PartialInitConfig & { action?: string; help?: boolean } = {
         app: {},
@@ -84,6 +93,21 @@ export function parseCliArgs(
     if (getBool('manage')) config.action = 'manage'
 
     if (getBool('with-data', 'data')) config.security!.introspectData = true
+    if (getBool('security-data')) config.security!.introspectSecurityData = true
+
+    const includeTables = parseCsvList(getStr('includeTables', 'include-tables'))
+    if (includeTables) config.security!.introspectIncludeTables = includeTables
+
+    const excludeTables = parseCsvList(getStr('excludeTables', 'exclude-tables'))
+    if (excludeTables) config.security!.introspectExcludeTables = excludeTables
+
+    const securityDataTables = parseCsvList(
+        getStr('securityDataTables', 'security-data-tables')
+    )
+    if (securityDataTables) {
+        config.security!.introspectSecurityTables = securityDataTables
+        config.security!.introspectSecurityData = true
+    }
 
     // App options
     if (getBool('yes', 'y')) config.app!.interactive = false
@@ -169,6 +193,13 @@ ${'Actions:'.cyan.bold}
 
 ${'Introspect Options:'.cyan.bold}
   --data, --with-data Enable data export (INSERTs)
+    --security-data     Include data export for security schema (no DDL)
+    --security-data-tables <list>
+                                            Include only these security tables (comma-separated)
+    --include-tables <list>
+                                            Only process these tables (table or schema.table)
+    --exclude-tables <list>
+                                            Skip these tables (table or schema.table)
 
 ${'App Options:'.cyan.bold}
   --yes, -y           Non-interactive mode (assume yes)
@@ -210,6 +241,9 @@ ${'Examples:'.cyan.bold}
   pnpm run db                     # Interactive mode
   pnpm run db sync --dry-run      # Preview sync
   pnpm run db introspect          # Generate from DB
+    pnpm run db introspect --data --security-data
+    pnpm run db introspect --data --security-data-tables profile,user_profile
+    pnpm run db introspect --include-tables business.person,security.profile
   pnpm run db seed --seedAdmin    # Create admin user
   pnpm run db bo --prune          # Sync BOs and prune orphans
   pnpm run db reset --yes         # Drop all tables

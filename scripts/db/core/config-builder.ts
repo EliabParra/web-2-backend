@@ -132,6 +132,18 @@ export class ConfigBuilder {
                     config.security.introspectData ?? false
                 )
             }
+
+            if (config.security.introspectData) {
+                if (
+                    cliConfig.security?.introspectSecurityData === undefined &&
+                    !cliConfig.security?.introspectSecurityTables?.length
+                ) {
+                    config.security.introspectSecurityData = await this.interactor.confirm(
+                        'Include security schema data too? (DDL still excluded)',
+                        config.security.introspectSecurityData ?? false
+                    )
+                }
+            }
         }
 
         this.interactor.close()

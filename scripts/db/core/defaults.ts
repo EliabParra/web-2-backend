@@ -45,6 +45,11 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
 
     registerBo: false,
     txStart: undefined,
+    introspectData: false,
+    introspectSecurityData: false,
+    introspectSecurityTables: [],
+    introspectIncludeTables: [],
+    introspectExcludeTables: [],
 
     seedPublicAuthPerms: process.env.AUTH_SEED_PUBLIC_AUTH_PERMS === 'true' || false,
     includeEmail: false,

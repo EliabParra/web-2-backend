@@ -126,8 +126,65 @@ async function main() {
             case 'introspect': {
                 console.log(colors.cyan('\n🔍 Running Introspect (DB → Code)...'))
                 const introspector = new Introspector(db, ddlDir, dmlDir)
+
+                if (
+                    config.app.interactive &&
+                    process.stdin.isTTY &&
+                    (!config.security.introspectIncludeTables ||
+                        config.security.introspectIncludeTables.length === 0)
+                ) {
+                    const interactor = new Interactor()
+                    const allTableKeys = (await introspector.listTables())
+                        .filter((t) => t.table_name !== '_migration_history')
+                        .map((t) => `${t.table_schema}.${t.table_name}`)
+                        .sort()
+
+                    if (allTableKeys.length > 0) {
+                        const selectedTables = await interactor.multiselect(
+                            'Select tables to introspect (arrow keys + space + enter)',
+                            allTableKeys,
+                            []
+                        )
+
+                        if (selectedTables.length === 0) {
+                            throw new Error(
+                                'No tables selected. Introspect requires at least one selected table in interactive mode.'
+                            )
+                        }
+
+                        config.security.introspectIncludeTables = selectedTables
+                    }
+
+                    if (
+                        config.security.introspectData &&
+                        config.security.introspectSecurityData &&
+                        (!config.security.introspectSecurityTables ||
+                            config.security.introspectSecurityTables.length === 0)
+                    ) {
+                        const securityTableKeys = (config.security.introspectIncludeTables || [])
+                            .filter((table) => table.startsWith('security.'))
+                            .sort()
+
+                        if (securityTableKeys.length > 0) {
+                            const selectedSecurityDataTables = await interactor.multiselect(
+                                'Select security tables for data export only (arrow keys + space + enter)',
+                                securityTableKeys,
+                                securityTableKeys
+                            )
+
+                            config.security.introspectSecurityTables = selectedSecurityDataTables
+                        }
+                    }
+
+                    interactor.close()
+                }
+
                 await introspector.introspectAll({
                     withData: config.security.introspectData,
+                    includeSecurityData: config.security.introspectSecurityData,
+                    securityDataTables: config.security.introspectSecurityTables,
+                    includeTables: config.security.introspectIncludeTables,
+                    excludeTables: config.security.introspectExcludeTables,
                 })
                 break
             }
