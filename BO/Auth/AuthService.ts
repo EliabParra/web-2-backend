@@ -1,5 +1,5 @@
 import { BOService } from '@toproc/bo'
-import type { IContainer, II18nService, IEmailService } from '@toproc/types'
+import type { IContainer, IEmailService } from '@toproc/types'
 import { AuthRepository, AuthMessages, Errors, Types } from './AuthModule.js'
 import { createHash, randomBytes, randomInt } from 'node:crypto'
 import bcrypt from 'bcryptjs'
@@ -10,13 +10,11 @@ function sha256Hex(value: string): string {
 
 export class AuthService extends BOService implements Types.IAuthService {
     private repo: AuthRepository
-    private i18n: II18nService
     private email: IEmailService
 
     constructor(container: IContainer) {
         super(container)
         this.repo = container.resolve<AuthRepository>('AuthRepository')
-        this.i18n = container.resolve<II18nService>('i18n')
         this.email = container.resolve<IEmailService>('email')
     }
 
