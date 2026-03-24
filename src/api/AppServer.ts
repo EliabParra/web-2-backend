@@ -28,6 +28,7 @@ import * as controllers from '@toproc/controllers'
 
 // Toproc Explorer
 import { explorerRouter } from '@toproc/scripts/explorer/router.js'
+import { generateExplorerSpec } from '@toproc/scripts/explorer/generate.js'
 
 /**
  * Servidor de Aplicación (AppServer).
@@ -145,7 +146,15 @@ export class AppServer {
         })
 
         // 3.5. Explorer (Solo en desarrollo)
-        if (this.config.app.env !== 'production') this.app.use('/explorer', explorerRouter)
+        if (this.config.app.env !== 'production') {
+            try {
+                await generateExplorerSpec({ includeDbTxSync: true })
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : String(error)
+                this.log.warn(`No se pudo generar Explorer spec al iniciar: ${message}`)
+            }
+            this.app.use('/explorer', explorerRouter)
+        }
 
         // 4. Rutas API
         this.setupRoutes()
