@@ -713,11 +713,51 @@ export type SessionResult =
  * Contexto por request para acceso transversal a datos de sesión.
  */
 export interface IRequestContextService {
+    /**
+     * Ejecuta una función dentro del contexto de una request, permitiendo acceso a sesión.
+     *
+     * @template T - Tipo de retorno de la función
+     * @param req - Request HTTP a asociar al contexto
+     * @param fn - Función a ejecutar dentro del contexto
+     */
     run<T>(req: AppRequest, fn: () => T): T
+
+    /**
+     * Verifica si hay una request activa en el contexto actual.
+     *
+     * @return `true` si hay una request activa, `false` si no hay contexto o no se ha establecido una request
+     */
     hasRequest(): boolean
+
+    /**
+     * Obtiene la request actual del contexto.
+     *
+     * @return Request HTTP asociada al contexto actual
+     * @throws {Error} Si no hay una request activa en el contexto
+     */
     getRequest(): AppRequest
+
+    /**
+     * Verifica si hay una sesión activa en el contexto actual.
+     *
+     * @return `true` si hay una sesión activa, `false` si no hay contexto o no se ha establecido una sesión
+     */
     hasSession(): boolean
+
+    /**
+     * Obtiene los datos de la sesión actual.
+     *
+     * @template T - Tipo de los datos de sesión esperados
+     * @return Datos de sesión asociados a la request actual
+     * @throws {Error} Si no hay una sesión activa en el contexto
+     */
     getSession<T extends AppSessionData = AppSessionData>(): T
+
+    /**
+     * Establece datos en la sesión actual.
+     *
+     * @param patch - Objeto con los campos a actualizar en la sesión actual
+     */
     setSession(patch: Partial<AppSessionData>): void
 }
 

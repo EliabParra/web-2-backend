@@ -1,6 +1,6 @@
 import { BaseBO } from '@toproc/bo'
 import { IContainer, ApiResponse } from '@toproc/types'
-import { AuthService, AuthMessages, AuthSchemas, Inputs, registerAuth } from './AuthModule.js'
+import { AuthService, AuthMessages, AuthSchemas, Inputs, Types, registerAuth } from './AuthModule.js'
 
 /**
  * Business Object para autenticación.
@@ -109,10 +109,7 @@ export class AuthBO extends BaseBO {
             params,
             AuthSchemas.switchActiveProfile,
             async (data) => {
-                const session = this.getSessionData<{
-                    userId?: number
-                    profileIds?: number[]
-                }>()
+                const session = this.getSessionData<Types.SwitchActiveProfileData>()
                 const userId = Number(session.userId)
 
                 if (!Number.isInteger(userId) || userId <= 0) {
