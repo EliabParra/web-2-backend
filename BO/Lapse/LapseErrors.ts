@@ -64,7 +64,7 @@ export class LapseValidationError extends LapseError {
     readonly validationErrors: string[]
 
     constructor(errors: string[]) {
-        super(defaultMessages.invalidData, 'LAPSE_VALIDATION_ERROR', 400, { errors })
+        super(errors[0] ?? defaultMessages.invalidData, 'LAPSE_VALIDATION_ERROR', 400, { errors })
         this.name = 'LapseValidationError'
         this.validationErrors = errors
     }

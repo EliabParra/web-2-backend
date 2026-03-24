@@ -64,7 +64,7 @@ export class LoanValidationError extends LoanError {
     readonly validationErrors: string[]
 
     constructor(errors: string[]) {
-        super(defaultMessages.invalidData, 'LOAN_VALIDATION_ERROR', 400, { errors })
+        super(errors[0] ?? defaultMessages.invalidData, 'LOAN_VALIDATION_ERROR', 400, { errors })
         this.name = 'LoanValidationError'
         this.validationErrors = errors
     }
@@ -82,6 +82,25 @@ export class LoanCannotDeleteError extends LoanError {
             { reason }
         )
         this.name = 'LoanCannotDeleteError'
+    }
+}
+
+export class LoanInvalidStateError extends LoanError {
+    constructor(message?: string, details?: Record<string, unknown>) {
+        super(
+            message ?? defaultMessages.requestNotPending,
+            'LOAN_INVALID_STATE',
+            409,
+            details
+        )
+        this.name = 'LoanInvalidStateError'
+    }
+}
+
+export class LoanStockInsufficientError extends LoanError {
+    constructor(details?: Record<string, unknown>) {
+        super(defaultMessages.stockInsufficient, 'LOAN_STOCK_INSUFFICIENT', 409, details)
+        this.name = 'LoanStockInsufficientError'
     }
 }
 

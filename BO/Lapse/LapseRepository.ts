@@ -13,8 +13,13 @@ export class LapseRepository implements Types.ILapseRepository {
     /**
      * Busca todos los lapses
      */
-    async findAll(): Promise<Types.LapseSummary[]> {
-        const result = await this.db.query<Types.LapseSummary>(LapseQueries.findAll, [])
+    async findAll(filters?: Types.GetAllLapseInput): Promise<Types.LapseSummary[]> {
+        const result = await this.db.query<Types.LapseSummary>(LapseQueries.findAll, [
+            filters?.lapse_de ?? null,
+            filters?.lapse_act ?? null,
+            filters?.lapse_start_dt ?? null,
+            filters?.lapse_close_dt ?? null,
+        ])
         return result.rows
     }
 
@@ -67,5 +72,9 @@ export class LapseRepository implements Types.ILapseRepository {
     async exists(id: number): Promise<boolean> {
         const result = await this.db.query<Types.ExistsLapse>(LapseQueries.exists, [id])
         return result.rows[0].exists
+    }
+
+    async syncActiveByDate(): Promise<void> {
+        await this.db.query(LapseQueries.syncActiveByDate, [])
     }
 }
