@@ -1,6 +1,6 @@
 /**
  * Auto-generated data for business.property
- * Generated at: 2026-03-22T23:55:31.637Z
+ * Generated at: 2026-03-23T19:05:33.715Z
  */
 export const DATA_PROPERTY_SCHEMA = [
     `INSERT INTO business.property (property_id, property_de, property_val) VALUES (1, 'Ω', 1) ON CONFLICT (property_id) DO UPDATE SET property_de = EXCLUDED.property_de, property_val = EXCLUDED.property_val;`,
