@@ -1,6 +1,6 @@
 /**
  * Auto-generated data for business.category
- * Generated at: 2026-03-23T19:05:33.732Z
+ * Generated at: 2026-03-24T23:05:33.544Z
  */
 export const DATA_CATEGORY_SCHEMA = [
     `INSERT INTO business.category (category_id, category_de, category_type_id) VALUES (1, 'Activo', 2) ON CONFLICT (category_id) DO UPDATE SET category_de = EXCLUDED.category_de, category_type_id = EXCLUDED.category_type_id;`,

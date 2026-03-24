@@ -1,6 +1,6 @@
 /**
  * Auto-generated data for business.item
- * Generated at: 2026-03-23T19:05:33.750Z
+ * Generated at: 2026-03-24T23:05:33.561Z
  */
 export const DATA_ITEM_SCHEMA = [
     `INSERT INTO business.item (item_id, item_cod, item_na, category_id) VALUES (1, 1, 'Resistencia', 2) ON CONFLICT (item_id) DO UPDATE SET item_cod = EXCLUDED.item_cod, item_na = EXCLUDED.item_na, category_id = EXCLUDED.category_id;`,

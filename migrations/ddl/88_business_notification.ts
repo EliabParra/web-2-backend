@@ -1,6 +1,6 @@
 /**
  * Auto-generated schema for business.notification
- * Generated at: 2026-03-23T19:05:33.676Z
+ * Generated at: 2026-03-24T23:05:33.469Z
  */
 export const NOTIFICATION_SCHEMA = [
     // Table Definition
