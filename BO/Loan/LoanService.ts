@@ -29,7 +29,53 @@ export class LoanService extends BOService implements Types.ILoanService {
         return this.i18n.use(LoanMessages)
     }
 
-    private buildTraceFromRequest(request: Types.Request): Types.TraceEntry[] {
+    private normalizeDetail(detail: Types.RegisterLoanDetailInput): string {
+        return `${detail.inventory_id}:${detail.movement_detail_am}:${detail.movement_detail_ob ?? ''}`
+    }
+
+    private areDetailsEqual(
+        original: Types.RegisterLoanDetailInput[],
+        candidate: Types.RegisterLoanDetailInput[]
+    ): boolean {
+        if (original.length !== candidate.length) return false
+        const left = [...original].map((d) => this.normalizeDetail(d)).sort()
+        const right = [...candidate].map((d) => this.normalizeDetail(d)).sort()
+        return left.every((item, idx) => item === right[idx])
+    }
+
+    private buildDetailsOverrideAudit(
+        actorUserId: number | undefined,
+        original: Types.RegisterLoanDetailInput[],
+        override: Types.RegisterLoanDetailInput[]
+    ): string {
+        return JSON.stringify({
+            action: 'details_override',
+            at: new Date().toISOString(),
+            actor_user_id: actorUserId ?? null,
+            before: original,
+            after: override,
+        })
+    }
+
+    private appendAuditToObservation(baseObservation: string | undefined, audit: string): string {
+        const base = (baseObservation ?? '').trim()
+        return base.length > 0 ? `${base}\n[AUDIT] ${audit}` : `[AUDIT] ${audit}`
+    }
+
+    private mapLoanDetailsToRegisterInputs(
+        details: Types.LoanDetailLine[]
+    ): Types.RegisterLoanDetailInput[] {
+        return details.map((detail) => ({
+            inventory_id: detail.inventory_id,
+            movement_detail_am: detail.movement_detail_am,
+            movement_detail_ob: detail.movement_detail_ob ?? undefined,
+        }))
+    }
+
+    private buildTraceFromRequest(
+        request: Types.Request,
+        details: Types.LoanDetailLine[] = []
+    ): Types.TraceEntry[] {
         const trace: Types.TraceEntry[] = []
 
         if (request.movement_booking_dt) {
@@ -48,7 +94,16 @@ export class LoanService extends BOService implements Types.ILoanService {
             })
         }
 
-        return trace
+        for (const detail of details) {
+            if (!detail.movement_detail_dt) continue
+            trace.push({
+                at: detail.movement_detail_dt,
+                action: 'request_detail_registered',
+                note: detail.movement_detail_ob ?? `${detail.item_na ?? 'item'} x${detail.movement_detail_am}`,
+            })
+        }
+
+        return trace.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime())
     }
 
     private buildTraceFromLoan(loan: Types.Loan, details: Types.LoanDetailLine[]): Types.TraceEntry[] {
@@ -74,10 +129,17 @@ export class LoanService extends BOService implements Types.ILoanService {
             })
         }
 
-        if (!params.include_trace) return request
-        return {
+        const details = await this.repo.findLoanDetails(params.movement_id)
+
+        const enriched: Types.RequestDetail = {
             ...request,
-            trace: this.buildTraceFromRequest(request),
+            details,
+        }
+
+        if (!params.include_trace) return enriched
+        return {
+            ...enriched,
+            trace: this.buildTraceFromRequest(request, details),
         }
     }
 
@@ -183,7 +245,17 @@ export class LoanService extends BOService implements Types.ILoanService {
             })
         }
 
-        for (const detail of params.details) {
+        const originalDetails = this.mapLoanDetailsToRegisterInputs(
+            await this.repo.findLoanDetails(params.movement_id)
+        )
+
+        const effectiveDetails = params.details?.length ? params.details : originalDetails
+
+        if (effectiveDetails.length === 0) {
+            throw new Errors.LoanValidationError([this.messages.validation.details.required])
+        }
+
+        for (const detail of effectiveDetails) {
             const stockRow = await this.repo.findInventoryById(detail.inventory_id)
             if (!stockRow) {
                 throw new Errors.LoanValidationError([
@@ -192,11 +264,28 @@ export class LoanService extends BOService implements Types.ILoanService {
             }
         }
 
+        let movementObservation = params.movement_ob
+        if (params.details?.length && !this.areDetailsEqual(originalDetails, params.details)) {
+            const audit = this.buildDetailsOverrideAudit(
+                params.actor_user_id,
+                originalDetails,
+                params.details
+            )
+            movementObservation = this.appendAuditToObservation(params.movement_ob, audit)
+        }
+
         let updatedMovement: Types.Loan
         let details: Types.LoanDetailLine[]
 
         try {
-            const result = await this.repo.registerLoanAtomic(params, this.LOAN_TYPE_ID)
+            const result = await this.repo.registerLoanAtomic(
+                {
+                    ...params,
+                    movement_ob: movementObservation,
+                    details: effectiveDetails,
+                },
+                this.LOAN_TYPE_ID
+            )
             updatedMovement = result.movement
             details = result.details
         } catch (err: unknown) {

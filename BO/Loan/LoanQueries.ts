@@ -43,7 +43,12 @@ export const LoanQueries = {
             m.movement_type_id,
             mt.movement_type_de,
             m.lapse_id,
-            l.lapse_de
+            l.lapse_de,
+            (
+                SELECT COUNT(*)::int
+                FROM business.movement_detail md
+                WHERE md.movement_id = m.movement_id
+            ) as total_items
         FROM business.movement m
         INNER JOIN business.movement_type mt ON mt.movement_type_id = m.movement_type_id
         INNER JOIN business.lapse l ON l.lapse_id = m.lapse_id
@@ -187,6 +192,11 @@ export const LoanQueries = {
         )
         VALUES (NOW(), $2, $3, $1, $4)
         RETURNING *
+    `,
+
+    deleteMovementDetailsByMovementId: `
+        DELETE FROM business.movement_detail
+        WHERE movement_id = $1
     `,
 
     markMovementAsLoan: `

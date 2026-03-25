@@ -47,6 +47,10 @@ export class LoanBO extends BaseBO {
                     movement_estimated_return_dt: this.formatDateTime(
                         result.movement_estimated_return_dt
                     ) as string,
+                    details: (result.details ?? []).map((detail) => ({
+                        ...detail,
+                        movement_detail_dt: this.formatDateTime(detail.movement_detail_dt) as string,
+                    })),
                     trace: this.formatTrace(result.trace),
                 }
                 return this.success(formatted, this.loanMessages.getRequest)

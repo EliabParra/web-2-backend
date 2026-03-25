@@ -33,6 +33,7 @@ export namespace Loan {
         movement_type_de?: string
         lapse_id: number
         lapse_de?: string
+        total_items?: number
     }
 
     export type LoanDetailLine = {
@@ -74,6 +75,7 @@ export namespace Loan {
     }
 
     export type RequestDetail = Request & {
+        details?: LoanDetailLine[]
         trace?: TraceEntry[]
     }
 
@@ -109,6 +111,7 @@ export namespace Loan {
     export interface RequestLoanInput {
         user_id: number
         movement_ob: string
+        details: RegisterLoanDetailInput[]
     }
 
     export interface AcceptRequestLoanInput {
@@ -135,7 +138,7 @@ export namespace Loan {
         movement_booking_dt?: string
         movement_ob?: string
         actor_user_id?: number
-        details: RegisterLoanDetailInput[]
+        details?: RegisterLoanDetailInput[]
     }
 
     export interface GetLoanInput {

@@ -60,13 +60,35 @@ export class LoanRepository implements Types.ILoanRepository {
         requestTypeId: number,
         lapseId: number
     ): Promise<Types.Request> {
-        const result = await this.db.query<Types.Request>(LoanQueries.createRequest, [
-            data.movement_ob,
-            data.user_id,
-            requestTypeId,
-            lapseId,
-        ])
-        return result.rows[0]
+        const client = await this.db.pool.connect()
+        try {
+            await client.query('BEGIN')
+
+            const result = await client.query<Types.Request>(LoanQueries.createRequest, [
+                data.movement_ob,
+                data.user_id,
+                requestTypeId,
+                lapseId,
+            ])
+            const request = result.rows[0]
+
+            for (const detail of data.details) {
+                await client.query(LoanQueries.insertMovementDetail, [
+                    detail.inventory_id,
+                    detail.movement_detail_am,
+                    detail.movement_detail_ob ?? null,
+                    request.movement_id,
+                ])
+            }
+
+            await client.query('COMMIT')
+            return request
+        } catch (err: unknown) {
+            await client.query('ROLLBACK')
+            throw err
+        } finally {
+            client.release()
+        }
     }
 
     async acceptRequest(
@@ -167,7 +189,9 @@ export class LoanRepository implements Types.ILoanRepository {
         try {
             await client.query('BEGIN')
 
-            for (const detail of data.details) {
+            await client.query(LoanQueries.deleteMovementDetailsByMovementId, [data.movement_id])
+
+            for (const detail of data.details ?? []) {
                 const stockResult = await client.query<{ inventory_id: number }>(
                     LoanQueries.decreaseInventoryStock,
                     [detail.inventory_id, detail.movement_detail_am]

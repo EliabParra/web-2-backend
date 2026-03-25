@@ -37,6 +37,13 @@ export const createLoanSchemas = (messages: LoanMessagesSet = LoanMessages.es) =
     requestLoan: z.object({
         user_id: z.coerce.number().int().min(1, validation.user.required),
         movement_ob: z.string().min(1, validation.observation.required),
+        details: z.array(
+            z.object({
+                inventory_id: z.coerce.number().int().min(1, validation.inventory.required),
+                movement_detail_am: z.coerce.number().int().min(1, validation.quantity.min),
+                movement_detail_ob: z.string().optional(),
+            })
+        ).min(1, validation.details.required),
     }),
     acceptRequestLoan: z.object({
         movement_id: z.coerce.number().int(),
@@ -70,7 +77,7 @@ export const createLoanSchemas = (messages: LoanMessagesSet = LoanMessages.es) =
                 movement_detail_am: z.coerce.number().int().min(1, validation.quantity.min),
                 movement_detail_ob: z.string().optional(),
             })
-        ).min(1, validation.details.required),
+        ).min(1, validation.details.required).optional(),
     }),
     }
 }
