@@ -1,6 +1,6 @@
 export const ProfileQueries = {
     findAll: `
-        SELECT 
+        SELECT
             p.*,
             COALESCE((SELECT array_agg(DISTINCT subsystem_id ORDER BY subsystem_id) FROM security.profile_subsystem WHERE profile_id = p.profile_id), '{}') as subsystem_ids,
             COALESCE((SELECT array_agg(DISTINCT menu_id ORDER BY menu_id) FROM security.profile_menu WHERE profile_id = p.profile_id), '{}') as menu_ids,
@@ -10,12 +10,12 @@ export const ProfileQueries = {
         ORDER BY p.profile_id DESC
     `,
     findById: `
-        SELECT 
+        SELECT
             p.*,
             COALESCE((SELECT array_agg(DISTINCT subsystem_id ORDER BY subsystem_id) FROM security.profile_subsystem WHERE profile_id = p.profile_id), '{}') as subsystem_ids,
             COALESCE((SELECT array_agg(DISTINCT menu_id ORDER BY menu_id) FROM security.profile_menu WHERE profile_id = p.profile_id), '{}') as menu_ids,
             COALESCE((SELECT array_agg(DISTINCT option_id ORDER BY option_id) FROM security.profile_option WHERE profile_id = p.profile_id), '{}') as option_ids
-        FROM security.profile p 
+        FROM security.profile p
         WHERE p.profile_id = $1
     `,
     create: `
