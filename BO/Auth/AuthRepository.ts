@@ -27,15 +27,19 @@ export class AuthRepository implements Types.IAuthRepository {
     }
 
     async getProfileIdById(profileId: number): Promise<number | null> {
-        const r = await this.db.query<{ profile_id: number }>(AuthQueries.getProfileIdById, [profileId])
-        const id = r.rows[0]?.profile_id
-        return Number.isInteger(id) ? Number(id) : null
+        const r = await this.db.query<{ profile_id: number | string }>(AuthQueries.getProfileIdById, [profileId])
+        const rawId = r.rows[0]?.profile_id
+        if (rawId === undefined || rawId === null) return null
+        const parsed = Number(rawId)
+        return Number.isInteger(parsed) && parsed > 0 ? parsed : null
     }
 
     async getProfileIdByName(profileName: string): Promise<number | null> {
-        const r = await this.db.query<{ profile_id: number }>(AuthQueries.getProfileIdByName, [profileName])
-        const id = r.rows[0]?.profile_id
-        return Number.isInteger(id) ? Number(id) : null
+        const r = await this.db.query<{ profile_id: number | string }>(AuthQueries.getProfileIdByName, [profileName])
+        const rawId = r.rows[0]?.profile_id
+        if (rawId === undefined || rawId === null) return null
+        const parsed = Number(rawId)
+        return Number.isInteger(parsed) && parsed > 0 ? parsed : null
     }
 
     async hasUserProfile(userId: number, profileId: number): Promise<boolean> {
