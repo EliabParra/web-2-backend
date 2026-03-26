@@ -11,22 +11,39 @@ export type ReportMessagesSet = typeof ReportMessages.es
 export const createReportSchemas = (messages: ReportMessagesSet = ReportMessages.es) => {
     const validation = messages.validation ?? ReportMessages.es.validation
 
+    const reportType = z.enum(['overdue_loans', 'solvency', 'devolution_stats'])
+
     return {
-    get: z.object({
-        id: z.coerce.number(),
-    }),
-    getAll: z.object({
-        // Parámetros de paginación o filtros opcionales
-    }),
-    create: z.object({
-        // TODO: Definir validación. Usa messages.validation.xxx
-    }),
-    update: z.object({
-        id: z.coerce.number(),
-    }),
-    delete: z.object({
-        id: z.coerce.number(),
-    }),
+        get: z.object({
+            id: z.coerce.number().int().positive(),
+        }),
+        getAll: z.object({
+            report_ty: reportType.optional(),
+        }),
+        create: z.object({
+            report_ty: reportType,
+            user_id: z.coerce.number().int().positive().optional(),
+            lapse_id: z.coerce.number().int().positive().optional(),
+            from_dt: z.coerce.date().optional(),
+            to_dt: z.coerce.date().optional(),
+        }),
+        update: z.object({
+            id: z.coerce.number().int().positive(),
+            user_id: z.coerce.number().int().positive().optional(),
+            lapse_id: z.coerce.number().int().positive().optional(),
+            from_dt: z.coerce.date().optional(),
+            to_dt: z.coerce.date().optional(),
+        }).refine(
+            (data) =>
+                data.user_id !== undefined ||
+                data.lapse_id !== undefined ||
+                data.from_dt !== undefined ||
+                data.to_dt !== undefined,
+            { message: validation.requiredField }
+        ),
+        delete: z.object({
+            id: z.coerce.number().int().positive(),
+        }),
     }
 }
 

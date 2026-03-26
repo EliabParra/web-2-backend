@@ -10,54 +10,49 @@ import { NotificationQueries, Types } from './NotificationModule.js'
 export class NotificationRepository implements Types.INotificationRepository {
     constructor(private readonly db: IDatabase) {}
 
-    /**
-     * Busca todos los notifications
-     */
-    async findAll(): Promise<Types.NotificationSummary[]> {
-        const result = await this.db.query<Types.NotificationSummary>(NotificationQueries.findAll, [])
+    async findAll(filters: Types.GetAllNotificationInput = {}): Promise<Types.NotificationSummary[]> {
+        const params = [
+            filters.user_id ?? null,
+            filters.notification_ty ?? null,
+            filters.from_dt ?? null,
+            filters.to_dt ?? null,
+            filters.limit ?? 50,
+            filters.offset ?? 0,
+        ]
+        const result = await this.db.query<Types.NotificationSummary>(NotificationQueries.findAll, params)
         return result.rows
     }
 
-    /**
-     * Busca notification por ID
-     */
     async findById(id: number): Promise<Types.Notification | null> {
         const result = await this.db.query<Types.Notification>(NotificationQueries.findById, [id])
-        return result.rows[0]
+        return result.rows[0] ?? null
     }
 
-    /**
-     * Crea nuevo notification
-     */
-    async create(data: Partial<Types.Notification>): Promise<Types.Notification> {
+    async create(data: Types.CreateNotificationInput): Promise<Types.Notification | null> {
         const result = await this.db.query<Types.Notification>(NotificationQueries.create, [
-            // TODO: Mapear campos de data a parámetros del query
+            data.notification_ty ?? null,
+            data.notification_tit,
+            data.notification_msg,
+            data.user_id,
         ])
-        return result.rows[0]
+        return result.rows[0] ?? null
     }
 
-    /**
-     * Actualiza notification
-     */
-    async update(id: number, data: Partial<Types.Notification>): Promise<Types.Notification | null> {
+    async update(id: number, data: Types.UpdateNotificationInput): Promise<Types.Notification | null> {
         const result = await this.db.query<Types.Notification>(NotificationQueries.update, [
             id,
-            // TODO: Mapear campos de data a parámetros del query
+            data.notification_ty ?? null,
+            data.notification_tit ?? null,
+            data.notification_msg ?? null,
         ])
-        return result.rows[0]
+        return result.rows[0] ?? null
     }
 
-    /**
-     * Elimina notification
-     */
     async delete(id: number): Promise<boolean> {
         const result = await this.db.query<Types.RowCountNotification>(NotificationQueries.delete, [id])
         return result.rowCount !== null && result.rowCount > 0
     }
 
-    /**
-     * Verifica si notification existe
-     */
     async exists(id: number): Promise<boolean> {
         const result = await this.db.query<Types.ExistsNotification>(NotificationQueries.exists, [id])
         return result.rows[0].exists

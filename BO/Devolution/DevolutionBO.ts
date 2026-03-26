@@ -50,8 +50,8 @@ export class DevolutionBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.DevolutionSummary>>(
             params,
             DevolutionSchemas.getAll,
-            async () => {
-                const result: Array<Types.DevolutionSummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.DevolutionSummary> = await this.service.getAll(data)
                 return this.success(result, this.devolutionMessages.getAll)
             }
         )
@@ -104,6 +104,50 @@ export class DevolutionBO extends BaseBO {
             async (data) => {
                 await this.service.delete(data.id)
                 return this.success(null, this.devolutionMessages.delete)
+            }
+        )
+    }
+
+    async registerDevolution(params: Inputs.RegisterDevolutionInput): Promise<ApiResponse> {
+        return this.exec<Inputs.RegisterDevolutionInput, Types.Devolution>(
+            params,
+            DevolutionSchemas.registerDevolution,
+            async (data) => {
+                const result = await this.service.registerDevolution(data)
+                return this.created(result, this.devolutionMessages.create)
+            }
+        )
+    }
+
+    async getAllDevolutions(params: Inputs.GetAllDevolutionsInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GetAllDevolutionsInput, Array<Types.DevolutionSummary>>(
+            params,
+            DevolutionSchemas.getAllDevolutions,
+            async (data) => {
+                const result = await this.service.getAllDevolutions(data)
+                return this.success(result, this.devolutionMessages.getAll)
+            }
+        )
+    }
+
+    async getUserDevolution(params: Inputs.GetUserDevolutionInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GetUserDevolutionInput, Array<Types.DevolutionSummary>>(
+            params,
+            DevolutionSchemas.getUserDevolution,
+            async (data) => {
+                const result = await this.service.getUserDevolution(data)
+                return this.success(result, this.devolutionMessages.getAll)
+            }
+        )
+    }
+
+    async getDevolution(params: Inputs.GetDevolutionInput): Promise<ApiResponse> {
+        return this.exec<Inputs.GetDevolutionInput, Types.Devolution>(
+            params,
+            DevolutionSchemas.getDevolution,
+            async (data) => {
+                const result = await this.service.getDevolution(data)
+                return this.success(result, this.devolutionMessages.get)
             }
         )
     }

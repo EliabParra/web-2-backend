@@ -49,7 +49,9 @@ export class TransactionController {
             const rawSessionProfileIds = req.session?.profileIds
             const sessionProfileIds =
                 hasSession && Array.isArray(rawSessionProfileIds)
-                    ? rawSessionProfileIds.filter((id) => Number.isInteger(id))
+                    ? rawSessionProfileIds
+                          .map((id) => Number(id))
+                          .filter((id) => Number.isInteger(id) && id > 0)
                     : []
             const rawActiveProfileId = req.session?.activeProfileId
             const activeProfileId =

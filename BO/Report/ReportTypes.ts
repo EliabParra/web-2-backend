@@ -3,44 +3,58 @@
  */
 
 export namespace Report {
-    // ============================================================
-    // Tipos de Entidad
-    // ============================================================
+    export type ReportType = 'overdue_loans' | 'solvency' | 'devolution_stats'
+
+    export type ReportFilters = {
+        user_id?: number
+        lapse_id?: number
+        from_dt?: string | Date
+        to_dt?: string | Date
+    }
 
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
         id: number
-        createdAt: Date
-        updatedAt?: Date
+        report_ty: ReportType
+        report_na: string
+        generated_dt: string | Date
+        filters: ReportFilters
+        data: Array<Record<string, unknown>>
+        summary: Record<string, number>
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
         id: number
+        report_ty: ReportType
+        report_na: string
+        report_de: string
     }
 
-    // ============================================================
-    // Tipos de Entrada
-    // ============================================================
-
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        report_ty: ReportType
+        user_id?: number
+        lapse_id?: number
+        from_dt?: string | Date
+        to_dt?: string | Date
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        id: number
+        user_id?: number
+        lapse_id?: number
+        from_dt?: string | Date
+        to_dt?: string | Date
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        report_ty?: ReportType
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        id: number
     }
 
     export type RowCount = {
@@ -56,25 +70,27 @@ export namespace Report {
     // ============================================================
 
     export interface Repository {
-        findAll(): Promise<Summary[]>
+        findAll(filters?: GetAllInput): Promise<Summary[]>
         findById(id: number): Promise<Entity | null>
-        create(data: Partial<Entity>): Promise<Entity | null>
-        update(id: number, data: Partial<Entity>): Promise<Entity | null>
+        create(data: CreateInput): Promise<Entity | null>
+        update(id: number, data: UpdateInput): Promise<Entity | null>
         delete(id: number): Promise<boolean>
         exists(id: number): Promise<boolean>
     }
 
     export interface Service {
-        getAll(): Promise<Summary[]>
+        getAll(filters?: GetAllInput): Promise<Summary[]>
         getById(id: number): Promise<Entity>
-        create(data: Partial<Entity>): Promise<Entity | null>
-        update(id: number, data: Partial<Entity>): Promise<Entity>
+        create(data: CreateInput): Promise<Entity>
+        update(id: number, data: UpdateInput): Promise<Entity>
         delete(id: number): Promise<void>
     }
 }
 
 export type Report = Report.Entity
 export type ReportSummary = Report.Summary
+export type ReportType = Report.ReportType
+export type ReportFilters = Report.ReportFilters
 export type CreateReportInput = Report.CreateInput
 export type UpdateReportInput = Report.UpdateInput
 export type GetReportInput = Report.GetInput

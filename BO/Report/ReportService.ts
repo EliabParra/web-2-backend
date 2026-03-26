@@ -16,11 +16,8 @@ export class ReportService extends BOService implements Types.IReportService {
         this.repo = container.resolve<ReportRepository>('ReportRepository')
     }
 
-    /**
-     * Obtiene todos los reports
-     */
-    async getAll(): Promise<Types.ReportSummary[]> {
-        return this.repo.findAll()
+    async getAll(filters: Types.GetAllReportInput = {}): Promise<Types.ReportSummary[]> {
+        return this.repo.findAll(filters)
     }
 
     /**
@@ -35,19 +32,20 @@ export class ReportService extends BOService implements Types.IReportService {
         return entity
     }
 
-    /**
-     * Crea nuevo report
-     */
-    async create(data: Partial<Types.Report>): Promise<Types.Report> {
+    async create(data: Types.CreateReportInput): Promise<Types.Report> {
         this.log.trace('Creando report')
-        return this.repo.create(data)
+        const created = await this.repo.create(data)
+        if (!created) {
+            throw new Errors.ReportValidationError(['No fue posible generar el reporte'])
+        }
+        return created
     }
 
     /**
      * Actualiza report
      * @throws ReportNotFoundError si no se encuentra
      */
-    async update(id: number, data: Partial<Types.Report>): Promise<Types.Report> {
+    async update(id: number, data: Types.UpdateReportInput): Promise<Types.Report> {
         const updated = await this.repo.update(id, data)
         if (!updated) {
             throw new Errors.ReportNotFoundError(id)
@@ -60,9 +58,14 @@ export class ReportService extends BOService implements Types.IReportService {
      * @throws ReportNotFoundError si no se encuentra
      */
     async delete(id: number): Promise<void> {
+        const exists = await this.repo.exists(id)
+        if (!exists) {
+            throw new Errors.ReportNotFoundError(id)
+        }
+
         const deleted = await this.repo.delete(id)
         if (!deleted) {
-            throw new Errors.ReportNotFoundError(id)
+            throw new Errors.ReportCannotDeleteError('El reporte es virtual y no se elimina físicamente')
         }
         this.log.info('Eliminado report ' + id)
     }

@@ -1,21 +1,70 @@
 export const NotificationQueries = {
     findAll: `
-        SELECT * FROM notification
+        SELECT
+            n.notification_id,
+            n.notification_ty,
+            n.notification_tit,
+            n.notification_dt,
+            n.user_id
+        FROM business.notification n
+        WHERE ($1::bigint IS NULL OR n.user_id = $1)
+          AND ($2::text IS NULL OR LOWER(n.notification_ty) = LOWER($2))
+          AND ($3::timestamptz IS NULL OR n.notification_dt >= $3)
+          AND ($4::timestamptz IS NULL OR n.notification_dt <= $4)
+        ORDER BY n.notification_dt DESC, n.notification_id DESC
+        LIMIT $5 OFFSET $6
     `,
     findById: `
-        SELECT * FROM notification WHERE id = $1
+        SELECT
+            n.notification_id,
+            n.notification_ty,
+            n.notification_tit,
+            n.notification_msg,
+            n.notification_dt,
+            n.user_id
+        FROM business.notification n
+        WHERE n.notification_id = $1
     `,
     create: `
-        INSERT INTO notification (created_at) VALUES (NOW()) RETURNING *
+        INSERT INTO business.notification (
+            notification_ty,
+            notification_tit,
+            notification_msg,
+            user_id
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING
+            notification_id,
+            notification_ty,
+            notification_tit,
+            notification_msg,
+            notification_dt,
+            user_id
     `,
     update: `
-        UPDATE notification SET updated_at = NOW() WHERE id = $1 RETURNING *
+        UPDATE business.notification
+        SET
+            notification_ty = COALESCE($2, notification_ty),
+            notification_tit = COALESCE($3, notification_tit),
+            notification_msg = COALESCE($4, notification_msg)
+        WHERE notification_id = $1
+        RETURNING
+            notification_id,
+            notification_ty,
+            notification_tit,
+            notification_msg,
+            notification_dt,
+            user_id
     `,
     delete: `
-        DELETE FROM notification WHERE id = $1
+        DELETE FROM business.notification WHERE notification_id = $1
     `,
     exists: `
-        SELECT EXISTS(SELECT 1 FROM notification WHERE id = $1) as "exists"
+        SELECT EXISTS(
+            SELECT 1
+            FROM business.notification
+            WHERE notification_id = $1
+        ) as "exists"
     `,
 } as const
 

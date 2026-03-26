@@ -117,11 +117,13 @@ export class AuthBO extends BaseBO {
                 }
 
                 const profileIds = Array.isArray(session.profileIds)
-                    ? session.profileIds.filter((id) => Number.isInteger(id))
+                    ? session.profileIds
+                          .map((id) => Number(id))
+                          .filter((id) => Number.isInteger(id) && id > 0)
                     : []
 
                 const activeProfileId =
-                    Number.isInteger(session.activeProfileId) &&
+                    Number.isInteger(Number(session.activeProfileId)) &&
                     profileIds.includes(Number(session.activeProfileId))
                         ? Number(session.activeProfileId)
                         : null
@@ -140,7 +142,7 @@ export class AuthBO extends BaseBO {
 
                 const navigation = await this.security.getMenuStructure(effectiveProfileIds)
 
-                const profilesInfo = profileIds.length > 0 
+                const profilesInfo = profileIds.length > 0
                     ? await this.db.query<{ id: number; profile_na: string }>(
                         `SELECT profile_id as id, profile_na FROM "security"."profile" WHERE profile_id = ANY($1)`,
                         [profileIds]

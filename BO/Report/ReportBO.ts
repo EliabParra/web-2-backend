@@ -50,8 +50,8 @@ export class ReportBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.ReportSummary>>(
             params,
             ReportSchemas.getAll,
-            async () => {
-                const result: Array<Types.ReportSummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.ReportSummary> = await this.service.getAll(data)
                 return this.success(result, this.reportMessages.getAll)
             }
         )
@@ -85,7 +85,13 @@ export class ReportBO extends BaseBO {
             params,
             ReportSchemas.update,
             async (data) => {
-                const result: Types.Report = await this.service.update(data.id, data)
+                const result: Types.Report = await this.service.update(data.id, {
+                    id: data.id,
+                    user_id: data.user_id,
+                    lapse_id: data.lapse_id,
+                    from_dt: data.from_dt,
+                    to_dt: data.to_dt,
+                })
                 return this.success(result, this.reportMessages.update)
             }
         )

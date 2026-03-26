@@ -209,7 +209,11 @@ export class SessionManager implements types.ISessionService {
             req.session.userId = user.user_id
             req.session.username = user.user_na
             // TODO(REVERT_NAMING): Singular tables & N:M profiles
-            const profileIds = Array.isArray(user.profile_ids) ? user.profile_ids : []
+            const profileIds = Array.isArray(user.profile_ids)
+                ? user.profile_ids
+                      .map((id) => Number(id))
+                      .filter((id) => Number.isInteger(id) && id > 0)
+                : []
             req.session.profileIds = profileIds
             req.session.activeProfileId = profileIds[0]
             req.session.email = user.user_em

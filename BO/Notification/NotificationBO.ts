@@ -50,8 +50,8 @@ export class NotificationBO extends BaseBO {
         return this.exec<Inputs.GetAllInput, Array<Types.NotificationSummary>>(
             params,
             NotificationSchemas.getAll,
-            async () => {
-                const result: Array<Types.NotificationSummary> = await this.service.getAll()
+            async (data) => {
+                const result: Array<Types.NotificationSummary> = await this.service.getAll(data)
                 return this.success(result, this.notificationMessages.getAll)
             }
         )

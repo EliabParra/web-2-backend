@@ -3,44 +3,52 @@
  */
 
 export namespace Notification {
-    // ============================================================
-    // Tipos de Entidad
-    // ============================================================
-
     export type Entity = {
-        // TODO: Definir propiedades de la entidad
-        id: number
-        createdAt: Date
-        updatedAt?: Date
+        notification_id: number
+        notification_ty?: string | null
+        notification_tit?: string | null
+        notification_msg?: string | null
+        notification_dt: string | Date
+        user_id: number
     }
 
     export type Summary = {
-        // TODO: Definir propiedades para listados/resúmenes
-        id: number
+        notification_id: number
+        notification_ty?: string | null
+        notification_tit?: string | null
+        notification_dt: string | Date
+        user_id: number
     }
 
-    // ============================================================
-    // Tipos de Entrada
-    // ============================================================
-
     export interface CreateInput {
-        // TODO: Definir datos para creación
+        notification_ty?: string
+        notification_tit: string
+        notification_msg: string
+        user_id: number
     }
 
     export interface UpdateInput {
-        // TODO: Definir datos para actualización
+        id: number
+        notification_ty?: string
+        notification_tit?: string
+        notification_msg?: string
     }
 
     export interface GetInput {
-        // TODO: Definir datos para get
+        id: number
     }
 
     export interface GetAllInput {
-        // TODO: Definir datos para getAll
+        user_id?: number
+        notification_ty?: string
+        from_dt?: string | Date
+        to_dt?: string | Date
+        limit?: number
+        offset?: number
     }
 
     export interface DeleteInput {
-        // TODO: Definir datos para delete
+        id: number
     }
 
     export type RowCount = {
@@ -56,19 +64,19 @@ export namespace Notification {
     // ============================================================
 
     export interface Repository {
-        findAll(): Promise<Summary[]>
+        findAll(filters?: GetAllInput): Promise<Summary[]>
         findById(id: number): Promise<Entity | null>
-        create(data: Partial<Entity>): Promise<Entity | null>
-        update(id: number, data: Partial<Entity>): Promise<Entity | null>
+        create(data: CreateInput): Promise<Entity | null>
+        update(id: number, data: UpdateInput): Promise<Entity | null>
         delete(id: number): Promise<boolean>
         exists(id: number): Promise<boolean>
     }
 
     export interface Service {
-        getAll(): Promise<Summary[]>
+        getAll(filters?: GetAllInput): Promise<Summary[]>
         getById(id: number): Promise<Entity>
-        create(data: Partial<Entity>): Promise<Entity | null>
-        update(id: number, data: Partial<Entity>): Promise<Entity>
+        create(data: CreateInput): Promise<Entity>
+        update(id: number, data: UpdateInput): Promise<Entity>
         delete(id: number): Promise<void>
     }
 }
