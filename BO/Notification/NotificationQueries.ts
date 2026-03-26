@@ -4,6 +4,7 @@ export const NotificationQueries = {
             n.notification_id,
             n.notification_ty,
             n.notification_tit,
+            n.notification_msg,
             n.notification_dt,
             n.user_id
         FROM business.notification n

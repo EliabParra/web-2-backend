@@ -16,6 +16,7 @@ export namespace Notification {
         notification_id: number
         notification_ty?: string | null
         notification_tit?: string | null
+        notification_msg?: string | null
         notification_dt: string | Date
         user_id: number
     }
