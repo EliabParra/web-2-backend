@@ -457,9 +457,9 @@
         };
 
         logDebug('info', `lookup fetch ${field} -> tx ${lookup.tx}`, requestBody.params);
-        const res = await fetch(`${API_BASE}/toProccess`, {
+        const res = await fetch(`${API_BASE}/explorer/exec?key=${encodeURIComponent(API_KEY)}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-explorer-key': API_KEY },
             credentials: 'include',
             body: JSON.stringify(requestBody),
         });
@@ -734,9 +734,9 @@
         const startTime = performance.now();
 
         try {
-            const res = await fetch(`${API_BASE}/toProccess`, {
+            const res = await fetch(`${API_BASE}/explorer/exec?key=${encodeURIComponent(API_KEY)}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-explorer-key': API_KEY },
                 credentials: 'include',
                 body: JSON.stringify(body),
             });
