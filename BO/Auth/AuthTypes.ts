@@ -112,6 +112,7 @@ export namespace Auth {
             activeProfileId: number | null
             mode: 'active' | 'union'
             effectiveProfileIds: number[]
+            profiles?: { id: number; profile_na: string }[]
         }
         navigation: MenuStructure
     }

@@ -140,12 +140,20 @@ export class AuthBO extends BaseBO {
 
                 const navigation = await this.security.getMenuStructure(effectiveProfileIds)
 
+                const profilesInfo = profileIds.length > 0 
+                    ? await this.db.query<{ id: number; profile_na: string }>(
+                        `SELECT profile_id as id, profile_na FROM "security"."profile" WHERE profile_id = ANY($1)`,
+                        [profileIds]
+                      )
+                    : { rows: [] }
+
                 const response: Types.NavigationResponse = {
                     session: {
                         userId,
                         username: session.username ? String(session.username) : null,
                         email: session.email ? String(session.email) : null,
                         profileIds,
+                        profiles: profilesInfo.rows,
                         activeProfileId,
                         mode,
                         effectiveProfileIds,

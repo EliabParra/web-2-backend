@@ -365,15 +365,38 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
                     methodId = metFind.rows[0].method_id
                 }
 
-                // Crear link object_method
-                await this.db.query(ExcelQueries.INSERT_OBJECT_METHOD, [objRes.rows[0].object_id, methodId])
+                const objectId = objRes.rows[0].object_id
 
-                // Crear transacción
-                await this.db.query(ExcelQueries.INSERT_TRANSACTION, [String(nextTx), methodId, objRes.rows[0].object_id])
-                nextTx++
+                // Evitar duplicar la relación object_method aunque no exista constraint UNIQUE en DB.
+                const objectMethodRes = await this.db.query<{ [key: string]: unknown; object_method_id: number }>(
+                    ExcelQueries.FIND_OBJECT_METHOD_BY_IDS,
+                    [objectId, methodId]
+                )
 
-                inserted++
-                this.log.debug(`Método registrado: "${parsed.object_na}.${parsed.method_na}"`)
+                let changed = false
+                if (objectMethodRes.rows.length === 0) {
+                    await this.db.query(ExcelQueries.INSERT_OBJECT_METHOD, [objectId, methodId])
+                    changed = true
+                }
+
+                // Solo crea TX cuando no existe para esa dupla object+method.
+                const txExisting = await this.db.query<{ [key: string]: unknown; transaction_id: number }>(
+                    ExcelQueries.FIND_TRANSACTION_BY_METHOD_OBJECT,
+                    [methodId, objectId]
+                )
+
+                if (txExisting.rows.length === 0) {
+                    await this.db.query(ExcelQueries.INSERT_TRANSACTION, [String(nextTx), methodId, objectId])
+                    nextTx++
+                    changed = true
+                }
+
+                if (changed) {
+                    inserted++
+                    this.log.debug(`Método registrado: "${parsed.object_na}.${parsed.method_na}"`)
+                } else {
+                    skipped++
+                }
             } catch (err) {
                 this.addError(SHEET_DEFINITIONS.METHODS.name, row, 'method_na', this.errorMessage(err))
             }
@@ -462,21 +485,33 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
                     ExcelQueries.INSERT_OPTION, [parsed.option_na, methodId]
                 )
 
+                let optionId: number | null = null
                 if (optRes.rows.length > 0) {
+                    optionId = optRes.rows[0].option_id
                     inserted++
                     this.log.debug(`Opción creada: "${parsed.option_na}"`)
-                    if (parsed.menu_na) {
-                        const menuRes = await this.db.query<MenuIdRow>(
-                            ExcelQueries.FIND_MENU_BY_NAME, [parsed.menu_na]
-                        )
-                        if (menuRes.rows.length > 0) {
-                            await this.db.query(
-                                ExcelQueries.INSERT_MENU_OPTION, [menuRes.rows[0].menu_id, optRes.rows[0].option_id]
-                            )
-                        }
-                    }
                 } else {
+                    const optionFind = await this.db.query<{ [key: string]: unknown; option_id: number; method_id: number | null }>(
+                        ExcelQueries.FIND_OPTION_BY_NAME,
+                        [parsed.option_na]
+                    )
+
+                    if (optionFind.rows.length > 0) {
+                        optionId = optionFind.rows[0].option_id
+                    }
+
                     skipped++
+                }
+
+                if (parsed.menu_na && optionId) {
+                    const menuRes = await this.db.query<MenuIdRow>(
+                        ExcelQueries.FIND_MENU_BY_NAME, [parsed.menu_na]
+                    )
+                    if (menuRes.rows.length > 0) {
+                        await this.db.query(
+                            ExcelQueries.INSERT_MENU_OPTION, [menuRes.rows[0].menu_id, optionId]
+                        )
+                    }
                 }
             } catch (err) {
                 this.addError(SHEET_DEFINITIONS.OPTIONS.name, row, 'option_name', this.errorMessage(err))
@@ -540,11 +575,55 @@ export class PermissionMatrixReader implements IPermissionMatrixReader {
                     const [objectName, methodName] = objectMethod.split('.')
 
                     try {
-                        const res = await this.db.query<ProfileMethodIdRow>(
-                            ExcelQueries.INSERT_PERMISSION,
-                            [profileName, objectName, methodName]
+                        const profileRes = await this.db.query<ProfileIdRow>(
+                            ExcelQueries.FIND_PROFILE_BY_NAME,
+                            [profileName]
                         )
-                        if (res.rows.length > 0) {
+
+                        if (profileRes.rows.length === 0) {
+                            this.addError(
+                                SHEET_DEFINITIONS.PERMISSIONS.name,
+                                row,
+                                'profile_na',
+                                `Perfil "${profileName}" no existe`
+                            )
+                            continue
+                        }
+
+                        const methodRes = await this.db.query<MethodIdRow>(
+                            ExcelQueries.FIND_METHOD_BY_OBJECT_METHOD,
+                            [objectName, methodName]
+                        )
+
+                        if (methodRes.rows.length === 0) {
+                            this.addError(
+                                SHEET_DEFINITIONS.PERMISSIONS.name,
+                                row,
+                                'object_method',
+                                `Método "${objectMethod}" no encontrado`
+                            )
+                            continue
+                        }
+
+                        const profileId = profileRes.rows[0].profile_id
+                        const methodId = methodRes.rows[0].method_id
+
+                        const existing = await this.db.query<ProfileMethodIdRow>(
+                            ExcelQueries.FIND_PROFILE_METHOD_BY_IDS,
+                            [profileId, methodId]
+                        )
+
+                        if (existing.rows.length > 0) {
+                            skipped++
+                            continue
+                        }
+
+                        const insertRes = await this.db.query<ProfileMethodIdRow>(
+                            ExcelQueries.INSERT_PERMISSION_BY_IDS,
+                            [profileId, methodId]
+                        )
+
+                        if (insertRes.rows.length > 0) {
                             inserted++
                             this.log.debug(
                                 `Permiso asignado: "${profileName}" → "${objectMethod}"`

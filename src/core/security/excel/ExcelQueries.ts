@@ -89,13 +89,19 @@ export const ExcelQueries = {
 
     INSERT_PROFILE: `
         INSERT INTO security.profile (profile_na)
-        VALUES ($1) ON CONFLICT (profile_na) DO NOTHING
+        SELECT $1
+        WHERE NOT EXISTS (
+            SELECT 1 FROM security.profile WHERE profile_na = $1
+        )
         RETURNING profile_id`,
 
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
     INSERT_USER: `
         INSERT INTO security."user" (user_na, user_pw)
-        VALUES ($1, $2) ON CONFLICT (user_na) DO NOTHING
+        SELECT $1, $2
+        WHERE NOT EXISTS (
+            SELECT 1 FROM security."user" WHERE user_na = $1
+        )
         RETURNING user_id`,
 
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
@@ -106,17 +112,26 @@ export const ExcelQueries = {
 
     INSERT_SUBSYSTEM: `
         INSERT INTO security.subsystem (subsystem_na)
-        VALUES ($1) ON CONFLICT DO NOTHING
+        SELECT $1
+        WHERE NOT EXISTS (
+            SELECT 1 FROM security.subsystem WHERE subsystem_na = $1
+        )
         RETURNING subsystem_id`,
 
     INSERT_OBJECT: `
         INSERT INTO security.object (object_na)
-        VALUES ($1) ON CONFLICT DO NOTHING
+        SELECT $1
+        WHERE NOT EXISTS (
+            SELECT 1 FROM security.object WHERE object_na = $1
+        )
         RETURNING object_id`,
 
     INSERT_METHOD: `
         INSERT INTO security.method (method_na)
-        VALUES ($1) ON CONFLICT DO NOTHING
+        SELECT $1
+        WHERE NOT EXISTS (
+            SELECT 1 FROM security.method WHERE method_na = $1
+        )
         RETURNING method_id`,
 
     INSERT_OBJECT_METHOD: `
@@ -133,12 +148,18 @@ export const ExcelQueries = {
 
     INSERT_MENU: `
         INSERT INTO security.menu (menu_na, subsystem_id)
-        VALUES ($1, $2) ON CONFLICT DO NOTHING
+        SELECT $1, $2
+        WHERE NOT EXISTS (
+            SELECT 1 FROM security.menu WHERE menu_na = $1 AND subsystem_id = $2
+        )
         RETURNING menu_id`,
 
     INSERT_OPTION: `
         INSERT INTO security.option (option_na, method_id)
-        VALUES ($1, $2) ON CONFLICT DO NOTHING
+        SELECT $1, $2
+        WHERE NOT EXISTS (
+            SELECT 1 FROM security.option WHERE option_na = $1
+        )
         RETURNING option_id`,
 
     INSERT_MENU_OPTION: `
@@ -152,6 +173,12 @@ export const ExcelQueries = {
         INNER JOIN security.object_method om ON met.method_id = om.method_id
         INNER JOIN security.object obj ON om.object_id = obj.object_id
         WHERE p.profile_na = $1 AND obj.object_na = $2 AND met.method_na = $3
+        ON CONFLICT DO NOTHING
+        RETURNING profile_method_id`,
+
+    INSERT_PERMISSION_BY_IDS: `
+        INSERT INTO security.profile_method (profile_id, method_id)
+        VALUES ($1, $2)
         ON CONFLICT DO NOTHING
         RETURNING profile_method_id`,
 
@@ -184,6 +211,8 @@ export const ExcelQueries = {
     FIND_PROFILE_BY_NAME: 'SELECT profile_id FROM security.profile WHERE profile_na = $1',
     FIND_SUBSYSTEM_BY_NAME: 'SELECT subsystem_id FROM security.subsystem WHERE subsystem_na = $1',
     FIND_MENU_BY_NAME: 'SELECT menu_id FROM security.menu WHERE menu_na = $1',
+    FIND_MENU_BY_NAME_AND_SUBSYSTEM:
+        'SELECT menu_id FROM security.menu WHERE menu_na = $1 AND subsystem_id = $2',
 
     // TODO(REVERT_NAMING): Singular tables & N:M profiles
     FIND_USER_BY_NAME: 'SELECT user_id FROM security."user" WHERE user_na = $1',
@@ -194,6 +223,18 @@ export const ExcelQueries = {
         INNER JOIN security.object_method om ON met.method_id = om.method_id
         INNER JOIN security.object obj ON om.object_id = obj.object_id
         WHERE obj.object_na = $1 AND met.method_na = $2`,
+
+    FIND_OBJECT_METHOD_BY_IDS:
+        'SELECT object_method_id FROM security.object_method WHERE object_id = $1 AND method_id = $2',
+
+    FIND_TRANSACTION_BY_METHOD_OBJECT:
+        'SELECT transaction_id FROM security.transaction WHERE method_id = $1 AND object_id = $2',
+
+    FIND_OPTION_BY_NAME:
+        'SELECT option_id, method_id FROM security.option WHERE option_na = $1 ORDER BY option_id LIMIT 1',
+
+    FIND_PROFILE_METHOD_BY_IDS:
+        'SELECT profile_method_id FROM security.profile_method WHERE profile_id = $1 AND method_id = $2',
 
     FIND_OBJECT_BY_NAME: 'SELECT object_id FROM security.object WHERE object_na = $1',
     FIND_METHOD_BY_NAME: 'SELECT method_id FROM security.method WHERE method_na = $1',

@@ -121,6 +121,15 @@ function createMockDB(opts = {}) {
             if (sql.includes('INSERT') && sql.includes('profile_method')) {
                 return { rows: [{ profile_method_id: 1 }] }
             }
+            if (sql.includes('FROM security.object_method') && sql.includes('object_id = $1') && sql.includes('method_id = $2')) {
+                return { rows: opts.objectMethodExists ? [{ object_method_id: 1 }] : [] }
+            }
+            if (sql.includes('FROM security.transaction') && sql.includes('method_id = $1') && sql.includes('object_id = $2')) {
+                return { rows: opts.transactionExists ? [{ transaction_id: 1 }] : [] }
+            }
+            if (sql.includes('SELECT profile_method_id FROM security.profile_method')) {
+                return { rows: opts.permissionExists ? [{ profile_method_id: 1 }] : [] }
+            }
             // INSERT profile_subsystem
             if (sql.includes('INSERT') && sql.includes('profile_subsystem')) {
                 return { rows: [] }
@@ -214,6 +223,24 @@ test('Reader import procesa Objetos y Métodos correctamente', async () => {
     const methodSummary = result.summary.find((s) => s.sheet === SHEET_DEFINITIONS.METHODS.name)
     assert.ok(methodSummary)
     assert.equal(methodSummary.inserted, 3)
+})
+
+test('Reader omite método cuando object_method y transaction ya existen', async () => {
+    const buffer = await buildWorkbook({
+        [SHEET_DEFINITIONS.METHODS.name]: {
+            columns: ['object_na', 'method_na'],
+            rows: [['Auth', 'login']],
+        },
+    })
+
+    const db = createMockDB({ objectMethodExists: true, transactionExists: true })
+    const reader = new PermissionMatrixReader(db, createMockValidator(), createMockLogger())
+    const result = await reader.import(buffer)
+
+    const methodSummary = result.summary.find((s) => s.sheet === SHEET_DEFINITIONS.METHODS.name)
+    assert.ok(methodSummary)
+    assert.equal(methodSummary.inserted, 0)
+    assert.equal(methodSummary.skipped, 1)
 })
 
 test('Reader import retorna errores para filas inválidas', async () => {
@@ -359,6 +386,24 @@ test('Reader reporta error cuando object_method no se resuelve', async () => {
     const result = await reader.import(buffer)
 
     assert.ok(!result.success)
+})
+
+test('Reader omite permiso cuando profile_method ya existe', async () => {
+    const buffer = await buildWorkbook({
+        [SHEET_DEFINITIONS.PERMISSIONS.name]: {
+            columns: ['profile_na', 'object_method'],
+            rows: [['Admin', 'Auth.login']],
+        },
+    })
+
+    const db = createMockDB({ permissionExists: true })
+    const reader = new PermissionMatrixReader(db, createMockValidator(), createMockLogger())
+    const result = await reader.import(buffer)
+
+    const summary = result.summary.find((s) => s.sheet === SHEET_DEFINITIONS.PERMISSIONS.name)
+    assert.ok(summary)
+    assert.equal(summary.inserted, 0)
+    assert.equal(summary.skipped, 1)
 })
 
 // ═══════════════════════════════════════════════════════════════════

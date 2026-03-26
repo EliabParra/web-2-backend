@@ -13,11 +13,17 @@ export namespace Profile {
     export type Entity = {
         profile_id: number
         profile_na: string
+        subsystem_ids?: number[]
+        menu_ids?: number[]
+        option_ids?: number[]
     }
 
     export type Summary = {
         profile_id: number
         profile_na: string
+        subsystem_ids?: number[]
+        menu_ids?: number[]
+        option_ids?: number[]
     }
 
     // ============================================================
