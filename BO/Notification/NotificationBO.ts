@@ -23,6 +23,16 @@ export class NotificationBO extends BaseBO {
         return this.i18n.use(NotificationMessages)
     }
 
+    private getSessionUserId(): number | null {
+        try {
+            const session = this.getSessionData<{ userId?: unknown }>()
+            const userId = Number(session?.userId)
+            return Number.isInteger(userId) && userId > 0 ? userId : null
+        } catch {
+            return null
+        }
+    }
+
     /**
      * Operación Get
      *
@@ -51,7 +61,16 @@ export class NotificationBO extends BaseBO {
             params,
             NotificationSchemas.getAll,
             async (data) => {
-                const result: Array<Types.NotificationSummary> = await this.service.getAll(data)
+                const sessionUserId = this.getSessionUserId()
+                const effectiveData = sessionUserId
+                    ? {
+                          ...data,
+                          user_id: sessionUserId,
+                      }
+                    : data
+
+                const result: Array<Types.NotificationSummary> =
+                    await this.service.getAll(effectiveData)
                 return this.success(result, this.notificationMessages.getAll)
             }
         )

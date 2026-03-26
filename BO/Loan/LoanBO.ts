@@ -35,6 +35,16 @@ export class LoanBO extends BaseBO {
         }))
     }
 
+    private getSessionUserId(): number | null {
+        try {
+            const session = this.getSessionData<{ userId?: unknown }>()
+            const userId = Number(session?.userId)
+            return Number.isInteger(userId) && userId > 0 ? userId : null
+        } catch {
+            return null
+        }
+    }
+
     async getRequest(params: Inputs.GetRequestInput): Promise<ApiResponse> {
         return this.exec<Inputs.GetRequestInput, Types.Request>(
             params,
@@ -63,7 +73,14 @@ export class LoanBO extends BaseBO {
             params,
             LoanSchemas.getAllRequests,
             async (data) => {
-                const result: Array<Types.RequestSummary> = await this.service.getAllRequests(data)
+                const sessionUserId = this.getSessionUserId()
+                const effectiveData =
+                    sessionUserId && data.user_id != null && data.user_id !== sessionUserId
+                        ? { ...data, user_id: sessionUserId }
+                        : data
+
+                const result: Array<Types.RequestSummary> =
+                    await this.service.getAllRequests(effectiveData)
                 const formatted = result.map((item) => ({
                     ...item,
                     movement_booking_dt: this.formatDateTime(item.movement_booking_dt) as string,
@@ -81,7 +98,15 @@ export class LoanBO extends BaseBO {
             params,
             LoanSchemas.requestLoan,
             async (data) => {
-                const result = await this.service.requestLoan(data)
+                const sessionUserId = this.getSessionUserId()
+                const effectiveData = sessionUserId
+                    ? {
+                          ...data,
+                          user_id: sessionUserId,
+                      }
+                    : data
+
+                const result = await this.service.requestLoan(effectiveData)
                 return this.created(result, this.loanMessages.requestLoan)
             }
         )
@@ -151,7 +176,13 @@ export class LoanBO extends BaseBO {
             params,
             LoanSchemas.getAllLoans,
             async (data) => {
-                const result = await this.service.getAllLoans(data)
+                const sessionUserId = this.getSessionUserId()
+                const effectiveData =
+                    sessionUserId && data.user_id != null && data.user_id !== sessionUserId
+                        ? { ...data, user_id: sessionUserId }
+                        : data
+
+                const result = await this.service.getAllLoans(effectiveData)
                 const formatted = result.map((item) => ({
                     ...item,
                     movement_booking_dt: this.formatDateTime(item.movement_booking_dt) as string,

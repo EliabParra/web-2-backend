@@ -86,25 +86,26 @@ export function createExplorerRouter(
             `, [])
 
             const adminUser = result.rows[0]
-            if (!adminUser) {
-                res.status(503).json({ code: 503, msg: 'No hay usuarios activos en la BD.' })
-                return
+            if (adminUser) {
+                const profileIds = Array.isArray(adminUser.profile_ids)
+                    ? adminUser.profile_ids.map(Number).filter(id => Number.isInteger(id) && id > 0)
+                    : []
+
+                const appReq = req as unknown as AppRequest
+                if (appReq.session) {
+                    Object.assign(appReq.session, {
+                        userId: adminUser.user_id,
+                        username: adminUser.user_na,
+                        email: adminUser.user_em,
+                        profileIds,
+                        activeProfileId: profileIds[0] ?? null,
+                    })
+                }
+
+                log.warn(`[BYPASS] TX como user_id=${adminUser.user_id} (${adminUser.user_na})`)
+            } else {
+                log.warn('[BYPASS] No hay usuarios activos; ejecutando TX sin sesión inyectada.')
             }
-
-            const profileIds = Array.isArray(adminUser.profile_ids)
-                ? adminUser.profile_ids.map(Number).filter(id => Number.isInteger(id) && id > 0)
-                : []
-
-            ;(req as unknown as AppRequest).session = {
-                ...(req as any).session,
-                userId: adminUser.user_id,
-                username: adminUser.user_na,
-                email: adminUser.user_em,
-                profileIds,
-                activeProfileId: profileIds[0] ?? null,
-            }
-
-            log.warn(`[BYPASS] TX como user_id=${adminUser.user_id} (${adminUser.user_na})`)
         } catch (err) {
             next(err)
             return

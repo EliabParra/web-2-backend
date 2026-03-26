@@ -116,17 +116,34 @@ export class AuthBO extends BaseBO {
                     return this.unauthorized()
                 }
 
-                const profileIds = Array.isArray(session.profileIds)
-                    ? session.profileIds
-                          .map((id) => Number(id))
-                          .filter((id) => Number.isInteger(id) && id > 0)
-                    : []
+                const profileRows = await this.db.query<{ id: number | string; profile_na: string }>(
+                    `SELECT p.profile_id as id, p.profile_na
+                     FROM "security"."user_profile" up
+                     INNER JOIN "security"."profile" p ON p.profile_id = up.profile_id
+                     WHERE up.user_id = $1
+                     ORDER BY p.profile_id`,
+                    [userId]
+                )
+
+                const profiles = profileRows.rows.map((row) => ({
+                    id: Number(row.id),
+                    profile_na: row.profile_na,
+                }))
+
+                const profileIds = profiles
+                    .map((row) => Number(row.id))
+                    .filter((id) => Number.isInteger(id) && id > 0)
 
                 const activeProfileId =
                     Number.isInteger(Number(session.activeProfileId)) &&
                     profileIds.includes(Number(session.activeProfileId))
                         ? Number(session.activeProfileId)
-                        : null
+                        : (profileIds[0] ?? null)
+
+                this.setSessionData({
+                    profileIds,
+                    activeProfileId: activeProfileId ?? undefined,
+                })
 
                 const mode = this.config.auth?.profileResolutionMode === 'union' ? 'union' : 'active'
                 const effectiveProfileIds =
@@ -142,20 +159,13 @@ export class AuthBO extends BaseBO {
 
                 const navigation = await this.security.getMenuStructure(effectiveProfileIds)
 
-                const profilesInfo = profileIds.length > 0
-                    ? await this.db.query<{ id: number; profile_na: string }>(
-                        `SELECT profile_id as id, profile_na FROM "security"."profile" WHERE profile_id = ANY($1)`,
-                        [profileIds]
-                      )
-                    : { rows: [] }
-
                 const response: Types.NavigationResponse = {
                     session: {
                         userId,
                         username: session.username ? String(session.username) : null,
                         email: session.email ? String(session.email) : null,
                         profileIds,
-                        profiles: profilesInfo.rows,
+                        profiles,
                         activeProfileId,
                         mode,
                         effectiveProfileIds,

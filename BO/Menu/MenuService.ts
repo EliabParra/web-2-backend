@@ -15,7 +15,7 @@ export class MenuService extends BOService implements Types.IMenuService {
     constructor(container: IContainer) {
         super(container)
         this.repo = container.resolve<MenuRepository>('MenuRepository')
-        this.menuProvider = container.resolve<IMenuProvider>('MenuProvider')
+        this.menuProvider = container.resolve<IMenuProvider>('menuProvider')
     }
 
     /**

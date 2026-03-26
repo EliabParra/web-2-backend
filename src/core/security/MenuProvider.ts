@@ -46,6 +46,11 @@ export class MenuProvider implements IMenuProvider {
         this.log = container.resolve<ILogger>('log').child({ category: 'MenuProvider' })
     }
 
+    private toPositiveInt(value: unknown): number | null {
+        const parsed = Number(value)
+        return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+    }
+
     /**
      * Loads the entire security structure and assignments into memory.
      * Should be called on system startup.
@@ -72,45 +77,60 @@ export class MenuProvider implements IMenuProvider {
         const subRes = await this.db.query<DBSubsystem>(SecurityQueries.SELECT_SUBSYSTEMS)
         this.subsystems.clear()
         // TODO(REVERT_NAMING): Revert subsystem_na to subsystem_name
-        subRes.rows.forEach((r) =>
-            this.subsystems.set(r.subsystem_id, {
-                subsystem_id: r.subsystem_id,
+        subRes.rows.forEach((r) => {
+            const subsystemId = this.toPositiveInt(r.subsystem_id)
+            if (!subsystemId) return
+
+            this.subsystems.set(subsystemId, {
+                subsystem_id: subsystemId,
                 subsystem_na: r.subsystem_na,
                 menus: [],
             })
-        )
+        })
 
         // Menus
         const menuRes = await this.db.query<DBMenu>(SecurityQueries.SELECT_MENUS)
         this.menus.clear()
         // TODO(REVERT_NAMING): Revert menu_na to menu_name
-        menuRes.rows.forEach((r) =>
-            this.menus.set(r.menu_id, {
-                menu_id: r.menu_id,
+        menuRes.rows.forEach((r) => {
+            const menuId = this.toPositiveInt(r.menu_id)
+            const subsystemId = this.toPositiveInt(r.subsystem_id)
+            if (!menuId || !subsystemId) return
+
+            this.menus.set(menuId, {
+                menu_id: menuId,
                 menu_na: r.menu_na,
-                subsystem_id: r.subsystem_id,
+                subsystem_id: subsystemId,
                 options: [],
             })
-        )
+        })
 
         // Options
         const optRes = await this.db.query<DBOption>(SecurityQueries.SELECT_OPTIONS)
         this.options.clear()
         // TODO(REVERT_NAMING): Revert option_na to option_name
-        optRes.rows.forEach((r) =>
-            this.options.set(r.option_id, {
-                option_id: r.option_id,
+        optRes.rows.forEach((r) => {
+            const optionId = this.toPositiveInt(r.option_id)
+            const methodId = this.toPositiveInt(r.method_id)
+            if (!optionId) return
+
+            this.options.set(optionId, {
+                option_id: optionId,
                 option_na: r.option_na,
-                method_id: r.method_id || undefined,
+                method_id: methodId ?? undefined,
             })
-        )
+        })
 
         // Menu-Option Relations
         const moRes = await this.db.query<DBMenuOption>(SecurityQueries.SELECT_MENU_OPTIONS)
         this.menuOptions.clear()
         moRes.rows.forEach((r) => {
-            if (!this.menuOptions.has(r.menu_id)) this.menuOptions.set(r.menu_id, new Set())
-            this.menuOptions.get(r.menu_id)?.add(r.option_id)
+            const menuId = this.toPositiveInt(r.menu_id)
+            const optionId = this.toPositiveInt(r.option_id)
+            if (!menuId || !optionId) return
+
+            if (!this.menuOptions.has(menuId)) this.menuOptions.set(menuId, new Set())
+            this.menuOptions.get(menuId)?.add(optionId)
         })
     }
 
@@ -121,22 +141,28 @@ export class MenuProvider implements IMenuProvider {
         )
         this.profileSubsystems.clear()
         psRes.rows.forEach((r) => {
-            if (r.subsystem_id) {
-                if (!this.profileSubsystems.has(r.profile_id))
-                    this.profileSubsystems.set(r.profile_id, new Set())
-                this.profileSubsystems.get(r.profile_id)?.add(r.subsystem_id)
+            const profileId = this.toPositiveInt(r.profile_id)
+            const subsystemId = this.toPositiveInt(r.subsystem_id)
+            if (!profileId || !subsystemId) return
+
+            if (!this.profileSubsystems.has(profileId)) {
+                this.profileSubsystems.set(profileId, new Set())
             }
+            this.profileSubsystems.get(profileId)?.add(subsystemId)
         })
 
         // Profile -> Menus
         const pmRes = await this.db.query<DBProfileAssignment>(SecurityQueries.SELECT_PROFILE_MENUS)
         this.profileMenus.clear()
         pmRes.rows.forEach((r) => {
-            if (r.menu_id) {
-                if (!this.profileMenus.has(r.profile_id))
-                    this.profileMenus.set(r.profile_id, new Set())
-                this.profileMenus.get(r.profile_id)?.add(r.menu_id)
+            const profileId = this.toPositiveInt(r.profile_id)
+            const menuId = this.toPositiveInt(r.menu_id)
+            if (!profileId || !menuId) return
+
+            if (!this.profileMenus.has(profileId)) {
+                this.profileMenus.set(profileId, new Set())
             }
+            this.profileMenus.get(profileId)?.add(menuId)
         })
 
         // Profile -> Options
@@ -145,11 +171,14 @@ export class MenuProvider implements IMenuProvider {
         )
         this.profileOptions.clear()
         poRes.rows.forEach((r) => {
-            if (r.option_id) {
-                if (!this.profileOptions.has(r.profile_id))
-                    this.profileOptions.set(r.profile_id, new Set())
-                this.profileOptions.get(r.profile_id)?.add(r.option_id)
+            const profileId = this.toPositiveInt(r.profile_id)
+            const optionId = this.toPositiveInt(r.option_id)
+            if (!profileId || !optionId) return
+
+            if (!this.profileOptions.has(profileId)) {
+                this.profileOptions.set(profileId, new Set())
             }
+            this.profileOptions.get(profileId)?.add(optionId)
         })
     }
 
