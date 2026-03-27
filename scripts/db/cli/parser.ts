@@ -86,6 +86,7 @@ export function parseCliArgs(
     if (getBool('sync')) config.action = 'sync'
     if (getBool('introspect', 'pull')) config.action = 'introspect'
     if (getBool('seed')) config.action = 'seed'
+    if (getBool('dml')) config.action = 'dml'
     if (getBool('reset')) config.action = 'reset'
     if (getBool('print')) config.action = 'print'
     if (getBool('apply')) config.action = 'apply'
@@ -186,6 +187,7 @@ ${'Actions:'.cyan.bold}
   sync        Apply schemas to database (Code → DB) [default]
   introspect  Generate schemas from database (DB → Code)
   seed        Populate initial data (profiles, admin)
+    dml         Apply only DML migrations (migrations/dml)
   bo          Sync BO methods (Code ↔ DB)
   manage      Manage security data interactively
   reset       Drop and recreate all tables
@@ -245,6 +247,7 @@ ${'Examples:'.cyan.bold}
     pnpm run db introspect --data --security-data-tables profile,user_profile
     pnpm run db introspect --include-tables business.person,security.profile
   pnpm run db seed --seedAdmin    # Create admin user
+    pnpm run db dml --yes           # Apply only DML migrations
   pnpm run db bo --prune          # Sync BOs and prune orphans
   pnpm run db reset --yes         # Drop all tables
 `)

@@ -18,6 +18,7 @@
         "dev": "nodemon --legacy-watch --watch src --watch BO --watch public --ext js,ts,json,html,css --signal SIGINT --exec \"node --import tsx src/index.ts\"",
         "dx:init": "docker compose down -v && docker compose up -d db adminer && pnpm install",
         "db": "node --import tsx scripts/db/index.ts",
+        "db:dml": "node --import tsx scripts/db/index.ts dml --yes",
         "hashpw": "tsx scripts/hash-password.ts",
         "bo": "node --import tsx scripts/bo/index.ts",
         "export:starter": "tsx scripts/export-starter.ts",

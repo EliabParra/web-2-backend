@@ -23,7 +23,16 @@ import { SecurityManager } from './seeders/security-manager.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-type MenuAction = 'sync' | 'introspect' | 'seed' | 'bo' | 'reset' | 'print' | 'manage' | 'exit'
+type MenuAction =
+    | 'sync'
+    | 'introspect'
+    | 'seed'
+    | 'dml'
+    | 'bo'
+    | 'reset'
+    | 'print'
+    | 'manage'
+    | 'exit'
 
 async function main() {
     console.log(colors.green(colors.bold('🚀 ToProc DB CLI')) + ' v2.0')
@@ -56,6 +65,7 @@ async function main() {
                 'sync       - Apply schemas to database (Code → DB)',
                 'introspect - Generate schemas from database (DB → Code)',
                 'seed       - Populate initial data (profiles, admin, BOs)',
+                'dml        - Apply only DML migrations',
                 'bo         - Sync BO methods (register new, find orphans)',
                 'manage     - Manage security data (users, profiles, menus...)',
                 'reset      - Drop and recreate all tables',
@@ -235,6 +245,14 @@ async function main() {
                 }
 
                 console.log(colors.green('\n✅ Seeding complete!'))
+                break
+            }
+
+            case 'dml': {
+                console.log(colors.cyan('\n📝 Running DML only...'))
+                const dmlRunner = new MigrationRunner(db, runnerConfig, dmlDir)
+                await dmlRunner.run()
+                console.log(colors.green('\n✅ DML migrations complete!'))
                 break
             }
 

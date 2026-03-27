@@ -58,7 +58,6 @@ FROM (
     ('Reportes', 'Negocio'),
     ('Notificar', 'Negocio'),
     ('Mantenimiento', 'Negocio'),
-    ('Auditoria', 'Negocio'),
     ('Prestamos Admin', 'Negocio'),
     ('Devoluciones Admin', 'Negocio'),
     ('Notificaciones Admin', 'Negocio'),
