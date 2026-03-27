@@ -33,6 +33,7 @@ export class NotificationRepository implements Types.INotificationRepository {
             data.notification_ty ?? null,
             data.notification_tit,
             data.notification_msg,
+            data.notification_read ?? false,
             data.user_id,
         ])
         return result.rows[0] ?? null
@@ -44,6 +45,7 @@ export class NotificationRepository implements Types.INotificationRepository {
             data.notification_ty ?? null,
             data.notification_tit ?? null,
             data.notification_msg ?? null,
+            data.notification_read ?? null,
         ])
         return result.rows[0] ?? null
     }

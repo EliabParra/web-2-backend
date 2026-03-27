@@ -8,6 +8,7 @@ export namespace Notification {
         notification_ty?: string | null
         notification_tit?: string | null
         notification_msg?: string | null
+        notification_read: boolean
         notification_dt: string | Date
         user_id: number
     }
@@ -17,6 +18,7 @@ export namespace Notification {
         notification_ty?: string | null
         notification_tit?: string | null
         notification_msg?: string | null
+        notification_read: boolean
         notification_dt: string | Date
         user_id: number
     }
@@ -25,6 +27,7 @@ export namespace Notification {
         notification_ty?: string
         notification_tit: string
         notification_msg: string
+        notification_read?: boolean
         user_id: number
     }
 
@@ -33,6 +36,7 @@ export namespace Notification {
         notification_ty?: string
         notification_tit?: string
         notification_msg?: string
+        notification_read?: boolean
     }
 
     export interface GetInput {

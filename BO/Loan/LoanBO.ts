@@ -45,6 +45,29 @@ export class LoanBO extends BaseBO {
         }
     }
 
+    private getSessionProfileIds(): number[] {
+        try {
+            const session = this.getSessionData<{ profileIds?: unknown }>()
+            const profileIds = Array.isArray(session?.profileIds) ? session.profileIds : []
+            return profileIds
+                .map((id) => Number(id))
+                .filter((id) => Number.isInteger(id) && id > 0)
+        } catch {
+            return []
+        }
+    }
+
+    private canViewAllRequestsAndLoans(): boolean {
+        const profileIds = this.getSessionProfileIds()
+        if (profileIds.length === 0) return false
+
+        return this.security.getPermissions({
+            profileIds,
+            objectName: 'Loan',
+            methodName: 'acceptRequestLoan',
+        })
+    }
+
     async getRequest(params: Inputs.GetRequestInput): Promise<ApiResponse> {
         return this.exec<Inputs.GetRequestInput, Types.Request>(
             params,
@@ -74,9 +97,13 @@ export class LoanBO extends BaseBO {
             LoanSchemas.getAllRequests,
             async (data) => {
                 const sessionUserId = this.getSessionUserId()
+                const canViewAll = this.canViewAllRequestsAndLoans()
                 const effectiveData =
-                    sessionUserId && data.user_id != null && data.user_id !== sessionUserId
-                        ? { ...data, user_id: sessionUserId }
+                    !canViewAll && sessionUserId
+                        ? {
+                              ...data,
+                              user_id: sessionUserId,
+                          }
                         : data
 
                 const result: Array<Types.RequestSummary> =
@@ -177,9 +204,13 @@ export class LoanBO extends BaseBO {
             LoanSchemas.getAllLoans,
             async (data) => {
                 const sessionUserId = this.getSessionUserId()
+                const canViewAll = this.canViewAllRequestsAndLoans()
                 const effectiveData =
-                    sessionUserId && data.user_id != null && data.user_id !== sessionUserId
-                        ? { ...data, user_id: sessionUserId }
+                    !canViewAll && sessionUserId
+                        ? {
+                              ...data,
+                              user_id: sessionUserId,
+                          }
                         : data
 
                 const result = await this.service.getAllLoans(effectiveData)

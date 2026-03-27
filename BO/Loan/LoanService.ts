@@ -1,5 +1,5 @@
 import { BOService } from '@toproc/bo'
-import type { IContainer } from '@toproc/types'
+import type { IContainer, IWebSocketService } from '@toproc/types'
 import { LoanRepository, Errors, LoanMessages, Types } from './LoanModule.js'
 
 /**
@@ -10,6 +10,7 @@ import { LoanRepository, Errors, LoanMessages, Types } from './LoanModule.js'
  */
 export class LoanService extends BOService implements Types.ILoanService {
     private repo: LoanRepository
+    private readonly websocket: IWebSocketService | null
     private readonly REQUEST_PENDING_TYPE_ID = 1 // Solicitado
     private readonly REQUEST_ACCEPTED_TYPE_ID = 2 // Aceptado
     private readonly REQUEST_REJECTED_TYPE_ID = 3 // Rechazado
@@ -23,6 +24,9 @@ export class LoanService extends BOService implements Types.ILoanService {
     constructor(container: IContainer) {
         super(container)
         this.repo = container.resolve<LoanRepository>('LoanRepository')
+        this.websocket = container.has('websocket')
+            ? container.resolve<IWebSocketService>('websocket')
+            : null
     }
 
     private get messages() {
@@ -158,7 +162,68 @@ export class LoanService extends BOService implements Types.ILoanService {
             )
         }
 
-        return this.repo.createRequest(params, this.REQUEST_PENDING_TYPE_ID, activeLapseId)
+        const created = await this.repo.createRequest(
+            params,
+            this.REQUEST_PENDING_TYPE_ID,
+            activeLapseId
+        )
+
+        await this.notifySupervisorsNewRequest(created)
+        return created
+    }
+
+    private async notifySupervisorsNewRequest(request: Types.Request): Promise<void> {
+        try {
+            const result = await this.db.query<{
+                notification_id: number
+                notification_ty: string | null
+                notification_tit: string | null
+                notification_dt: string | Date
+                user_id: number
+            }>(
+                `
+                INSERT INTO business.notification (
+                    notification_ty,
+                    notification_tit,
+                    notification_msg,
+                    user_id
+                )
+                SELECT
+                    'loan_request',
+                    'Nueva solicitud de préstamo',
+                    $1,
+                    sup.user_id
+                FROM (
+                    SELECT DISTINCT up.user_id
+                    FROM security.user_profile up
+                    INNER JOIN security.profile p ON p.profile_id = up.profile_id
+                    WHERE LOWER(p.profile_na) = 'supervisor'
+                ) sup
+                RETURNING
+                    notification_id,
+                    notification_ty,
+                    notification_tit,
+                    notification_dt,
+                    user_id
+                `,
+                [`Se creó la solicitud #${request.movement_id} y está pendiente de aprobación.`]
+            )
+
+            for (const createdNotification of result.rows) {
+                this.websocket?.emitToUser(String(createdNotification.user_id), 'notification.created', {
+                    notification_id: createdNotification.notification_id,
+                    notification_ty: createdNotification.notification_ty,
+                    notification_tit: createdNotification.notification_tit,
+                    notification_dt: createdNotification.notification_dt,
+                    user_id: createdNotification.user_id,
+                })
+            }
+        } catch (err) {
+            this.log.warn('No se pudo notificar a supervisores por nueva solicitud', {
+                movement_id: request.movement_id,
+                error: err instanceof Error ? err.message : String(err),
+            })
+        }
     }
 
     async acceptRequestLoan(params: Types.AcceptRequestLoanInput): Promise<Types.Request> {

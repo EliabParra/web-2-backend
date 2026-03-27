@@ -47,6 +47,7 @@ export class NotificationService extends BOService implements Types.INotificatio
             notification_id: created.notification_id,
             notification_ty: created.notification_ty,
             notification_tit: created.notification_tit,
+            notification_read: created.notification_read,
             notification_dt: created.notification_dt,
             user_id: created.user_id,
         })

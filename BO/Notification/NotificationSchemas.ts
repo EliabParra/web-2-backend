@@ -35,6 +35,7 @@ export const createNotificationSchemas = (messages: NotificationMessagesSet = No
                 .trim()
                 .min(1, validation.requiredField)
                 .max(2000),
+            notification_read: z.boolean().optional(),
             user_id: z.coerce.number().int().positive(),
         }),
         update: z
@@ -43,12 +44,14 @@ export const createNotificationSchemas = (messages: NotificationMessagesSet = No
                 notification_ty: z.string().trim().min(1).max(60).optional(),
                 notification_tit: z.string().trim().min(1).max(200).optional(),
                 notification_msg: z.string().trim().min(1).max(2000).optional(),
+                notification_read: z.boolean().optional(),
             })
             .refine(
                 (data) =>
                     data.notification_ty !== undefined ||
                     data.notification_tit !== undefined ||
-                    data.notification_msg !== undefined,
+                    data.notification_msg !== undefined ||
+                    data.notification_read !== undefined,
                 { message: validation.requiredField }
             ),
         delete: z.object({

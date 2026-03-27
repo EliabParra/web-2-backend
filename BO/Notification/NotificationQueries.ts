@@ -5,6 +5,7 @@ export const NotificationQueries = {
             n.notification_ty,
             n.notification_tit,
             n.notification_msg,
+            n.notification_read,
             n.notification_dt,
             n.user_id
         FROM business.notification n
@@ -21,6 +22,7 @@ export const NotificationQueries = {
             n.notification_ty,
             n.notification_tit,
             n.notification_msg,
+            n.notification_read,
             n.notification_dt,
             n.user_id
         FROM business.notification n
@@ -31,14 +33,16 @@ export const NotificationQueries = {
             notification_ty,
             notification_tit,
             notification_msg,
+            notification_read,
             user_id
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING
             notification_id,
             notification_ty,
             notification_tit,
             notification_msg,
+            notification_read,
             notification_dt,
             user_id
     `,
@@ -47,13 +51,15 @@ export const NotificationQueries = {
         SET
             notification_ty = COALESCE($2, notification_ty),
             notification_tit = COALESCE($3, notification_tit),
-            notification_msg = COALESCE($4, notification_msg)
+            notification_msg = COALESCE($4, notification_msg),
+            notification_read = COALESCE($5, notification_read)
         WHERE notification_id = $1
         RETURNING
             notification_id,
             notification_ty,
             notification_tit,
             notification_msg,
+            notification_read,
             notification_dt,
             user_id
     `,

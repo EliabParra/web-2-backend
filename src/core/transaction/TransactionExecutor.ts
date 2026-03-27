@@ -61,7 +61,7 @@ export class TransactionExecutor implements ITransactionExecutor {
             throw new Error(`Método de BO no encontrado: ${objectName}.${methodName}`)
         }
 
-        return await (instance as any)[methodName](params)
+        return await instance[methodName](params)
     }
 
     /**
