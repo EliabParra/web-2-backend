@@ -1,0 +1,6 @@
+# Configuración de pnpm del proyecto (no es un monorepo).
+# Desde pnpm v10 los settings viven aquí; pnpm v11+ ya NO lee el campo "pnpm" de package.json.
+# allowBuilds: dependencias autorizadas a ejecutar scripts de instalación (compilación nativa).
+allowBuilds:
+  bcrypt: true
+  esbuild: true

@@ -48,15 +48,16 @@ services:
             - '5441:5432' # Útil si quieres conectar TablePlus/DBeaver desde fuera
         volumes:
             # Persistencia de datos: Si borras el contenedor, los datos sobreviven aquí.
-            - postgres_data:/var/lib/postgresql/data
+            - postgres_data:/var/lib/postgresql
             # Script de inicialización de BD
             - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
         healthcheck:
             # Comprobación de salud para que la API sepa cuándo conectarse
             test: ['CMD-SHELL', 'pg_isready -U postgres']
-            interval: 5s
+            interval: 10s
             timeout: 5s
             retries: 5
+            start_period: 30s
         networks:
             - toproc-net
 

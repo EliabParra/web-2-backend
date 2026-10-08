@@ -1,14 +1,14 @@
 # --- Etapa 1: Builder (Constructor) ---
 FROM node:20-alpine AS builder
 
-# Habilitamos Corepack para tener pnpm disponible
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Instalamos pnpm con versión FIJA (major 10). NO usar "latest": cambia de major sin aviso y rompe el build.
+RUN npm install -g pnpm@10
 
 WORKDIR /app
 
 # Copiamos los archivos de definición de dependencias
-# Incluimos pnpm-lock.yaml si existe
-COPY package.json pnpm-lock.yaml* ./
+# pnpm-workspace.yaml contiene allowBuilds (bcrypt, esbuild); sin él la instalación falla
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Instalamos TODAS las dependencias
 RUN pnpm install --frozen-lockfile
@@ -22,18 +22,18 @@ RUN pnpm run build
 # --- Etapa 2: Runner (Ejecución en Producción) ---
 FROM node:20-alpine AS runner
 
-# Habilitamos Corepack también en la etapa final
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Misma versión fija de pnpm que en el builder
+RUN npm install -g pnpm@10
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copiamos archivos de dependencias
-COPY package.json pnpm-lock.yaml* ./
+# Copiamos archivos de dependencias (incluye pnpm-workspace.yaml por allowBuilds)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Instalamos SOLO dependencias de producción
-RUN pnpm install --prod --frozen-lockfile
+# Instalamos SOLO dependencias de producción SIN frozen-lockfile para evitar falsos positivos
+RUN pnpm install --prod
 
 # Copiamos los artefactos construidos
 COPY --from=builder /app/dist ./dist

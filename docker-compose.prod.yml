@@ -1,0 +1,51 @@
+name: toproc-prod
+
+services:
+  # --- Servicio API (Producción) ---
+  api:
+    build:
+      context: .
+      # Al no poner 'target', usa la última etapa del Dockerfile ('runner')
+    container_name: toproc-api-prod
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/toproc_prod
+      - PGHOST=db
+      - PGPORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - uru_network
+    restart: always
+
+  # --- Base de Datos (Producción) ---
+  db:
+    image: postgres:18-alpine
+    container_name: toproc-db-prod
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: toproc_prod
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - uru_network
+    restart: always
+
+networks:
+  uru_network:
+    external: true
+
+volumes:
+  postgres_data_prod:
