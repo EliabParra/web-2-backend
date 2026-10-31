@@ -3,6 +3,7 @@
 #   $env:LAB_DIR    install folder (default $HOME\control-lab)
 #   $env:LAB_BRANCH branch of both repos (default master)
 #   $env:HTTP_PORT     default 3000 local, 80 server
+#   $env:ADMIN_USER / $env:ADMIN_PASSWORD  admin credentials for the first install. Asked if unset; empty password = generated.
 $ErrorActionPreference = 'Stop'
 
 $Dir = if ($env:LAB_DIR) { $env:LAB_DIR } else { Join-Path $HOME 'control-lab' }
@@ -35,6 +36,26 @@ $DockerReady = $LASTEXITCODE -eq 0
 $ErrorActionPreference = 'Stop'
 if (-not $DockerReady) { throw 'Docker no está corriendo. Abre Docker Desktop, espera a que esté listo y vuelve a ejecutar este script.' }
 
+function Test-Password($p) { $p.Length -ge 8 -and $p -notmatch '[\s$#"''\\]' }
+$PasswordRule = 'Mínimo 8 caracteres, sin espacios, $, #, comillas ni barras invertidas.'
+
+$UserName = $env:ADMIN_USER
+$Password = $env:ADMIN_PASSWORD
+if (-not (Test-Path $EnvFile)) {
+    if (-not $UserName) { $UserName = Read-Host 'Usuario administrador [admin]' }
+    while (-not $env:ADMIN_PASSWORD) {
+        $Password = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR((Read-Host 'Contraseña del administrador (vacío = generar una)' -AsSecureString)))
+        if (-not $Password) { break }
+        if (-not (Test-Password $Password)) { Write-Host $PasswordRule; continue }
+        $Again = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR((Read-Host 'Repite la contraseña' -AsSecureString)))
+        if ($Password -ceq $Again) { break }
+        Write-Host 'Las contraseñas no coinciden.'
+    }
+}
+if (-not $UserName) { $UserName = 'admin' }
+if ($UserName -notmatch '^[A-Za-z0-9._-]+$') { throw 'El usuario solo puede tener letras, números, punto, guion y guion bajo.' }
+if ($Password -and -not (Test-Password $Password)) { throw "ADMIN_PASSWORD: $PasswordRule" }
+
 Write-Host "==> Descargando la rama $Branch en $Dir"
 New-Item -ItemType Directory -Force -Path $Dir | Out-Null
 foreach ($repo in 'web-2-backend', 'web-2-frontend') {
@@ -49,16 +70,18 @@ foreach ($repo in 'web-2-backend', 'web-2-frontend') {
 
 if (-not (Test-Path $EnvFile)) {
     function New-Secret { $b = New-Object byte[] 24; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); ($b | ForEach-Object { $_.ToString('x2') }) -join '' }
-    $AdminPassword = (New-Secret).Substring(0, 16)
+    $Generated = -not $Password
+    if ($Generated) { $Password = (New-Secret).Substring(0, 16) }
     @(
-        'ADMIN_USER=admin'
-        "ADMIN_PASSWORD=$AdminPassword"
+        "ADMIN_USER=$UserName"
+        "ADMIN_PASSWORD=$Password"
         "PGPASSWORD=$(New-Secret)"
         "SESSION_SECRET=$(New-Secret)"
         "BIND_ADDRESS=$Bind"
         "HTTP_PORT=$Port"
     ) | Set-Content -Encoding ascii $EnvFile
-    Write-Host "==> Creado $EnvFile (contraseña de admin: $AdminPassword)"
+    Write-Host "==> Creado $EnvFile (usuario administrador: $UserName)"
+    if ($Generated) { Write-Host "==> Contraseña generada: $Password (guárdala; también queda en $EnvFile)" }
 } elseif ($Mode) {
     (Get-Content $EnvFile) -replace '^BIND_ADDRESS=.*', "BIND_ADDRESS=$Bind" -replace '^HTTP_PORT=.*', "HTTP_PORT=$Port" | Set-Content -Encoding ascii $EnvFile
     Write-Host "==> Modo cambiado a $Mode en $EnvFile"

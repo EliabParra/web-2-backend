@@ -31,18 +31,20 @@ irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps
 
 En Windows, la primera ejecución instala Docker Desktop y pide reiniciar. Reinicia, abre Docker Desktop una vez, espera a que diga *running* y ejecuta el mismo comando otra vez.
 
+Después pregunta el usuario administrador (por defecto `admin`) y su contraseña. La contraseña no se ve al escribirla y se pide dos veces. Debe tener al menos 8 caracteres, sin espacios, `$`, `#`, comillas ni barras invertidas. Si la dejas vacía, el instalador genera una y la muestra.
+
 Al final el instalador muestra la URL de la aplicación.
 
 ### Instalar sin preguntas
 
-Para automatizar, define el modo con `LAB_MODE` (`local` o `server`):
+Para automatizar, define el modo con `LAB_MODE` (`local` o `server`) y las credenciales con `ADMIN_USER` y `ADMIN_PASSWORD`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.sh | LAB_MODE=server bash
+curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.sh | LAB_MODE=server ADMIN_USER=pasante ADMIN_PASSWORD=ClaveSegura1 bash
 ```
 
 ```powershell
-$env:LAB_MODE='server'; irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps1 | iex
+$env:LAB_MODE='server'; $env:ADMIN_USER='pasante'; $env:ADMIN_PASSWORD='ClaveSegura1'; irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps1 | iex
 ```
 
 Si ya estaba instalado, pasar `LAB_MODE` cambia el modo guardado en `.env`.
@@ -63,9 +65,11 @@ curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/feat/lan-d
 
 ## Iniciar sesión
 
-Usuario `admin`. La contraseña se genera en la primera instalación, se muestra una vez y queda guardada en `~/control-lab/.env` (`ADMIN_PASSWORD`).
+Con el usuario y la contraseña que elegiste al instalar. Quedan guardados en `~/control-lab/.env` (`ADMIN_USER`, `ADMIN_PASSWORD`).
 
-Para cambiarla: edita `ADMIN_PASSWORD` en `.env` y vuelve a ejecutar el instalador.
+Para cambiar la contraseña: edita `ADMIN_PASSWORD` en `.env` y vuelve a ejecutar el instalador.
+
+Si cambias `ADMIN_USER`, se crea un administrador nuevo con ese nombre; el anterior sigue existiendo y se puede desactivar desde *Seguridad → Usuarios*.
 
 ## Actualizar
 
