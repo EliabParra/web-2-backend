@@ -10,7 +10,7 @@ export namespace User {
     export type Entity = {
         user_id: number
         user_na: string
-        user_pw: string
+        user_pw?: string
         user_act: boolean
         profile_ids?: number[]
         user_created_dt?: string | Date
