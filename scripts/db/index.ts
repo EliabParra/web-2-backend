@@ -4,6 +4,7 @@
  */
 import 'dotenv/config'
 import colors from 'colors'
+import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -37,7 +38,10 @@ const PUBLIC_AUTH_METHODS = [
 
 async function registerBOs(db: Database, boRoot: string, security: SecurityConfig) {
     const registrar = new BORegistrar(db, boRoot)
-    await registrar.registerAll({ profileId: security.adminProfileId || 1, txStart: security.txStart })
+    // Pinned tx numbers keep fresh installs and updates on the same numbers as the frontend.
+    const txMapPath = path.join(__dirname, 'tx-map.json')
+    const txMap = fs.existsSync(txMapPath) ? JSON.parse(fs.readFileSync(txMapPath, 'utf8')) : undefined
+    await registrar.registerAll({ profileId: security.adminProfileId || 1, txStart: security.txStart, txMap })
     if (security.seedPublicAuthPerms) {
         await registrar.grantMethods(security.publicProfileId || 1, 'Auth', PUBLIC_AUTH_METHODS)
     }

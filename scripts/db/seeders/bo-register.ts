@@ -83,6 +83,8 @@ export class BORegistrar {
     async registerAll(options: {
         profileId: number
         txStart?: number
+        /** Pinned "Object.method" -> tx numbers; when given, every method must be listed. */
+        txMap?: Record<string, number>
     }): Promise<{ registered: number; bos: string[] }> {
         console.log(`\n📦 Registering Business Objects...`.cyan)
 
@@ -117,7 +119,8 @@ export class BORegistrar {
             const objectId = await this.upsertObject(bo.objectName)
 
             for (const method of bo.methods) {
-                const { methodId, tx } = await this.upsertMethod(objectId, method.name, nextTx)
+                const pinnedTx = options.txMap ? this.pinnedTx(options.txMap, bo.objectName, method.name) : nextTx
+                const { methodId, tx } = await this.upsertMethod(objectId, method.name, pinnedTx)
                 await this.grantPermission(options.profileId, methodId)
                 registered++
                 nextTx = Math.max(nextTx + 1, tx + 1)
@@ -129,6 +132,15 @@ export class BORegistrar {
 
         console.log(`\n   📊 Total methods registered: ${registered}`.gray)
         return { registered, bos: boNames }
+    }
+
+    private pinnedTx(txMap: Record<string, number>, objectName: string, methodName: string): number {
+        const key = `${objectName}.${methodName}`
+        if (txMap[key] !== undefined) return txMap[key]
+        const next = Math.max(...Object.values(txMap)) + 1
+        throw new Error(
+            `${key} has no transaction number in scripts/db/tx-map.json. Add "${key}": ${next} there and to the frontend src/api/tx.ts.`
+        )
     }
 
     /**
