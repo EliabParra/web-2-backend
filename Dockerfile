@@ -1,47 +1,40 @@
-# --- Etapa 1: Builder (Constructor) ---
+# --- Stage 1: Frontend build (named build context "frontend", see docker-compose.prod.yml) ---
+FROM node:20-alpine AS web
+WORKDIR /web
+COPY --from=frontend package.json package-lock.json ./
+RUN npm ci
+COPY --from=frontend . .
+RUN npm run build
+
+# --- Stage 2: Backend builder (also used by the dev compose and the prod "migrate" job) ---
 FROM node:20-alpine AS builder
-
-# Habilitamos Corepack para tener pnpm disponible
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 WORKDIR /app
-
-# Copiamos los archivos de definición de dependencias
-# Incluimos pnpm-lock.yaml si existe
-COPY package.json pnpm-lock.yaml* ./
-
-# Instalamos TODAS las dependencias
+COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-
-# Copiamos el resto del código fuente
 COPY . .
-
-# Construimos la aplicación
 RUN pnpm run build
 
-# --- Etapa 2: Runner (Ejecución en Producción) ---
+# --- Stage 3: Production runner ---
 FROM node:20-alpine AS runner
-
-# Habilitamos Corepack también en la etapa final
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+    NODE_ENV=production \
+    APP_HOST=0.0.0.0 \
+    APP_PORT=3000 \
+    APP_FRONTEND_MODE=spa \
+    SPA_DIST_PATH=/app/frontend
+RUN corepack enable
 WORKDIR /app
-
-ENV NODE_ENV=production
-
-# Copiamos archivos de dependencias
-COPY package.json pnpm-lock.yaml* ./
-
-# Instalamos SOLO dependencias de producción
+COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
-
-# Copiamos los artefactos construidos
 COPY --from=builder /app/dist ./dist
+COPY --from=web /web/dist ./frontend
 
-# Seguridad: Usuario no-root
 RUN addgroup -S toproc && adduser -S toproc -G toproc
 USER toproc
 
+# Runtime paths (BO/, src/config, src/locales) are resolved from the cwd, so run from dist/
+WORKDIR /app/dist
 EXPOSE 3000
-
-CMD ["node", "dist/src/index.js"]
+CMD ["node", "src/index.js"]

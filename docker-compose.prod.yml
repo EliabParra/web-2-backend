@@ -1,0 +1,82 @@
+# Production stack: docker compose -f docker-compose.prod.yml up -d --build
+# Secrets and knobs come from a .env next to this file (written by install.sh / install.ps1):
+#   ADMIN_USER, ADMIN_PASSWORD, PGPASSWORD, SESSION_SECRET, BIND_ADDRESS, HTTP_PORT
+name: toproc
+
+x-app-env: &app-env
+    NODE_ENV: production
+    LOG_LEVEL: info
+    PGHOST: db
+    PGPORT: 5432
+    PGUSER: toproc
+    PGDATABASE: toproc
+    PGPASSWORD: ${PGPASSWORD:?Set PGPASSWORD in .env}
+    SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+    SESSION_SCHEMA: security
+    SESSION_TABLE: sessions
+    SESSION_COOKIE_SECURE: 'false'
+    AUTH_PUBLIC_PROFILE_ID: 1
+    AUTH_SESSION_PROFILE_ID: 2
+    AUTH_REQUIRE_EMAIL_VERIFICATION: 'false'
+    CORS_ENABLED: 'false'
+
+services:
+    db:
+        image: postgres:18-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: toproc
+            POSTGRES_DB: toproc
+            POSTGRES_PASSWORD: ${PGPASSWORD:?Set PGPASSWORD in .env}
+        volumes:
+            - db_data:/var/lib/postgresql
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U toproc -d toproc']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    # One-shot job: schema (DDL) + seed data (DML) + admin user + BO permissions. Safe to re-run.
+    migrate:
+        build:
+            context: .
+            target: builder
+        environment:
+            <<: *app-env
+            ADMIN_USER: ${ADMIN_USER:-admin}
+            ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+        command:
+            - sh
+            - -c
+            - >-
+                node --import tsx scripts/db/index.ts sync --yes &&
+                node --import tsx scripts/db/index.ts seed --yes
+                --seedAdmin --adminUser "$$ADMIN_USER" --adminPassword "$$ADMIN_PASSWORD"
+                --profileId 3 --registerBo --txStart 1000
+        depends_on:
+            db:
+                condition: service_healthy
+
+    api:
+        build:
+            context: .
+            target: runner
+            additional_contexts:
+                frontend: ${FRONTEND_DIR:-../web-2-frontend}
+        restart: unless-stopped
+        environment: *app-env
+        ports:
+            # local mode: 127.0.0.1 (this PC only); server mode: 0.0.0.0 (whole LAN)
+            - '${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-3000}:3000'
+        healthcheck:
+            test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/health']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 20s
+        depends_on:
+            migrate:
+                condition: service_completed_successfully
+
+volumes:
+    db_data:
