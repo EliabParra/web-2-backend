@@ -1,18 +1,11 @@
-<div align="center">
+# Control de Laboratorio
 
-<picture>
-	<source media="(prefers-color-scheme: dark)" srcset="assets/branding/toproc-logo.light.svg" />
-	<img alt="Toproc" src="assets/branding/toproc-logo.dark.svg" width="150" />
-</picture>
-
-_**Inventario de componentes** sobre **Toproc**, un backend orientado a transacciones._
+_Inventario de componentes y equipos del laboratorio, construido sobre **[Toproc](#cómo-funciona-framework-toproc)**, un framework backend orientado a transacciones._
 
 [![Node.js (ESM)](https://img.shields.io/badge/Node.js-20+-3c873a?style=for-the-badge)](#)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge)](#)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-336791?style=for-the-badge)](#)
 [![Licencia: MIT](https://img.shields.io/badge/License-MIT-2f6feb?style=for-the-badge)](LICENSE)
-
-</div>
 
 Sistema para gestionar el inventario de componentes y equipos del laboratorio: inventario, ubicaciones, préstamos y devoluciones, reportes, notificaciones y administración de usuarios y permisos.
 
@@ -59,9 +52,9 @@ npm install
 npm run dev                   # http://localhost:5173
 ```
 
-La instalación de producción (`~/toproc`) y el entorno de desarrollo pueden convivir en la misma PC. Lo único que comparten es el puerto 3000, así que no corras los dos a la vez.
+La instalación de producción (`~/control-lab`) y el entorno de desarrollo pueden convivir en la misma PC. Lo único que comparten es el puerto 3000, así que no corras los dos a la vez.
 
-## Cómo funciona
+## Cómo funciona (framework Toproc)
 
 Toproc no expone endpoints REST por recurso: todo pasa por una sola ruta, `POST /toProccess`, con un número de transacción y sus parámetros:
 

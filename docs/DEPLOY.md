@@ -1,4 +1,4 @@
-# Desplegar Toproc
+# Desplegar Control de Laboratorio
 
 Un solo instalador levanta toda la aplicación (base de datos, backend y frontend) con Docker. No hace falta descargar los repositorios antes: el instalador los descarga solo. Los datos viven en un volumen de Docker y sobreviven a reinicios, apagados y actualizaciones.
 
@@ -35,35 +35,35 @@ Al final el instalador muestra la URL de la aplicación.
 
 ### Instalar sin preguntas
 
-Para automatizar, define el modo con `TOPROC_MODE` (`local` o `server`):
+Para automatizar, define el modo con `LAB_MODE` (`local` o `server`):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.sh | TOPROC_MODE=server bash
+curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.sh | LAB_MODE=server bash
 ```
 
 ```powershell
-$env:TOPROC_MODE='server'; irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps1 | iex
+$env:LAB_MODE='server'; irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps1 | iex
 ```
 
-Si ya estaba instalado, pasar `TOPROC_MODE` cambia el modo guardado en `.env`.
+Si ya estaba instalado, pasar `LAB_MODE` cambia el modo guardado en `.env`.
 
 Otras variables opcionales:
 
 | Variable | Qué hace | Por defecto |
 | --- | --- | --- |
-| `TOPROC_DIR` | Carpeta de instalación | `~/toproc` |
-| `TOPROC_BRANCH` | Rama de ambos repositorios | `master` |
+| `LAB_DIR` | Carpeta de instalación | `~/control-lab` |
+| `LAB_BRANCH` | Rama de ambos repositorios | `master` |
 | `HTTP_PORT` | Puerto | 3000 (PC) / 80 (servidor) |
 
-Para probar una rama antes de mergearla, usa la URL del script de esa rama y `TOPROC_BRANCH`. La rama tiene que existir en GitHub en los dos repositorios:
+Para probar una rama antes de mergearla, usa la URL del script de esa rama y `LAB_BRANCH`. La rama tiene que existir en GitHub en los dos repositorios:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/feat/lan-deploy/install.sh | TOPROC_BRANCH=feat/lan-deploy bash
+curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/feat/lan-deploy/install.sh | LAB_BRANCH=feat/lan-deploy bash
 ```
 
 ## Iniciar sesión
 
-Usuario `admin`. La contraseña se genera en la primera instalación, se muestra una vez y queda guardada en `~/toproc/.env` (`ADMIN_PASSWORD`).
+Usuario `admin`. La contraseña se genera en la primera instalación, se muestra una vez y queda guardada en `~/control-lab/.env` (`ADMIN_PASSWORD`).
 
 Para cambiarla: edita `ADMIN_PASSWORD` en `.env` y vuelve a ejecutar el instalador.
 
@@ -73,7 +73,7 @@ Vuelve a ejecutar el instalador. Descarga el código nuevo, reconstruye y aplica
 
 ## Comandos del día a día
 
-Ejecútalos desde `~/toproc` (en Linux usa `sudo` si tu usuario no está en el grupo `docker`):
+Ejecútalos desde `~/control-lab` (en Linux usa `sudo` si tu usuario no está en el grupo `docker`):
 
 ```bash
 C="docker compose --env-file .env -f web-2-backend/docker-compose.prod.yml"
@@ -112,6 +112,6 @@ $C start api
 
 `docker-compose.prod.yml` levanta tres servicios:
 
-- `db`: PostgreSQL 18, volumen `toproc-prod_db_data`, no expuesto a la red.
+- `db`: PostgreSQL 18, volumen `control-lab_db_data`, no expuesto a la red.
 - `migrate`: tarea de una sola vez. Aplica el esquema y los datos iniciales, crea el admin (perfil 3, `super_admin`), registra todos los métodos de los BO desde la tx 1000 y da al perfil público (1) los métodos de registro y recuperación de cuenta. Se puede ejecutar varias veces sin duplicar nada.
 - `api`: el backend; también sirve el frontend compilado en el mismo puerto. Se reinicia solo.

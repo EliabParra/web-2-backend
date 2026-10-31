@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Toproc installer for Linux. Run it again to update: .env and the database are kept.
-#   TOPROC_MODE   local (this PC only) | server (reachable from the LAN). Asked on first install if unset.
-#   TOPROC_DIR    install folder (default ~/toproc)
-#   TOPROC_BRANCH branch of both repos (default master)
+# Control de Laboratorio installer for Linux. Run it again to update: .env and the database are kept.
+#   LAB_MODE   local (this PC only) | server (reachable from the LAN). Asked on first install if unset.
+#   LAB_DIR    install folder (default ~/control-lab)
+#   LAB_BRANCH branch of both repos (default master)
 #   HTTP_PORT     default 3000 local, 80 server
 set -euo pipefail
 
-DIR=${TOPROC_DIR:-$HOME/toproc}
-BRANCH=${TOPROC_BRANCH:-master}
+DIR=${LAB_DIR:-$HOME/control-lab}
+BRANCH=${LAB_BRANCH:-master}
 ENV_FILE="$DIR/.env"
 REPOS="web-2-backend web-2-frontend"
 
-MODE=${TOPROC_MODE:-}
+MODE=${LAB_MODE:-}
 if [ -z "$MODE" ] && [ ! -f "$ENV_FILE" ] && { : </dev/tty; } 2>/dev/null; then
-    echo "¿Dónde vas a instalar Toproc?"
+    echo "¿Dónde vas a instalar Control de Laboratorio?"
     echo "  1) En esta PC (solo se usa desde aquí)"
     echo "  2) En un servidor (se usa desde otras PCs de la red)"
     read -r -p "Elige 1 o 2 [1]: " choice </dev/tty
@@ -23,7 +23,7 @@ fi
 case "${MODE:-local}" in
     local) BIND=127.0.0.1; PORT=${HTTP_PORT:-3000} ;;
     server) BIND=0.0.0.0; PORT=${HTTP_PORT:-80} ;;
-    *) echo "TOPROC_MODE debe ser 'local' o 'server'" >&2; exit 1 ;;
+    *) echo "LAB_MODE debe ser 'local' o 'server'" >&2; exit 1 ;;
 esac
 
 SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
@@ -69,4 +69,4 @@ $DOCKER compose --env-file "$ENV_FILE" -f "$DIR/web-2-backend/docker-compose.pro
 PORT=$(grep '^HTTP_PORT=' "$ENV_FILE" | cut -d= -f2)
 HOST=localhost
 grep -q '^BIND_ADDRESS=0.0.0.0' "$ENV_FILE" && HOST=$( (hostname -I 2>/dev/null || true) | awk '{print $1}'); HOST=${HOST:-<ip-del-servidor>}
-echo "==> Toproc está corriendo: http://$HOST:$PORT  (credenciales en $ENV_FILE)"
+echo "==> Control de Laboratorio está corriendo: http://$HOST:$PORT  (credenciales en $ENV_FILE)"

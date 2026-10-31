@@ -1,4 +1,4 @@
-# Desarrollar Toproc
+# Desarrollar Control de Laboratorio
 
 Postgres corre en Docker; el backend y el frontend corren en tu máquina con recarga automática.
 

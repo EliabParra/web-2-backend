@@ -1,17 +1,17 @@
-# Toproc installer for Windows. Run it again to update: .env and the database are kept.
-#   $env:TOPROC_MODE   local (this PC only) | server (reachable from the LAN). Asked on first install if unset.
-#   $env:TOPROC_DIR    install folder (default $HOME\toproc)
-#   $env:TOPROC_BRANCH branch of both repos (default master)
+# Control de Laboratorio installer for Windows. Run it again to update: .env and the database are kept.
+#   $env:LAB_MODE   local (this PC only) | server (reachable from the LAN). Asked on first install if unset.
+#   $env:LAB_DIR    install folder (default $HOME\control-lab)
+#   $env:LAB_BRANCH branch of both repos (default master)
 #   $env:HTTP_PORT     default 3000 local, 80 server
 $ErrorActionPreference = 'Stop'
 
-$Dir = if ($env:TOPROC_DIR) { $env:TOPROC_DIR } else { Join-Path $HOME 'toproc' }
-$Branch = if ($env:TOPROC_BRANCH) { $env:TOPROC_BRANCH } else { 'master' }
+$Dir = if ($env:LAB_DIR) { $env:LAB_DIR } else { Join-Path $HOME 'control-lab' }
+$Branch = if ($env:LAB_BRANCH) { $env:LAB_BRANCH } else { 'master' }
 $EnvFile = Join-Path $Dir '.env'
 
-$Mode = $env:TOPROC_MODE
+$Mode = $env:LAB_MODE
 if (-not $Mode -and -not (Test-Path $EnvFile)) {
-    Write-Host '¿Dónde vas a instalar Toproc?'
+    Write-Host '¿Dónde vas a instalar Control de Laboratorio?'
     Write-Host '  1) En esta PC (solo se usa desde aquí)'
     Write-Host '  2) En un servidor (se usa desde otras PCs de la red)'
     if ((Read-Host 'Elige 1 o 2 [1]') -eq '2') { $Mode = 'server' }
@@ -20,7 +20,7 @@ if (-not $Mode -and -not (Test-Path $EnvFile)) {
 switch ($(if ($Mode) { $Mode } else { 'local' })) {
     'local' { $Bind = '127.0.0.1'; $Port = if ($env:HTTP_PORT) { $env:HTTP_PORT } else { '3000' } }
     'server' { $Bind = '0.0.0.0'; $Port = if ($env:HTTP_PORT) { $env:HTTP_PORT } else { '80' } }
-    default { throw "TOPROC_MODE debe ser 'local' o 'server'" }
+    default { throw "LAB_MODE debe ser 'local' o 'server'" }
 }
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
@@ -73,4 +73,4 @@ $HostName = 'localhost'
 if ($Settings.BIND_ADDRESS -eq '0.0.0.0') {
     $HostName = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object -First 1).IPAddress
 }
-Write-Host "==> Toproc está corriendo: http://${HostName}:$($Settings.HTTP_PORT)  (credenciales en $EnvFile)"
+Write-Host "==> Control de Laboratorio está corriendo: http://${HostName}:$($Settings.HTTP_PORT)  (credenciales en $EnvFile)"
