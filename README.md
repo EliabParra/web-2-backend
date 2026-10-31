@@ -44,7 +44,7 @@ cp .env.example .env          # ajusta los valores indicados en docs/DEV.md
 docker compose up -d db
 pnpm install
 pnpm run db sync --yes
-pnpm run db seed --yes --seedAdmin --adminUser admin --adminPassword admin123 --profileId 3 --registerBo --txStart 1000 --seedPublicAuthPerms --publicProfileId 1
+pnpm run db seed --yes --seedAdmin --adminUser admin --adminPassword admin123 --profileId 3 --registerBo --seedPublicAuthPerms --publicProfileId 1
 pnpm run dev                  # API en http://localhost:3000
 
 # Frontend (en web-2-frontend)
@@ -68,7 +68,7 @@ Toproc no expone endpoints REST por recurso: todo pasa por una sola ruta, `POST 
 - **Auditoría**: cada intento queda registrado con quién, cuándo y con qué parámetros.
 - **Sesiones** en PostgreSQL y protección CSRF (`GET /csrf` devuelve el token, que se envía en `X-CSRF-Token`).
 
-Los números de transacción se asignan al registrar los BOs (en orden alfabético, desde la 1000). El frontend los tiene en `src/api/tx.ts`.
+Cada método de BO tiene un número de transacción fijo en `scripts/db/tx-map.json`; el frontend usa los mismos en `src/api/tx.ts`. Para agregar métodos o cambiar el esquema sin romper instalaciones existentes, ver [docs/DEV.md](docs/DEV.md#cambios-que-llegan-a-instalaciones-existentes).
 
 ## Scripts
 

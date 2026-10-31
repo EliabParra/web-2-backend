@@ -73,7 +73,7 @@ Si cambias `ADMIN_USER`, se crea un administrador nuevo con ese nombre; el anter
 
 ## Actualizar
 
-Vuelve a ejecutar el instalador. Descarga el código nuevo, reconstruye y aplica las migraciones pendientes. Se conservan `.env` y la base de datos.
+Vuelve a ejecutar el instalador. Descarga el código nuevo de `master` (backend y frontend), reconstruye y aplica solo las migraciones pendientes. Se conservan `.env` y la base de datos. Antes de una actualización importante, conviene hacer un respaldo (ver abajo).
 
 ## Comandos del día a día
 
@@ -117,5 +117,5 @@ $C start api
 `docker-compose.prod.yml` levanta tres servicios:
 
 - `db`: PostgreSQL 18, volumen `control-lab_db_data`, no expuesto a la red.
-- `migrate`: tarea de una sola vez. Aplica el esquema y los datos iniciales, crea el admin (perfil 3, `super_admin`), registra todos los métodos de los BO desde la tx 1000 y da al perfil público (1) los métodos de registro y recuperación de cuenta. Se puede ejecutar varias veces sin duplicar nada.
+- `migrate`: tarea de una sola vez. Aplica el esquema y los datos iniciales, crea el admin (perfil 3, `super_admin`), registra todos los métodos de los BO con los números fijos de `scripts/db/tx-map.json` y da al perfil público (1) los métodos de registro y recuperación de cuenta. Se puede ejecutar varias veces sin duplicar nada.
 - `api`: el backend; también sirve el frontend compilado en el mismo puerto. Se reinicia solo.
