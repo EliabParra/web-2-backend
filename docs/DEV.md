@@ -56,7 +56,7 @@ Los números de transacción del frontend están en `src/api/tx.ts` y deben coin
 
 ## Cambios que llegan a instalaciones existentes
 
-Las instalaciones se actualizan volviendo a ejecutar el instalador: se descarga el código de `master`, se reconstruye y `migrate` aplica solo lo nuevo. Los datos se conservan si se respetan dos reglas:
+Las instalaciones se actualizan **ejecutando el mismo comando de instalación** (ver [DEPLOY.md](DEPLOY.md#instalar)): se descarga el código de `master`, se reconstruye y `migrate` aplica solo lo nuevo. Los datos se conservan si se respetan dos reglas:
 
 1. **Esquema de base de datos:** cada cambio va en un archivo **nuevo** en `migrations/ddl/` (por ejemplo `91_business_item_brand.ts`). Nunca edites una migración que ya está en `master`: las instalaciones existentes ya la aplicaron y no la vuelven a ejecutar. Lo mismo vale para los datos iniciales en `migrations/dml/`.
 2. **Métodos de BO nuevos:** cada método necesita un número de transacción fijo. Agrégalo en `scripts/db/tx-map.json` con el siguiente número libre (el mayor + 1) y el mismo número en `src/api/tx.ts` del frontend. Nunca cambies ni reutilices un número existente. Si te olvidas, `pnpm test` y `migrate` fallan indicando qué línea falta.

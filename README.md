@@ -30,9 +30,19 @@ curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/ins
 irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps1 | iex
 ```
 
-Al terminar muestra la URL y la contraseña del usuario `admin`. Para actualizar, se vuelve a ejecutar el mismo comando: los datos se conservan.
+Al terminar muestra la URL y las credenciales del administrador que elegiste.
 
 Modos, respaldos, comandos útiles y problemas comunes: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
+## Actualizar
+
+Para actualizar una instalación, **se ejecuta el mismo comando de instalación**. El instalador descarga lo último de `master` (backend y frontend), reconstruye y aplica solo las migraciones nuevas. Los datos y el `.env` se conservan.
+
+Para que eso siga funcionando, quien suba cambios a `master` tiene que respetar estas reglas (detalle en [docs/DEV.md](docs/DEV.md#cambios-que-llegan-a-instalaciones-existentes)):
+
+1. **Cambios en la base de datos:** siempre en un archivo de migración **nuevo** (`migrations/ddl/` o `migrations/dml/`). Nunca editar una migración que ya está en `master`.
+2. **Métodos nuevos en un BO:** agregar su número de transacción en `scripts/db/tx-map.json` y el mismo número en `src/api/tx.ts` del frontend. Nunca cambiar ni reutilizar un número existente.
+3. **Antes de subir:** `pnpm run verify` en el backend y `npm run build` en el frontend.
 
 ## Desarrollar
 
