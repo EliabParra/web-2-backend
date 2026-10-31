@@ -61,7 +61,12 @@ export class SessionManager implements types.ISessionService {
             await this.updateUserStats(user.user_id)
             await this.auditLoginSuccess(req, user)
 
-            return { status: 'success', user, msg: this.i18n.messages.success.login }
+            const { user_pw: _passwordHash, ...publicUser } = user
+            return {
+                status: 'success',
+                user: publicUser,
+                msg: this.i18n.messages.success.login,
+            }
         } catch (error) {
             this.logSystemError(req, error)
             return {

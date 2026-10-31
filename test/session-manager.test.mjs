@@ -265,3 +265,25 @@ test('createSession handles error gracefully and logs', async () => {
     assert.equal(result.error.code, 500)
     assert.equal(logCalled, true)
 })
+
+test('authenticate success response never includes the password hash', async () => {
+    const { default: bcrypt } = await import('bcryptjs')
+    const user_pw = await bcrypt.hash('password123', 4)
+    const deps = createMockDeps({
+        db: {
+            query: async () => ({
+                rows: [{ user_id: 1, user_na: 'admin', user_em: null, user_pw, profile_ids: [3] }],
+            }),
+        },
+    })
+    const sm = new SessionManager(deps)
+
+    const result = await sm.authenticate({
+        body: { identifier: 'admin', password: 'password123' },
+        session: {},
+    })
+
+    assert.equal(result.status, 'success')
+    assert.equal(result.user.user_na, 'admin')
+    assert.equal('user_pw' in result.user, false)
+})
