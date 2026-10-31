@@ -51,6 +51,8 @@ Unlike traditional MVC frameworks, Toproc does not expose resources (REST Endpoi
 
 ## 🚀 Quickstart
 
+> **Deploy or develop the app?** See [docs/DEPLOY.md](docs/DEPLOY.md) (one-command install, local or LAN server) and [docs/DEV.md](docs/DEV.md) (development flow).
+
 ### 1. Requirements
 
 - Node.js 20+
