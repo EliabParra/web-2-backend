@@ -39,7 +39,7 @@ export const en = {
             unauthorized: { msg: 'You are not authorized to perform this action', code: 401 },
             permissionDenied: {
                 msg: "You don't have permission to perform this action",
-                code: 401,
+                code: 403,
             },
             invalidToken: { msg: 'Invalid token', code: 401 },
             expiredToken: { msg: 'Expired token', code: 401 },

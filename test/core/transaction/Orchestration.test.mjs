@@ -85,6 +85,7 @@ describe('Security & Orchestration Core', () => {
 
             const res = await orchestrator.execute(100, context, {})
             assert.equal(res.code, 403)
+            assert.equal(res.msg, 'errors.client.permissionDenied')
         })
 
         it('execute() answers 401 when an anonymous caller is denied', async () => {

@@ -78,7 +78,7 @@ export class TransactionOrchestrator {
         if (!this.auth.isAuthorized(context.profileIds, objectName, methodName)) {
             await this.auditLog(context, 'ACCESS_DENIED', route)
             if (context.userId == null) return this.errorResponse('errors.client.login', 401)
-            return this.errorResponse('auth.noPrivileges', 403)
+            return this.errorResponse('errors.client.permissionDenied', 403)
         }
 
         // 4. Ejecución

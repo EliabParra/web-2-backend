@@ -39,7 +39,7 @@ export const es = {
             alreadyRegistered: { msg: 'Ya está registrado', code: 401 },
             unknown: { msg: 'Error desconocido', code: 500 },
             unauthorized: { msg: 'No estas autorizado para realizar esta acción', code: 401 },
-            permissionDenied: { msg: 'No tienes permiso para realizar esta acción', code: 401 },
+            permissionDenied: { msg: 'No tienes permiso para realizar esta acción', code: 403 },
             invalidToken: { msg: 'Token inválido', code: 401 },
             expiredToken: { msg: 'Token expirado', code: 401 },
             usernameOrPasswordIncorrect: {
