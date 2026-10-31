@@ -5,160 +5,99 @@
 	<img alt="Toproc" src="assets/branding/toproc-logo.dark.svg" width="150" />
 </picture>
 
-_**ToProccess core**: tx-driven secure dispatch backend._
+_**Inventario de componentes** sobre **Toproc**, un backend orientado a transacciones._
 
-[![Node.js (ESM)](https://img.shields.io/badge/Node.js-ESM-3c873a?style=for-the-badge)](#)
+[![Node.js (ESM)](https://img.shields.io/badge/Node.js-20+-3c873a?style=for-the-badge)](#)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge)](#)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-required-336791?style=for-the-badge)](#)
-[![Tests](https://img.shields.io/badge/Tests-319%20passing-2f6feb?style=for-the-badge)](#)
-[![CI](https://img.shields.io/github/actions/workflow/status/EliabParra/toproc/ci.yml?branch=master&style=for-the-badge)](https://github.com/EliabParra/toproc/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-2f6feb?style=for-the-badge)](LICENSE)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-336791?style=for-the-badge)](#)
+[![Licencia: MIT](https://img.shields.io/badge/License-MIT-2f6feb?style=for-the-badge)](LICENSE)
 
 </div>
 
-**Español:** ver [README.es.md](README.es.md)
+Sistema para gestionar el inventario de componentes y equipos del laboratorio: inventario, ubicaciones, préstamos y devoluciones, reportes, notificaciones y administración de usuarios y permisos.
 
-Toproc is a modern, **Transaction-Oriented** backend architecture designed for applications requiring high security, granular traceability, and "Zero-Magic".
+El sistema tiene dos repositorios:
 
-Unlike traditional MVC frameworks, Toproc does not expose resources (REST Endpoints), but **Business Intents**.
+- **[web-2-backend](https://github.com/EliabParra/web-2-backend)** (este): API, base de datos, instaladores y documentación de despliegue.
+- **[web-2-frontend](https://github.com/EliabParra/web-2-frontend)**: interfaz web (React). En producción la compila y la sirve este backend.
 
-## ✨ Key Features
+## Instalar
 
-### 🛡️ Security by Design (Transaction-Oriented)
+Un solo comando instala todo (Docker incluido si falta), sin descargar los repositorios antes. La primera vez pregunta si se instala **en esta PC** o **en un servidor** de la red.
 
-- **Single Entry Point**: All traffic flows through `POST /toProccess`.
-- **Deny by Default**: If a Transaction (e.g., `1001`) is not mapped and authorized in DB, it doesn't exist.
-- **Granular Audit**: We know exactly _who_, _when_, and _with what_ parameters attempted each action.
-- **Dynamic Profile Management**: Menus and permissions are managed dynamically via Database with granular Profile assignments (Subsystems, Menus, Options).
-
-### 🧩 Robust Architecture & DI
-
-- **TypeScript Strict**: Static typing throughout the lifecycle (Zod -> Service -> Repository).
-- **Dependency Injection**: Business Objects (`BO`) receive their dependencies (`db`, `email`, `log`) via `BOService` base class, facilitating unit testing.
-- **Smart Abstractions**:
-    - `BaseBO`: Handles validation/execution flow (`.exec()`).
-    - `CrudBO`: Auto-implements standard CRUD operations.
-    - `BOService`: Provides typed access to core resources.
-- **Zod Deep Integration**: Input validation, `.env` typing, and automatic sanitization.
-
-### 🔋 "Batteries Included"
-
-- **Full Auth Module**: Login, Register, Email Verification (OTP), Password Reset, and CSRF Protection.
-- **Ready Infrastructure**: Postgres Sessions, Rate Limiting, Secure CORS, and Structured Logs (JSON/Text).
-- **CLI Tools**: Code generators (`pnpm run bo`), DB initializers, and maintenance scripts.
-
----
-
-## 🚀 Quickstart
-
-> **Deploy or develop the app?** See [docs/DEPLOY.md](docs/DEPLOY.md) (one-command install, local or LAN server) and [docs/DEV.md](docs/DEV.md) (development flow).
-
-### 1. Requirements
-
-- Node.js 20+
-- PostgreSQL 14+
-
-### 2. Installation
+**Linux**
 
 ```bash
-git clone ...
+curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.sh | bash
+```
+
+**Windows** (PowerShell como Administrador)
+
+```powershell
+irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps1 | iex
+```
+
+Al terminar muestra la URL y la contraseña del usuario `admin`. Para actualizar, se vuelve a ejecutar el mismo comando: los datos se conservan.
+
+Modos, respaldos, comandos útiles y problemas comunes: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
+## Desarrollar
+
+Resumen (detalle en **[docs/DEV.md](docs/DEV.md)**):
+
+```bash
+# Backend (este repositorio)
+cp .env.example .env          # ajusta los valores indicados en docs/DEV.md
+docker compose up -d db
 pnpm install
+pnpm run db sync --yes
+pnpm run db seed --yes --seedAdmin --adminUser admin --adminPassword admin123 --profileId 3 --registerBo --txStart 1000 --seedPublicAuthPerms --publicProfileId 1
+pnpm run dev                  # API en http://localhost:3000
+
+# Frontend (en web-2-frontend)
+npm install
+npm run dev                   # http://localhost:5173
 ```
 
-### 3. Configuration
+La instalación de producción (`~/toproc`) y el entorno de desarrollo pueden convivir en la misma PC. Lo único que comparten es el puerto 3000, así que no corras los dos a la vez.
 
-Copy the example file and adjust your Postgres credentials.
+## Cómo funciona
 
-```bash
-cp .env.example .env
+Toproc no expone endpoints REST por recurso: todo pasa por una sola ruta, `POST /toProccess`, con un número de transacción y sus parámetros:
+
+```json
+{ "tx": 1034, "params": {} }
 ```
 
-> **Note**: System won't start if it detects invalid config (Zod Validation).
+- **Denegado por defecto**: una transacción que no está registrada y autorizada en la base de datos no existe.
+- **Business Objects** (`BO/`): cada módulo (Inventory, Loan, User…) tiene su BO con validación Zod, servicio, repositorio y consultas SQL.
+- **Permisos por perfil**: `1` público, `2` sesión, `3` super_admin.
+- **Auditoría**: cada intento queda registrado con quién, cuándo y con qué parámetros.
+- **Sesiones** en PostgreSQL y protección CSRF (`GET /csrf` devuelve el token, que se envía en `X-CSRF-Token`).
 
-### 4. Initialization (Zero-to-Hero)
+Los números de transacción se asignan al registrar los BOs (en orden alfabético, desde la 1000). El frontend los tiene en `src/api/tx.ts`.
 
-If you have Docker installed, you can initialize a completely isolated environment (Database + Adminer Web UI) instantly:
+## Scripts
 
-```bash
-pnpm run dx:init
-```
+| Script | Qué hace |
+| :-- | :-- |
+| `pnpm run dev` | Servidor de desarrollo con recarga automática. |
+| `pnpm run verify` | Verificación completa: typecheck, build, smoke test y tests. |
+| `pnpm test` | Tests (Node test runner). |
+| `pnpm run db` | CLI de base de datos (`sync`, `seed`, `dml`, `bo`…). |
+| `pnpm run bo <cmd>` | CLI para crear y sincronizar BOs. |
+| `pnpm run config:check` | Valida el `.env` sin arrancar el servidor. |
+| `pnpm run hashpw` | Hashea una contraseña manualmente. |
+| `pnpm run docs:gen` | Genera la documentación de la API (TypeDoc). |
 
-Once the database is up, you can generate the system tables using the interactive **Database CLI**:
+## Documentación del framework
 
-```bash
-pnpm run db
-```
+- Primeros pasos: [estructura](docs/00-Introduction/FILE_STRUCTURE.es.md), [variables de entorno](docs/01-Getting-Started/ENVIRONMENT.es.md), [CLI](docs/01-Getting-Started/CLI_TOOLS.es.md), [crear un BO](docs/05-Guides/CREATE_NEW_MODULE.es.md)
+- Arquitectura: [seguridad y permisos](docs/02-Architecture/SECURITY_SYSTEM.es.md), [AppServer](docs/02-Architecture/APPSERVER_CORE.es.md), [inyección de dependencias](docs/02-Architecture/DEPENDENCY_INJECTION.es.md), [sesiones](docs/02-Architecture/SESSIONS.es.md)
+- Conceptos: [autenticación](docs/03-Core-Concepts/AUTH_MODULE.es.md), [validación](docs/03-Core-Concepts/VALIDATION_SYSTEM.es.md), [errores](docs/03-Core-Concepts/EXCEPTION_STRATEGY.es.md), [Business Objects](docs/03-Core-Concepts/BUSINESS_OBJECTS.es.md)
+- Infraestructura: [base de datos](docs/04-Infrastructure/DATABASE_LAYER.es.md), [logs y auditoría](docs/04-Infrastructure/LOGGING_SYSTEM.es.md), [email](docs/04-Infrastructure/EMAIL_SERVICE.es.md)
+- [Referencia de la API](docs/06-API-Reference/API_REFERENCE.es.md)
 
-_Select `Sync Code -> DB` followed by `Seed -> Seed System Profiles` and `Register BO methods`_
+## Licencia
 
-### 5. Start
-
-```bash
-pnpm run dev
-```
-
----
-
-## 📚 Master Documentation (EN)
-
-### 🚀 01. Getting Started
-
-- [Overview & Structure](docs/00-Introduction/FILE_STRUCTURE.en.md)
-- [Installation](docs/01-Getting-Started/MANUAL_INSTALLATION.en.md)
-- [Environment Config (.env)](docs/01-Getting-Started/ENVIRONMENT.en.md)
-- [Your First Business Object](docs/05-Guides/CREATE_NEW_MODULE.en.md)
-- [CLI Tools](docs/01-Getting-Started/CLI_TOOLS.en.md)
-
-### 🏛️ 02. Architecture
-
-- [Security & Permission System](docs/02-Architecture/SECURITY_SYSTEM.en.md)
-- [The AppServer (Core)](docs/02-Architecture/APPSERVER_CORE.en.md)
-- [Dependency Injection](docs/02-Architecture/DEPENDENCY_INJECTION.en.md)
-- [Session Management](docs/02-Architecture/SESSIONS.en.md)
-
-### 🧠 03. Core Concepts
-
-- [Authentication Module](docs/03-Core-Concepts/AUTH_MODULE.en.md)
-- [Validation System (Zod)](docs/03-Core-Concepts/VALIDATION_SYSTEM.en.md)
-- [Exception Strategy](docs/03-Core-Concepts/EXCEPTION_STRATEGY.en.md)
-- [Business Objects (BaseBO)](docs/03-Core-Concepts/BUSINESS_OBJECTS.en.md)
-
-### 🏗️ 04. Infrastructure
-
-- [Database Layer (Pg)](docs/04-Infrastructure/DATABASE_LAYER.en.md)
-- [Logging & Audit System](docs/04-Infrastructure/LOGGING_SYSTEM.en.md)
-- [Email Service](docs/04-Infrastructure/EMAIL_SERVICE.en.md)
-
-### 🔌 06. API Reference
-
-- [Messaging Standard](docs/06-API-Reference/API_REFERENCE.en.md)
-- [Endpoints & HTTP Codes](docs/06-API-Reference/API_REFERENCE.en.md)
-
-### 🎨 07. Frontend Adapters
-
-- [Adapter Pattern (General)](docs/07-Frontend-Adapters/ADAPTER_PATTERN.en.md)
-- [React Guide (Hooks)](docs/07-Frontend-Adapters/REACT_GUIDE.en.md)
-- [Angular Guide (Service)](docs/07-Frontend-Adapters/ANGULAR_GUIDE.en.md)
-- [Vue Guide (Composable)](docs/07-Frontend-Adapters/VUE_GUIDE.en.md)
-
----
-
-## 🛠️ Available Scripts
-
-| Script                  | Description                                    |
-| :---------------------- | :--------------------------------------------- |
-| `pnpm run dev`          | Development mode with `nodemon` (Hot Reload).  |
-| `pnpm start`            | Production mode (Runs `dist/index.js`).        |
-| `pnpm run verify`       | **Quality Gate**: Typecheck + Build + Tests.   |
-| `pnpm run db`           | Interactive DB CLI (sync, seed, introspect).   |
-| `pnpm run dx:init`      | Starts Dockerized environment completely.      |
-| `pnpm run config:check` | Validates `.env` file without starting server. |
-| `pnpm run bo <cmd>`     | BO CLI: `new`, `sync`, `list`.                 |
-| `pnpm run docs:gen`     | Generates API documentation (TypeDoc).         |
-| `pnpm run hashpw`       | Utility to manually hash passwords.            |
-
----
-
-## License
-
-MIT. See [LICENSE](LICENSE).
+MIT. Ver [LICENSE](LICENSE).

@@ -1,7 +1,7 @@
 # Production stack: docker compose -f docker-compose.prod.yml up -d --build
 # Secrets and knobs come from a .env next to this file (written by install.sh / install.ps1):
 #   ADMIN_USER, ADMIN_PASSWORD, PGPASSWORD, SESSION_SECRET, BIND_ADDRESS, HTTP_PORT
-name: toproc
+name: toproc-prod
 
 x-app-env: &app-env
     NODE_ENV: production

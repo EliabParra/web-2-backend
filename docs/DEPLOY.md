@@ -112,6 +112,6 @@ $C start api
 
 `docker-compose.prod.yml` levanta tres servicios:
 
-- `db`: PostgreSQL 18, volumen `toproc_db_data`, no expuesto a la red.
+- `db`: PostgreSQL 18, volumen `toproc-prod_db_data`, no expuesto a la red.
 - `migrate`: tarea de una sola vez. Aplica el esquema y los datos iniciales, crea el admin (perfil 3, `super_admin`), registra todos los métodos de los BO desde la tx 1000 y da al perfil público (1) los métodos de registro y recuperación de cuenta. Se puede ejecutar varias veces sin duplicar nada.
 - `api`: el backend; también sirve el frontend compilado en el mismo puerto. Se reinicia solo.
