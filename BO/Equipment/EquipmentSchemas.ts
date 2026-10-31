@@ -16,18 +16,18 @@ export const createEquipmentSchemas = (messages: EquipmentMessagesSet = Equipmen
         item_id: z.coerce.number(),
     }),
     getAll: z.object({
-        item_cod: z.coerce.number().optional(),
+        item_cod: z.string().trim().optional(),
         item_na: z.string().optional(),
         category_id: z.coerce.number().optional(),
     }),
     create: z.object({
-        item_cod: z.coerce.number().int().min(1, validation.code.min),
+        item_cod: z.string().trim().min(1, validation.code.min).max(50, validation.code.max),
         item_na: z.string().min(1, validation.name.required),
         category_id: z.coerce.number().int().min(1, validation.category.min),
     }),
     update: z.object({
         item_id: z.coerce.number(),
-        item_cod: z.coerce.number().int().optional(),
+        item_cod: z.string().trim().min(1, validation.code.min).max(50, validation.code.max).optional(),
         item_na: z.string().optional(),
         category_id: z.coerce.number().int().optional(),
     }),

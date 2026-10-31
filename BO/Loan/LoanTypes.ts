@@ -44,7 +44,7 @@ export namespace Loan {
         inventory_id: number
         movement_id: number
         item_id?: number
-        item_cod?: number
+        item_cod?: string
         item_na?: string
         location_id?: number
         location_de?: string
@@ -88,7 +88,7 @@ export namespace Loan {
         inventory_qt: number
         item_id: number
         item_na?: string
-        item_cod?: number
+        item_cod?: string
         category_type_id?: number
     }
 

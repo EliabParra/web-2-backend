@@ -22,7 +22,7 @@ export namespace Inventory {
 
         // Datos enriquecidos para reglas y vistas
         category_type_id?: number
-        item_cod?: number
+        item_cod?: string
         item_na?: string
         location_de?: string
         location_sh?: number
@@ -36,7 +36,7 @@ export namespace Inventory {
         location_id: number
         item_id: number
         category_type_id?: number
-        item_cod?: number
+        item_cod?: string
         item_na?: string
         location_de?: string
         location_sh?: number

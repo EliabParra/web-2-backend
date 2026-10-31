@@ -14,14 +14,14 @@ export namespace Equipment {
 
     export type Entity = {
         item_id: number
-        item_cod: number
+        item_cod: string
         item_na: string
         category_id: number
     }
 
     export type Summary = {
         item_id: number
-        item_cod: number
+        item_cod: string
         item_na: string
         category_id: number
     }
@@ -31,14 +31,14 @@ export namespace Equipment {
     // ============================================================
 
     export interface CreateInput {
-        item_cod: number
+        item_cod: string
         item_na: string
         category_id: number
     }
 
     export interface UpdateInput {
         item_id: number
-        item_cod?: number
+        item_cod?: string
         item_na?: string
         category_id?: number
     }
@@ -48,7 +48,7 @@ export namespace Equipment {
     }
 
     export interface GetAllInput {
-        item_cod?: number
+        item_cod?: string
         item_na?: string
         category_id?: number
     }

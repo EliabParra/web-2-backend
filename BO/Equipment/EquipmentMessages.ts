@@ -19,7 +19,8 @@ export const EquipmentMessages = {
             requiredField: 'Campo requerido',
             invalidFormat: 'Formato inválido',
             code: {
-                min: 'El codigo debe ser mayor a 0',
+                min: 'El código es requerido',
+                max: 'El código admite como máximo 50 caracteres',
             },
             name: {
                 required: 'El nombre es requerido',
@@ -49,7 +50,8 @@ export const EquipmentMessages = {
             requiredField: 'Field required',
             invalidFormat: 'Invalid format',
             code: {
-                min: 'Code must be greater than 0',
+                min: 'Code is required',
+                max: 'Code must be at most 50 characters',
             },
             name: {
                 required: 'Name is required',
