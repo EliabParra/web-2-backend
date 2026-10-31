@@ -222,6 +222,20 @@ export class BORegistrar {
         return { methodId, tx: finalTx }
     }
 
+    /**
+     * Grants already registered methods of one BO to a profile (e.g. public auth methods).
+     */
+    async grantMethods(profileId: number, objectName: string, methodNames: string[]): Promise<void> {
+        const { rows } = await this.db.exeRaw(
+            `SELECT m.method_id FROM security.method m
+             JOIN security.object_method om ON om.method_id = m.method_id
+             JOIN security.object o ON o.object_id = om.object_id
+             WHERE o.object_na = $1 AND m.method_na = ANY($2)`,
+            [objectName, methodNames]
+        )
+        for (const row of rows) await this.grantPermission(profileId, row.method_id)
+    }
+
     private async grantPermission(profileId: number, methodId: number): Promise<void> {
         const existingPerm = await this.db.exeRaw(
             'SELECT profile_method_id FROM security.profile_method WHERE profile_id = $1 AND method_id = $2',

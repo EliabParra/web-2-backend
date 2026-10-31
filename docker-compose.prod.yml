@@ -53,6 +53,7 @@ services:
                 node --import tsx scripts/db/index.ts seed --yes
                 --seedAdmin --adminUser "$$ADMIN_USER" --adminPassword "$$ADMIN_PASSWORD"
                 --profileId 3 --registerBo --txStart 1000
+                --seedPublicAuthPerms --publicProfileId 1
         depends_on:
             db:
                 condition: service_healthy

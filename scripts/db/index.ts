@@ -8,6 +8,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { Database } from './core/db.js'
+import type { SecurityConfig } from './types.js'
 import { MigrationRunner } from './core/MigrationRunner.js'
 import { Introspector } from './core/introspector.js'
 import { parseCliArgs, printHelp } from './cli/parser.js'
@@ -22,6 +23,25 @@ import { SecurityManager } from './seeders/security-manager.js'
 // Setup paths for ESM
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+/** Auth methods an anonymous visitor needs: sign up, verify email and recover access. */
+const PUBLIC_AUTH_METHODS = [
+    'register',
+    'verifyEmail',
+    'requestEmailVerification',
+    'requestPasswordReset',
+    'verifyPasswordReset',
+    'resetPassword',
+    'requestUsername',
+]
+
+async function registerBOs(db: Database, boRoot: string, security: SecurityConfig) {
+    const registrar = new BORegistrar(db, boRoot)
+    await registrar.registerAll({ profileId: security.adminProfileId || 1, txStart: security.txStart })
+    if (security.seedPublicAuthPerms) {
+        await registrar.grantMethods(security.publicProfileId || 1, 'Auth', PUBLIC_AUTH_METHODS)
+    }
+}
 
 type MenuAction =
     | 'sync'
@@ -123,13 +143,7 @@ async function main() {
                 await runner.run()
 
                 // Auto-register BOs if enabled
-                if (config.security.registerBo) {
-                    const registrar = new BORegistrar(db, boRoot)
-                    await registrar.registerAll({
-                        profileId: config.security.adminProfileId || 1,
-                        txStart: config.security.txStart,
-                    })
-                }
+                if (config.security.registerBo) await registerBOs(db, boRoot, config.security)
                 break
             }
 
@@ -236,13 +250,7 @@ async function main() {
                 }
 
                 // Register BOs
-                if (config.security.registerBo) {
-                    const registrar = new BORegistrar(db, boRoot)
-                    await registrar.registerAll({
-                        profileId: config.security.adminProfileId || 1,
-                        txStart: config.security.txStart,
-                    })
-                }
+                if (config.security.registerBo) await registerBOs(db, boRoot, config.security)
 
                 console.log(colors.green('\n✅ Seeding complete!'))
                 break
