@@ -77,6 +77,7 @@ export class TransactionOrchestrator {
         // TODO(REVERT_NAMING): Singular tables & N:M profiles
         if (!this.auth.isAuthorized(context.profileIds, objectName, methodName)) {
             await this.auditLog(context, 'ACCESS_DENIED', route)
+            if (context.userId == null) return this.errorResponse('errors.client.login', 401)
             return this.errorResponse('auth.noPrivileges', 403)
         }
 

@@ -87,6 +87,27 @@ describe('Security & Orchestration Core', () => {
             assert.equal(res.code, 403)
         })
 
+        it('execute() answers 401 when an anonymous caller is denied', async () => {
+            const mockMapper = { resolve: () => ({ objectName: 'Safe', methodName: 'exec' }) }
+            const mockAuth = { isAuthorized: () => false }
+
+            const container = createMockContainer({
+                transactionMapper: mockMapper,
+                authorization: mockAuth,
+                transactionExecutor: null,
+                log: mockLog,
+                audit: mockAudit,
+                i18n: mockI18n,
+            })
+
+            const orchestrator = new TransactionOrchestrator(container)
+            const anonymous = { userId: null, profileIds: [1], username: '' }
+
+            const res = await orchestrator.execute(100, anonymous, {})
+            assert.equal(res.code, 401)
+            assert.equal(res.msg, 'errors.client.login')
+        })
+
         it('execute() runs Executor on success', async () => {
             const mockMapper = { resolve: () => ({ objectName: 'Safe', methodName: 'exec' }) }
             const mockAuth = { isAuthorized: () => true }
