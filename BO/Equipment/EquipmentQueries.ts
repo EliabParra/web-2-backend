@@ -57,6 +57,16 @@ export const EquipmentQueries = {
             AND c.category_type_id = 1
         )
     `,
+    codeTaken: `
+        SELECT EXISTS(
+            SELECT 1
+            FROM business.item i
+            INNER JOIN business.category c ON c.category_id = i.category_id
+            WHERE c.category_type_id = 1
+            AND LOWER(i.item_cod) = LOWER($1)
+            AND i.item_id <> COALESCE($2::int, 0)
+        ) as "exists"
+    `,
     exists: `
         SELECT EXISTS(
             SELECT 1

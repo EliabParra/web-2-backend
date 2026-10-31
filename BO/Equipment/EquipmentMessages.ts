@@ -9,7 +9,7 @@ export const EquipmentMessages = {
 
         // Common errors
         notFound: 'Equipment no encontrado',
-        alreadyExists: 'Ya existe un registro con estos datos',
+        alreadyExists: 'Ya existe un equipo con ese código',
         invalidData: 'Datos inválidos',
         cannotDelete: 'No se puede eliminar el registro',
         permissionDenied: 'Permiso denegado',
@@ -40,7 +40,7 @@ export const EquipmentMessages = {
 
         // Common errors
         notFound: 'Equipment not found',
-        alreadyExists: 'Record already exists',
+        alreadyExists: 'An equipment with that code already exists',
         invalidData: 'Invalid data',
         cannotDelete: 'Cannot delete record',
         permissionDenied: 'Permission denied',

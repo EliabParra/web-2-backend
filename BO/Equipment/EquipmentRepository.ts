@@ -66,6 +66,11 @@ export class EquipmentRepository implements Types.IEquipmentRepository {
     /**
      * Verifica si equipment existe
      */
+    async codeTaken(code: string, exceptId: number | null): Promise<boolean> {
+        const result = await this.db.query<Types.ExistsEquipment>(EquipmentQueries.codeTaken, [code, exceptId])
+        return result.rows[0].exists
+    }
+
     async exists(id: number): Promise<boolean> {
         const result = await this.db.query<Types.ExistsEquipment>(EquipmentQueries.exists, [id])
         return result.rows[0].exists

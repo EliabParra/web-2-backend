@@ -40,6 +40,7 @@ export class EquipmentService extends BOService implements Types.IEquipmentServi
      */
     async create(data: Partial<Types.Equipment>): Promise<Types.Equipment> {
         this.log.trace('Creando equipment')
+        await this.assertCodeFree(data.item_cod, null)
         return this.repo.create(data)
     }
 
@@ -48,6 +49,7 @@ export class EquipmentService extends BOService implements Types.IEquipmentServi
      * @throws EquipmentNotFoundError si no se encuentra
      */
     async update(id: number, data: Partial<Types.Equipment>): Promise<Types.Equipment> {
+        await this.assertCodeFree(data.item_cod, id)
         const updated = await this.repo.update(id, data)
         if (!updated) {
             throw new Errors.EquipmentNotFoundError(id)
@@ -65,5 +67,12 @@ export class EquipmentService extends BOService implements Types.IEquipmentServi
             throw new Errors.EquipmentNotFoundError(id)
         }
         this.log.info('Eliminado equipment ' + id)
+    }
+
+    /** Each physical equipment is identified by its code, so two equipments never share one. */
+    private async assertCodeFree(code: string | undefined, exceptId: number | null): Promise<void> {
+        if (code !== undefined && (await this.repo.codeTaken(code, exceptId))) {
+            throw new Errors.EquipmentAlreadyExistsError('item_cod', code)
+        }
     }
 }
