@@ -1,95 +1,117 @@
-# Deploy Toproc
+# Desplegar Toproc
 
-One installer sets up the whole app (database, backend, frontend) with Docker. Data lives in a Docker volume and survives restarts, reboots and updates.
+Un solo instalador levanta toda la aplicación (base de datos, backend y frontend) con Docker. No hace falta descargar los repositorios antes: el instalador los descarga solo. Los datos viven en un volumen de Docker y sobreviven a reinicios, apagados y actualizaciones.
 
-## Pick a mode
+## Modos de instalación
 
-| Mode | Use it for | Opens at | Default port |
+La primera vez el instalador pregunta dónde se va a usar:
+
+| Opción | Para qué | Se abre en | Puerto |
 | --- | --- | --- | --- |
-| `local` (default) | One PC (Windows or Linux) | `http://localhost:3000` | 3000 |
-| `server` | A Linux server other PCs reach over the LAN | `http://<server-ip>` | 80 |
+| 1) En esta PC | Una sola PC (Windows o Linux) | `http://localhost:3000` | 3000 |
+| 2) En un servidor | Un servidor Linux al que entran otras PCs de la red | `http://<ip-del-servidor>` | 80 |
 
-The mode is saved in `.env` on the first install (`BIND_ADDRESS`, `HTTP_PORT`).
+La elección queda guardada en `.env` (`BIND_ADDRESS`, `HTTP_PORT`). Las siguientes ejecuciones no vuelven a preguntar.
 
-## Install
+## Instalar
 
-Requirements: internet access and admin rights. Docker is installed for you if missing.
+Requisitos: internet y permisos de administrador. Si Docker no está instalado, el instalador lo instala.
 
-**Linux, local mode**
+**Linux**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.sh | bash
 ```
 
-**Linux, server mode**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.sh | TOPROC_MODE=server bash
-```
-
-**Windows** (PowerShell as Administrator)
+**Windows** (PowerShell como Administrador)
 
 ```powershell
 irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps1 | iex
 ```
 
-On Windows the first run installs Docker Desktop and asks you to restart. Restart, open Docker Desktop once, and run the same command again. For server mode, run `$env:TOPROC_MODE='server'` first.
+En Windows, la primera ejecución instala Docker Desktop y pide reiniciar. Reinicia, abre Docker Desktop una vez, espera a que diga *running* y ejecuta el mismo comando otra vez.
 
-Optional variables: `TOPROC_DIR` (install folder, default `~/toproc`), `TOPROC_BRANCH` (default `master`), `HTTP_PORT` (first install only).
+Al final el instalador muestra la URL de la aplicación.
 
-The installer prints the URL at the end.
+### Instalar sin preguntas
 
-## Log in
+Para automatizar, define el modo con `TOPROC_MODE` (`local` o `server`):
 
-User `admin`. The password is generated on the first install, printed once, and stored in `~/toproc/.env` (`ADMIN_PASSWORD`).
+```bash
+curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.sh | TOPROC_MODE=server bash
+```
 
-To change it: edit `ADMIN_PASSWORD` in `.env` and re-run the installer.
+```powershell
+$env:TOPROC_MODE='server'; irm https://raw.githubusercontent.com/EliabParra/web-2-backend/master/install.ps1 | iex
+```
 
-## Update
+Si ya estaba instalado, pasar `TOPROC_MODE` cambia el modo guardado en `.env`.
 
-Re-run the installer. It downloads the latest code, rebuilds, and applies new migrations. `.env` and the database are kept.
+Otras variables opcionales:
 
-## Everyday commands
+| Variable | Qué hace | Por defecto |
+| --- | --- | --- |
+| `TOPROC_DIR` | Carpeta de instalación | `~/toproc` |
+| `TOPROC_BRANCH` | Rama de ambos repositorios | `master` |
+| `HTTP_PORT` | Puerto | 3000 (PC) / 80 (servidor) |
 
-Run these from `~/toproc` (use `sudo` on Linux if your user is not in the `docker` group):
+Para probar una rama antes de mergearla, usa la URL del script de esa rama y `TOPROC_BRANCH`. La rama tiene que existir en GitHub en los dos repositorios:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EliabParra/web-2-backend/feat/lan-deploy/install.sh | TOPROC_BRANCH=feat/lan-deploy bash
+```
+
+## Iniciar sesión
+
+Usuario `admin`. La contraseña se genera en la primera instalación, se muestra una vez y queda guardada en `~/toproc/.env` (`ADMIN_PASSWORD`).
+
+Para cambiarla: edita `ADMIN_PASSWORD` en `.env` y vuelve a ejecutar el instalador.
+
+## Actualizar
+
+Vuelve a ejecutar el instalador. Descarga el código nuevo, reconstruye y aplica las migraciones pendientes. Se conservan `.env` y la base de datos.
+
+## Comandos del día a día
+
+Ejecútalos desde `~/toproc` (en Linux usa `sudo` si tu usuario no está en el grupo `docker`):
 
 ```bash
 C="docker compose --env-file .env -f web-2-backend/docker-compose.prod.yml"
-$C ps              # status
-$C logs -f api     # app logs
-$C logs migrate    # migration logs
+$C ps              # estado
+$C logs -f api     # logs de la aplicación
+$C logs migrate    # logs de las migraciones
 $C restart api
-$C down            # stop (data is kept)
-$C up -d           # start again
+$C down            # detener (los datos se conservan)
+$C up -d           # volver a iniciar
 ```
 
-## Backup and restore
+## Respaldo y restauración
 
 ```bash
-# Backup
+# Respaldo
 $C exec -T db pg_dump -U toproc -d toproc -Fc > toproc-$(date +%F).dump
 
-# Restore (replaces current data)
+# Restaurar (reemplaza los datos actuales)
 $C stop api
 $C exec -T db pg_restore -U toproc -d toproc --clean --if-exists < toproc-2026-01-31.dump
 $C start api
 ```
 
-## Troubleshooting
+## Problemas comunes
 
-| Symptom | Fix |
+| Síntoma | Solución |
 | --- | --- |
-| `port is already allocated` | Set another `HTTP_PORT` in `.env`, re-run the installer. |
-| Other PCs can't open it (server mode) | Check `BIND_ADDRESS=0.0.0.0` in `.env` and open the port in the firewall (`sudo ufw allow 80/tcp`). |
-| `migrate` exited with an error | `$C logs migrate`, fix the cause, re-run the installer. |
-| Windows: `Docker is not running` | Open Docker Desktop, wait until it says *running*, re-run. |
-| Login fails after editing `.env` | Re-run the installer so the admin password is re-applied. |
-| Start from zero (deletes all data) | `$C down -v`, then re-run the installer. |
+| `port is already allocated` | Cambia `HTTP_PORT` en `.env` y vuelve a ejecutar el instalador. |
+| Las otras PCs no pueden entrar (modo servidor) | Revisa que `.env` tenga `BIND_ADDRESS=0.0.0.0` y abre el puerto en el firewall (`sudo ufw allow 80/tcp`). |
+| `migrate` terminó con error | `$C logs migrate`, corrige la causa y vuelve a ejecutar el instalador. |
+| Windows: `Docker no está corriendo` | Abre Docker Desktop, espera a que diga *running* y vuelve a ejecutar. |
+| El login falla después de editar `.env` | Vuelve a ejecutar el instalador para que se aplique la contraseña de admin. |
+| Empezar de cero (borra todos los datos) | `$C down -v` y vuelve a ejecutar el instalador. |
 
-## What runs
+## Qué se ejecuta
 
-`docker-compose.prod.yml` starts three services:
+`docker-compose.prod.yml` levanta tres servicios:
 
-- `db`: PostgreSQL 18, volume `toproc_db_data`, not exposed to the network.
-- `migrate`: one-shot job. Applies the schema and seed data, creates the admin (profile 3, `super_admin`) and registers every BO method from tx 1000. Safe to re-run.
-- `api`: the backend; it also serves the built frontend on the same port. Restarts automatically.
+- `db`: PostgreSQL 18, volumen `toproc_db_data`, no expuesto a la red.
+- `migrate`: tarea de una sola vez. Aplica el esquema y los datos iniciales, crea el admin (perfil 3, `super_admin`), registra todos los métodos de los BO desde la tx 1000 y da al perfil público (1) los métodos de registro y recuperación de cuenta. Se puede ejecutar varias veces sin duplicar nada.
+- `api`: el backend; también sirve el frontend compilado en el mismo puerto. Se reinicia solo.

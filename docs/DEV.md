@@ -1,8 +1,8 @@
-# Develop Toproc
+# Desarrollar Toproc
 
-Run Postgres in Docker, the backend and frontend on your machine with hot reload.
+Postgres corre en Docker; el backend y el frontend corren en tu máquina con recarga automática.
 
-Requirements: Node.js 20+, pnpm (`corepack enable`), Docker.
+Requisitos: Node.js 20+, pnpm (`corepack enable`) y Docker.
 
 ## 1. Backend
 
@@ -10,7 +10,7 @@ Requirements: Node.js 20+, pnpm (`corepack enable`), Docker.
 cp .env.example .env
 ```
 
-Make sure `.env` has these values (the dev database from `docker-compose.yml` listens on port 5441):
+Verifica que `.env` tenga estos valores (la base de desarrollo de `docker-compose.yml` escucha en el puerto 5441):
 
 ```dotenv
 PGHOST=localhost
@@ -19,7 +19,7 @@ PGUSER=postgres
 PGPASSWORD=postgres
 PGDATABASE=toproc_dev
 APP_PORT=3000
-SESSION_SECRET=any-long-random-string
+SESSION_SECRET=cualquier-cadena-larga-y-aleatoria
 SESSION_SCHEMA=security
 SESSION_TABLE=sessions
 AUTH_PUBLIC_PROFILE_ID=1
@@ -27,48 +27,50 @@ AUTH_SESSION_PROFILE_ID=2
 AUTH_REQUIRE_EMAIL_VERIFICATION=false
 ```
 
-Then:
+Después:
 
 ```bash
 docker compose up -d db
 pnpm install
 pnpm run db sync --yes
-pnpm run db seed --yes --seedAdmin --adminUser admin --adminPassword admin123 --profileId 3 --registerBo --txStart 1000
+pnpm run db seed --yes --seedAdmin --adminUser admin --adminPassword admin123 --profileId 3 --registerBo --txStart 1000 --seedPublicAuthPerms --publicProfileId 1
 pnpm run dev
 ```
 
-The API runs at `http://localhost:3000`. Log in as `admin` / `admin123`.
+La API queda en `http://localhost:3000`. Inicia sesión con `admin` / `admin123`.
 
-Profiles: `1` public, `2` session, `3` super_admin. Every BO method is granted to profile 3.
+Perfiles: `1` público, `2` sesión, `3` super_admin. Todos los métodos de los BO se otorgan al perfil 3; el perfil 1 solo recibe los métodos públicos de `Auth` (registro y recuperación de cuenta).
 
 ## 2. Frontend
 
-In the `web-2-frontend` repo:
+En el repositorio `web-2-frontend`:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Vite proxies the API calls (`/toProccess`, `/login`, `/logout`, `/csrf`) to `http://localhost:3000`, so open the Vite URL it prints.
+Vite redirige las llamadas a la API (`/toProccess`, `/login`, `/logout`, `/csrf`) a `http://localhost:3000`, así que abre la URL que muestra Vite.
 
-## Common tasks
+Los números de transacción del frontend están en `src/api/tx.ts`. Coinciden con el registro de BOs del backend (carpetas en orden alfabético, desde la tx 1000). Si agregas, quitas o reordenas métodos de un BO, actualiza ese archivo.
 
-| Task | Command |
+## Tareas comunes
+
+| Tarea | Comando |
 | --- | --- |
-| New BO | `pnpm run bo <cmd>` |
-| Register new BO methods | `pnpm run db bo --yes --profileId 3` |
-| Apply new migrations | `pnpm run db sync --yes` then `pnpm run db dml --yes` |
-| Reset the dev database | `docker compose down -v && docker compose up -d db`, then the `db` commands above |
-| Quality gate | `pnpm run verify` |
-| Adminer (DB web UI) | `docker compose up -d adminer`, open `http://localhost:8080` |
+| Nuevo BO | `pnpm run bo <cmd>` |
+| Registrar métodos nuevos de un BO | `pnpm run db bo --yes --profileId 3` |
+| Aplicar migraciones nuevas | `pnpm run db sync --yes` y luego `pnpm run db dml --yes` |
+| Reiniciar la base de desarrollo | `docker compose down -v && docker compose up -d db`, luego los comandos `db` de arriba |
+| Verificación completa | `pnpm run verify` |
+| Adminer (interfaz web de la base) | `docker compose up -d adminer` y abre `http://localhost:8080` |
 
-## Test the production build locally
+## Probar el build de producción en local
 
-See [DEPLOY.md](DEPLOY.md). From this repo you can also run the stack directly:
+Ver [DEPLOY.md](DEPLOY.md). Desde este repositorio también puedes levantar el stack directamente, sin el instalador:
 
 ```bash
 FRONTEND_DIR=../web-2-frontend docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-It needs `ADMIN_PASSWORD`, `PGPASSWORD` and `SESSION_SECRET` in a `.env` next to the compose file or in your shell.
+Necesita `ADMIN_PASSWORD`, `PGPASSWORD` y `SESSION_SECRET` en un `.env` junto al compose o en tu shell. Por defecto queda en `http://localhost:3000`.
