@@ -31,6 +31,7 @@
         "explorer": "node --import tsx scripts/explorer/generate.ts"
     },
     "type": "module",
+    "packageManager": "pnpm@10.34.6",
     "dependencies": {
         "@clack/prompts": "^1.0.1",
         "@socket.io/redis-adapter": "^8.3.0",

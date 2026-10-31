@@ -1,5 +1,5 @@
 import { Database } from '../core/db.js'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import colors from 'colors'
 
 // TODO(REVERT_NAMING): Revert user_na to username

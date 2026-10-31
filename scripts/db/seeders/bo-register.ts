@@ -30,7 +30,9 @@ export class BORegistrar {
         const bos: BOInfo[] = []
 
         try {
-            const entries = await fs.readdir(this.boRoot, { withFileTypes: true })
+            const entries = (await fs.readdir(this.boRoot, { withFileTypes: true })).sort(
+                (a, b) => a.name.localeCompare(b.name)
+            )
 
             for (const entry of entries) {
                 if (!entry.isDirectory()) continue

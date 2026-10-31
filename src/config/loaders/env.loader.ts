@@ -56,6 +56,7 @@ export class EnvLoader {
             },
             log: {
                 format: env.LOG_FORMAT as any,
+                minLevel: env.LOG_LEVEL as any,
             },
             email: {
                 mode: env.EMAIL_MODE as any,

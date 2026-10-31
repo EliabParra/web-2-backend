@@ -26,10 +26,6 @@ import * as rateLimit from '@toproc/api/http/rate-limit/index.js'
 // Controllers
 import * as controllers from '@toproc/controllers'
 
-// Toproc Explorer
-import { createExplorerRouter } from '@toproc/scripts/explorer/router.js'
-import { generateExplorerSpec } from '@toproc/scripts/explorer/generate.js'
-
 /**
  * Servidor de Aplicación (AppServer).
  *
@@ -150,6 +146,9 @@ export class AppServer {
 
         // 3.5. Explorer (Solo en desarrollo)
         if (this.config.app.env !== 'production') {
+            // Dynamic import: the explorer needs devDependencies (typescript)
+            const { generateExplorerSpec } = await import('@toproc/scripts/explorer/generate.js')
+            const { createExplorerRouter } = await import('@toproc/scripts/explorer/router.js')
             try {
                 await generateExplorerSpec({ includeDbTxSync: true })
             } catch (error: unknown) {

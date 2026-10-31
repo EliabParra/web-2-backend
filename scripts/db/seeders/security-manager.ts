@@ -1,6 +1,6 @@
 import { Database } from '../core/db.js'
 import * as p from '@clack/prompts'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import colors from 'colors'
 import { readFileSync, writeFileSync } from 'node:fs'
 import fs from 'node:fs/promises'
