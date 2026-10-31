@@ -57,5 +57,5 @@ $DOCKER compose --env-file "$ENV_FILE" -f "$DIR/web-2-backend/docker-compose.pro
 
 PORT=$(grep '^HTTP_PORT=' "$ENV_FILE" | cut -d= -f2)
 HOST=localhost
-grep -q '^BIND_ADDRESS=0.0.0.0' "$ENV_FILE" && HOST=$(hostname -I | awk '{print $1}')
+grep -q '^BIND_ADDRESS=0.0.0.0' "$ENV_FILE" && HOST=$( (hostname -I 2>/dev/null || true) | awk '{print $1}'); HOST=${HOST:-<server-ip>}
 echo "==> Toproc is running: http://$HOST:$PORT  (credentials in $ENV_FILE)"
