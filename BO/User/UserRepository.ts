@@ -54,6 +54,10 @@ export class UserRepository implements Types.IUserRepository {
     /**
      * Actualiza user
      */
+    async ensurePerson(id: number): Promise<void> {
+        await this.db.query(UserQueries.ensurePerson, [id])
+    }
+
     async update(id: number, data: Partial<Types.User>): Promise<Types.User | null> {
         const result = await this.db.query<Types.User>(UserQueries.update, [
             id,

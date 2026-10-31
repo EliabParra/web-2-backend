@@ -12,6 +12,7 @@ interface MockUserRepo {
     update: MockFn
     delete: MockFn
     exists: MockFn
+    ensurePerson: MockFn
 }
 
 interface MockSecurity {
@@ -31,6 +32,7 @@ function createUserServiceWithMocks(): {
         update: createMockFn(async () => null),
         delete: createMockFn(async () => false),
         exists: createMockFn(async () => false),
+        ensurePerson: createMockFn(async () => undefined),
     }
 
     const security: MockSecurity = {
@@ -86,6 +88,25 @@ describe('UserService', () => {
 
         assert.equal('user_pw' in (repo.update.calls[0] as [number, object])[1], false)
         assert.equal('user_pw' in user, false)
+    })
+
+    it('update crea la persona del usuario antes de guardar datos personales', async () => {
+        repo.update = createMockFn(async () => ({ user_id: 1 }))
+        Object.assign(service, { repo })
+
+        await service.update(1, { person_na: 'Ana' })
+
+        assert.deepEqual(repo.ensurePerson.calls[0], [1])
+        assert.equal(repo.update.callCount, 1)
+    })
+
+    it('update sin datos personales no toca la persona', async () => {
+        repo.update = createMockFn(async () => ({ user_id: 1 }))
+        Object.assign(service, { repo })
+
+        await service.update(1, { user_em: 'a@b.com' })
+
+        assert.equal(repo.ensurePerson.callCount, 0)
     })
 
     it('getAll y getById no devuelven el password', async () => {

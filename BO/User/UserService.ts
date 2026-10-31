@@ -60,6 +60,8 @@ export class UserService extends BOService implements Types.IUserService {
      * @throws UserNotFoundError si no se encuentra
      */
     async update(id: number, data: Partial<Types.User>): Promise<Types.User> {
+        const personFields = ['person_ci', 'person_na', 'person_ln', 'person_ph', 'person_deg'] as const
+        if (personFields.some((f) => data[f] !== undefined)) await this.repo.ensurePerson(id)
         const updated = await this.repo.update(id, await hashPassword(data))
         if (!updated) {
             throw new Errors.UserNotFoundError(id)

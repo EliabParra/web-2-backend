@@ -133,6 +133,17 @@ export const UserQueries = {
         FROM created_user cu
         LEFT JOIN created_person cp ON cp.person_id = cu.person_id
     `,
+    ensurePerson: `
+        WITH target AS (
+            SELECT user_id FROM security."user" WHERE user_id = $1 AND person_id IS NULL
+        ),
+        new_person AS (
+            INSERT INTO business.person (person_na) SELECT NULL FROM target RETURNING person_id
+        )
+        UPDATE security."user"
+        SET person_id = (SELECT person_id FROM new_person)
+        WHERE user_id IN (SELECT user_id FROM target)
+    `,
     update: `
         WITH updated_user AS (
             UPDATE security."user"
